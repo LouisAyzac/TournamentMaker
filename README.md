@@ -3,7 +3,7 @@
 ## Membres du projet 
 
 - Ange Gagnard
-- Pablo Minelian
+- Pablo Minelian https://ohmygit.org
 - Florian Garcia--Salon
 - Antoine Huang
 - Louis Ayzac   
