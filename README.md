@@ -6,7 +6,7 @@
 - Pablo Minelian
 - Florian Garcia--Salon
 - Antoine Huang
-- Louis Ayzac 
+- Louis Ayzac https://youtube.com/watch?v=1ffBJ4sVUb4&t=125s
 - Remy Adboul Mazidou
 
 ## Technologies 
