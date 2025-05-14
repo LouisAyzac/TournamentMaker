@@ -5,7 +5,7 @@
 - Ange Gagnard
 - Pablo Minelian
 - Florian Garcia--Salon
-- Antoine Huang
+- Antoine Huang (https://eagain.net/articles/git-for-computer-scientists/)
 - Louis Ayzac   
 - Remy Adboul Mazidou
 
