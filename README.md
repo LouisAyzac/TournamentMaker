@@ -2,7 +2,7 @@
 
 ## Membres du projet 
 
-- Ange Gagnard
+- Ange Gagnard https://onlywei.github.io/explain-git-with-d3/
 - Pablo Minelian
 - Florian Garcia--Salon
 - Antoine Huang
