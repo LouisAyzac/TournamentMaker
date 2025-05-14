@@ -7,7 +7,7 @@
 - Florian Garcia--Salon
 - Antoine Huang
 - Louis Ayzac   
-- Remy Adboul Mazidou
+- Remy Abdoul Mazidou https://agripongit.vincenttunru.com/
 
 ## Technologies 
 
