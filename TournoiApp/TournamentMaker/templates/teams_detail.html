@@ -1,0 +1,19 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h2>Détails de l'équipe</h2>
+  <p><strong>Nom :</strong> {{ team.name }}</p>
+  <p><strong>Coach :</strong> {{ team.coach }}</p>
+
+  <h3>Joueurs dans cette équipe :</h3>
+  <ul>
+    {% for player in team.players.all %}
+      <!-- Lien vers la page de détail du joueur -->
+      <li><a href="{% url 'player_detail' player.id %}">{{ player.first_name }} {{ player.last_name }}</a></li>
+    {% empty %}
+      <li>Aucun joueur dans cette équipe.</li>
+    {% endfor %}
+  </ul>
+
+  <p><a href="{% url 'teams' %}">← Retour à la liste des équipes</a></p>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h2>Liste des équipes</h2>
+
+  <!-- Champ de recherche -->
+  <input type="text" id="searchInput" onkeyup="searchTeam()" placeholder="Rechercher une équipe...">
+
+  <ul id="teamsList">
+    {% for team in teams %}
+      <li class="team">
+        <!-- Lien vers la page de détail de l'équipe -->
+        <a href="{% url 'team_detail' team.id %}">{{ team.name }} - {{ team.coach }}</a>
+      </li>
+    {% empty %}
+      <li>Aucune équipe trouvée.</li>
+    {% endfor %}
+  </ul>
+
+
+  <script>
+    function searchTeam() {
+      // Récupérer la valeur de recherche
+      var input = document.getElementById('searchInput');
+      var filter = input.value.toLowerCase();
+
+      // Récupérer la liste des équipes
+      var teamsList = document.getElementById('teamsList');
+      var teams = teamsList.getElementsByClassName('team');
+
+      // Parcourir les équipes et les afficher ou les masquer
+      for (var i = 0; i < teams.length; i++) {
+        var teamName = teams[i].textContent || teams[i].innerText;
+        if (teamName.toLowerCase().indexOf(filter) > -1) {
+          teams[i].style.display = ""; // Afficher l'équipe
+        } else {
+          teams[i].style.display = "none"; // Masquer l'équipe
+        }
+      }
+    }
+  </script>
+
+{% endblock %}
