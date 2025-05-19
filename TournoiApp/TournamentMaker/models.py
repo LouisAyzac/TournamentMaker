@@ -53,10 +53,12 @@ class Match(models.Model):
             return self.team_b
         return None  # match nul
 
+from django.db import models
 
 class Ranking(models.Model):
-    team = models.OneToOneField(Team, on_delete=models.CASCADE)
-    rank = models.PositiveIntegerField()
-
-    def __str__(self):
-        return f"{self.team.name} - Rang {self.rank}"
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    rank = models.PositiveIntegerField(default=0)
+    played = models.PositiveIntegerField(default=0)
+    wins = models.PositiveIntegerField(default=0)
+    losses = models.PositiveIntegerField(default=0)
+    points = models.PositiveIntegerField(default=0)

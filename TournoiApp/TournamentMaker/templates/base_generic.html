@@ -14,9 +14,10 @@
       <nav>
         <ul class="navbar">
           <li><a href="{% url 'index' %}">Accueil</a></li>
-          <li><a href="#">Équipes</a></li>
-          <li><a href="#">Joueurs</a></li>
-          <li><a href="#">Matchs</a></li>
+          <li><a href="{% url 'equipes' %}">Équipes</a></li>
+          <li><a href="{% url 'joueurs' %}">Joueurs</a></li>
+          <li><a href="{% url 'matchs' %}">Matchs</a></li>
+          <li><a href="{% url 'ranking' %}">Classement</a></li>
         </ul>
       </nav>
     </div>
@@ -34,4 +35,3 @@
   </footer>
 </body>
 </html>
-
