@@ -1,0 +1,12 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<h1>Liste des équipes</h1>
+<ul>
+  {% for equipe in equipes %}
+    <li>{{ equipe.name }}</li>
+  {% empty %}
+    <li>Aucune équipe disponible.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

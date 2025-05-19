@@ -1,0 +1,16 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<h1>Liste des matchs</h1>
+<ul>
+  {% for match in matchs %}
+    <li>
+      {{ match.team_a.name }} vs {{ match.team_b.name }} – 
+      Score : {{ match.score_team_a }} - {{ match.score_team_b }} –
+      Joué le : {{ match.date_played|date:"d/m/Y H:i" }}
+    </li>
+  {% empty %}
+    <li>Aucun match enregistré.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

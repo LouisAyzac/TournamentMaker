@@ -1,0 +1,22 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<h1>Liste des joueurs</h1>
+<ul>
+  {% for joueur in joueurs %}
+    <li>
+      {{ joueur.first_name }} {{ joueur.last_name }} –
+      Équipe : {{ joueur.team.name }} –
+      Date de naissance : {{ joueur.birth_date }} –
+      Niveau : 
+      {% if joueur.level == 'D' %}Débutant
+      {% elif joueur.level == 'I' %}Intermédiaire
+      {% elif joueur.level == 'A' %}Avancé
+      {% else %}Inconnu
+      {% endif %}
+    </li>
+  {% empty %}
+    <li>Aucun joueur inscrit.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
