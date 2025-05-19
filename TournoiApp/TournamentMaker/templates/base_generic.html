@@ -1,28 +1,37 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Tournoi{% endblock %}</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-  </head>
-  <body>
-    <header>
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Tournoi de Volleyball{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <header>
+    <div class="container">
       <h1>Tournoi de Volleyball</h1>
       <nav>
-        <a href="{% url 'index' %}">Accueil</a> |
-        <a href="#">Équipes</a> |
-        <a href="#">Joueurs</a> |
-        <a href="#">Matchs</a>
+        <ul class="navbar">
+          <li><a href="{% url 'index' %}">Accueil</a></li>
+          <li><a href="#">Équipes</a></li>
+          <li><a href="#">Joueurs</a></li>
+          <li><a href="#">Matchs</a></li>
+        </ul>
       </nav>
-      <hr>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      {% block content %}
-      {% endblock %}
-    </main>
+  <main class="container">
+    {% block content %}
+    {% endblock %}
+  </main>
 
-    
-  </body>
+  <footer>
+    <div class="container">
+      <p> TournamentMaker</p>
+    </div>
+  </footer>
+</body>
 </html>
+
