@@ -3,7 +3,24 @@
 {% block content %}
   <h2>Détails de l'équipe</h2>
   <p><strong>Nom :</strong> {{ team.name }}</p>
-  <p><strong>Coach :</strong> {{ team.coach }}</p>
+
+  <p><strong>Classement :</strong> 
+    {% if ranking %}
+      Rang {{ ranking.rank }}
+    {% else %}
+      Non classée
+    {% endif %}
+  </p>
+
+  <p><strong>Pool(s) :</strong> 
+    {% if team.pools.all %}
+      {% for pool in team.pools.all %}
+        <a href="{% url 'pool_detail' pool.id %}">{{ pool.name }}</a>{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+    {% else %}
+      Aucune pool assignée.
+    {% endif %}
+  </p>
 
   <h3>Joueurs dans cette équipe :</h3>
   <ul>

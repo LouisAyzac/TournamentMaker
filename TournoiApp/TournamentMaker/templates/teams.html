@@ -10,7 +10,7 @@
     {% for team in teams %}
       <li class="team">
         <!-- Lien vers la page de détail de l'équipe -->
-        <a href="{% url 'team_detail' team.id %}">{{ team.name }} - {{ team.coach }}</a>
+        <a href="{% url 'team_detail' team.id %}">{{ team.name }}</a>
       </li>
     {% empty %}
       <li>Aucune équipe trouvée.</li>
