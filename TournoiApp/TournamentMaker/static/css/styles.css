@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* Reset + base */
 * {
   margin: 0;
@@ -62,4 +63,44 @@ footer {
   margin-top: 40px;
   font-size: 60px;
   border-top: 3px solid #facc15;
+=======
+.header-bar {
+  background-color: #f8f9fa;
+  padding: 20px;
+  text-align: center;
+  border-bottom: 2px solid #ddd;
+}
+
+.header-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.nav-button {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #4CAF50, #2E7D32);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: background 0.3s ease, transform 0.1s ease;
+}
+
+.nav-button:hover {
+  background: linear-gradient(135deg, #66BB6A, #388E3C);
+  transform: translateY(-2px);
+}
+
+.nav-button:active {
+  transform: scale(0.98);
+>>>>>>> dev
 }
