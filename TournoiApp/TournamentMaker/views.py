@@ -3,6 +3,9 @@ from django.shortcuts import render
 # Create your views here.
 from TournamentMaker.models import Player, Team
 
+def home(request):
+    return render(request, 'home.html', {'hide_nav': True})
+
 def index(request):
     """View function for home page of site."""
 
