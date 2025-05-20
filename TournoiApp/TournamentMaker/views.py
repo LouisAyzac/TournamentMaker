@@ -4,8 +4,18 @@ from django.shortcuts import render
 from TournamentMaker.models import Player, Team
 
 def index(request):
-    num_Player = Player.objects.count()
-    context = {'num_Player': num_Player}
+    """View function for home page of site."""
+
+    # Generate counts of some of the main objects
+    num_Player = Player.objects.all().count()
+
+    # Available books (status = 'a'
+
+    context = {
+        'num_Player': num_Player,
+    }
+
+    # Render the HTML template index.html with the data in the context variable
     return render(request, 'index.html', context=context)
 
 from django.shortcuts import render
@@ -113,4 +123,3 @@ def scores(request):
     # GET : afficher les matchs
     matches = Match.objects.all()
     return render(request, "scores.html", {"matches": matches})
-

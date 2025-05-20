@@ -1,37 +1,44 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>{% block title %}Tournoi de Volleyball{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-  <header>
-    <div class="container">
-      <h1>Tournoi de Volleyball</h1>
-      <nav>
-        <ul class="navbar">
-          <li><a href="{% url 'index' %}">Accueil</a></li>
-          <li><a href="{% url 'equipes' %}">Équipes</a></li>
-          <li><a href="{% url 'joueurs' %}">Joueurs</a></li>
-          <li><a href="{% url 'matchs' %}">Matchs</a></li>
-          <li><a href="{% url 'ranking' %}">Classement</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-
-  <main class="container">
-    {% block content %}
+<!doctype html>
+<html lang="en">
+  <head>
+    {% block title %}
+      <title>Bibliothèque locale</title>
     {% endblock %}
-  </main>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+      crossorigin="anonymous" />
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+  </head>
 
-  <footer>
-    <div class="container">
-      <p> TournamentMaker</p>
+  
+  <body>
+    <div class="header-bar">
+      <div class="header-title">Tournament Maker</div>
+      <div class="nav-buttons">
+        <a href="{% url 'index' %}" class="nav-button">Acceuil</a>
+        <a href="{% url 'players' %}" class="nav-button">Joueurs</a>
+        <a href="{% url 'teams' %}" class="nav-button">Teams</a>
+        <a href="{% url 'login' %}" class="nav-button">Scores</a>
+<a href="{% url 'pool_list' %}" class="nav-button">Pools</a>
+<a href="{% url 'rankings_list' %}" class="nav-button">Classements</a>
+
+
+
+
+      </div>
     </div>
-  </footer>
-</body>
+
+    <div class="container-fluid mt-4">
+      <div class="row">
+        <div class="col-sm-12">
+          {% block content %} {% endblock %}
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
