@@ -1,0 +1,27 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h2>Liste des Pools</h2>
+
+  {% if pools %}
+    <ul>
+      {% for pool in pools %}
+        <li>
+          <!-- Lien cliquable sur le nom de la pool vers la page détail -->
+          <a href="{% url 'pool_detail' pool.id %}"><strong>{{ pool.name }}</strong></a> ({{ pool.teams.count }} équipes)
+          <ul>
+            {% for team in pool.teams.all %}
+              <li>
+                <a href="{% url 'team_detail' team.id %}">{{ team.name }}</a>
+              </li>
+            {% empty %}
+              <li>Aucune équipe dans cette pool.</li>
+            {% endfor %}
+          </ul>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Aucune pool disponible.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+  <body>
+    {% extends "base_generic.html" %}
+
+    {% block content %}
+    <h2>Liste des Joueurs</h2>
+
+    <!-- Champ de recherche -->
+    <input type="text" id="searchInput" onkeyup="searchPlayer()" placeholder="Rechercher un joueur par nom...">
+
+    <ul id="playersList">
+      {% for player in players %}
+        <a href="{% url 'player_detail' player.id %}">
+          <li class="player">{{ player.first_name }} - {{ player.last_name }}</li>
+        </a>
+      {% empty %}
+        <li>Aucun joueur trouvé.</li>
+      {% endfor %}
+    </ul>
+
+    <script>
+      function searchPlayer() {
+        // Récupérer la valeur de recherche
+        var input = document.getElementById('searchInput');
+        var filter = input.value.toLowerCase();
+
+        // Récupérer la liste des joueurs
+        var playersList = document.getElementById('playersList');
+        var players = playersList.getElementsByClassName('player');
+
+        // Parcourir les joueurs et les afficher ou les masquer
+        for (var i = 0; i < players.length; i++) {
+          var playerName = players[i].textContent || players[i].innerText;
+          if (playerName.toLowerCase().indexOf(filter) > -1) {
+            players[i].style.display = ""; // Afficher le joueur
+          } else {
+            players[i].style.display = "none"; // Masquer le joueur
+          }
+        }
+      }
+    </script>
+
+    {% endblock %}
+  </body>
+</html>

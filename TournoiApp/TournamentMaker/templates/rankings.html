@@ -1,0 +1,33 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h2>Classement par Pool</h2>
+
+  {% if pool_rankings %}
+    {% for item in pool_rankings %}
+      <h3>{{ item.pool.name }}</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Rang</th>
+            <th>Équipe</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ranking in item.rankings %}
+            <tr>
+              <td>{{ ranking.rank }}</td>
+              <td>
+                <a href="{% url 'team_detail' ranking.team.id %}">
+                  {{ ranking.team.name }}
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  {% else %}
+    <p>Aucun classement disponible.</p>
+  {% endif %}
+{% endblock %}
