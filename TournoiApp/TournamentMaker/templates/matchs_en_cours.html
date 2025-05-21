@@ -1,0 +1,50 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="card p-3 shadow-sm">
+    <h5 class="mb-3">Matchs en cours</h5>
+
+    {% if matchs %}
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered">
+            <thead class="thead-light">
+                <tr>
+                    <th class="text-center">Équipe A</th>
+                    <th class="text-center">Score A</th>
+                    <th class="text-center">Équipe B</th>
+                    <th class="text-center">Score B</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in matchs %}
+                <tr>
+                    <td class="align-middle text-center">
+                        <a href="{% url 'team_detail' match.team_a.id %}">
+                            {{ match.team_a.name }}
+                        </a>
+                    </td>
+                    <td class="align-middle text-center">
+                        {{ match.set1_team_a }}
+                        {% if match.set2_team_a %}/ {{ match.set2_team_a }}{% endif %}
+                        {% if match.set3_team_a %}/ {{ match.set3_team_a }}{% endif %}
+                    </td>
+                    <td class="align-middle text-center">
+                        <a href="{% url 'team_detail' match.team_b.id %}">
+                            {{ match.team_b.name }}
+                        </a>
+                    </td>
+                    <td class="align-middle text-center">
+                        {{ match.set1_team_b }}
+                        {% if match.set2_team_b %}/ {{ match.set2_team_b }}{% endif %}
+                        {% if match.set3_team_b %}/ {{ match.set3_team_b }}{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-muted small">Aucun match en cours pour le moment.</p>
+    {% endif %}
+</div>
+{% endblock %}

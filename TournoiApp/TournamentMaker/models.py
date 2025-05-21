@@ -3,14 +3,12 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-
 class Tournament(models.Model):
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
-
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
@@ -21,7 +19,6 @@ class Team(models.Model):
 
     def player_count(self):
         return self.players.count()
-
 
 class Player(models.Model):
     LEVEL_CHOICES = [
@@ -39,11 +36,9 @@ class Player(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
-
 class Pool(models.Model):
     name = models.CharField(max_length=50)
     max_size = models.PositiveIntegerField(default=4)
-
     teams = models.ManyToManyField('Team', blank=True, related_name='pools')
 
     def __str__(self):
@@ -55,7 +50,6 @@ class Pool(models.Model):
             .exclude(pools=self)
             .values_list('id', flat=True)
         )
-
 
         filtered_teams = [team for team in teams_to_add if team.id not in assigned_team_ids]
 
@@ -69,9 +63,6 @@ class Pool(models.Model):
         return self.teams.all()
 
     def all_matches_played(self):
-        """
-        Vérifie si tous les matchs de cette pool ont des scores valides.
-        """
         for match in self.matches.all():
             if match.winner() is None:
                 return False
@@ -116,14 +107,12 @@ class Pool(models.Model):
                 defaults={"rank": i}
             )
 
-
-
-
 class Match(models.Model):
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
     team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a')
     team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')
 
+    en_cours = models.BooleanField(default=False)  # ✅ NOUVEAU CHAMP
 
     set1_team_a = models.PositiveIntegerField(default=0)
     set1_team_b = models.PositiveIntegerField(default=0)
@@ -140,13 +129,11 @@ class Match(models.Model):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"
 
     def winner(self):
-
         sets = [
             (self.set1_team_a, self.set1_team_b),
             (self.set2_team_a, self.set2_team_b),
             (self.set3_team_a, self.set3_team_b),
         ]
-
 
         if self.set4_team_a is not None and self.set4_team_b is not None:
             sets.append((self.set4_team_a, self.set4_team_b))
@@ -169,15 +156,12 @@ class Match(models.Model):
         else:
             return None
 
-
-
 class Ranking(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)
     rank = models.PositiveIntegerField()
 
     def __str__(self):
         return f"{self.team.name} - Rang {self.rank}"
-
 
 @receiver(post_save, sender=Match)
 def update_rankings_on_match_save(sender, instance, **kwargs):
