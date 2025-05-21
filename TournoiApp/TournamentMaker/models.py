@@ -185,3 +185,30 @@ def update_rankings_on_match_save(sender, instance, **kwargs):
     pool = instance.pool
     if pool and pool.all_matches_played():
         pool.calculate_rankings()
+
+from django.contrib.auth.models import User
+
+class UserProfile(models.Model):
+    LEVEL_CHOICES = [
+        (1, 'Débutant'),
+        (2, 'Intermédiaire'),
+        (3, 'Avancé'),
+        (4, 'Expert'),
+        (5, 'Maître'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    first_name = models.CharField(max_length=30, default='John')
+    last_name = models.CharField(max_length=30, default='Smith')
+    date_of_birth = models.DateField(default='2000-01-01')
+    level = models.IntegerField(choices=LEVEL_CHOICES)
+    email = models.EmailField(default='default@example.com')
+
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='members')
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
