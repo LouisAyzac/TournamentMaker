@@ -126,8 +126,6 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Redirect to home URL after login (Default redirects to /accounts/profile/)
-<<<<<<< HEAD
+
 LOGIN_REDIRECT_URL = '/TournamentMaker/scores/'
-=======
-LOGIN_REDIRECT_URL = '/TournamentMaker/scores/'
->>>>>>> ange
+

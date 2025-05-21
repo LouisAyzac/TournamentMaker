@@ -4,7 +4,10 @@ from django.shortcuts import render
 from TournamentMaker.models import Player, Team
 
 def home(request):
-    return render(request, 'home.html', {'hide_nav': True})
+    return render(request, 'home.html')
+
+
+
 
 def index(request):
     """View function for home page of site."""
@@ -143,12 +146,15 @@ def select_tournament(request):
     if request.method == 'POST':
         selected_id = request.POST.get('tournament_id')
         if selected_id:
-            request.session['selected_tournament_id'] = selected_id
-            tournoi = get_object_or_404(Tournament, id=selected_id)
-            return redirect('dashboard')
+
+            tournoi = get_object_or_404(Tournament, id= selected_id)
+            request.session['selected_tournament_id'] = tournoi.id
+            request.session['selected_tournament_name'] = tournoi.name
+            return redirect('dashboard')  # Redirige vers dashboard où le menu s’adapte
 
     tournois = Tournament.objects.all()
     return render(request, 'select_tournament.html', {'tournois': tournois})
+
 
 def player_list(request):
     tournament_id = request.session.get('selected_tournament_id')
@@ -163,9 +169,7 @@ def landing(request):
     return render(request, 'landing.html')
 
 def dashboard(request):
-    tournament_id = request.session.get('selected_tournament_id')
-    if not tournament_id:
-        return redirect('index') 
-
-    tournament = get_object_or_404(Tournament, id=tournament_id)
-    return render(request, 'dashboard.html', {'tournament': tournament})
+    selected_id = request.session.get('selected_tournament_id')
+    print("Selected tournament ID:", selected_id)  # juste pour debug dans la console
+    tournoi_name = request.session.get('selected_tournament_name', 'Aucun tournoi sélectionné')
+    return render(request, 'dashboard.html', {'tournoi_name': tournoi_name})

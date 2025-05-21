@@ -15,42 +15,27 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
   </head>
 
-  
   <body>
-<<<<<<< HEAD
+
     <div class="header-bar">
       <div class="header-title">Tournament Maker</div>
       <div class="nav-buttons">
-        <a href="{% url 'index' %}" class="nav-button">Acceuil</a>
-        <a href="{% url 'players' %}" class="nav-button">Joueurs</a>
-        <a href="{% url 'teams' %}" class="nav-button">Teams</a>
-        <a href="{% url 'login' %}" class="nav-button">Scores</a>
-<a href="{% url 'pool_list' %}" class="nav-button">Pools</a>
-<a href="{% url 'rankings_list' %}" class="nav-button">Classements</a>
+        
 
+        <a href="{% url 'home' %}" class="nav-button">Accueil</a>
+        <a href="{% url 'index' %}" class="nav-button">Tournoi</a>
 
-
-
-      </div>
-    </div>
-=======
-    {% if not hide_nav %}
-    <div class="header-bar">
-      <div class="header-title">Tournament Maker</div>
-      <div class="nav-buttons">
-        <a href="{% url 'index' %}" class="nav-button">Accueil</a>
-        {% if request.session.selected_tournament %}
+    {% if request.session.selected_tournament_id %}
           <a href="{% url 'select_tournament' %}" class="nav-button">Sélectionner un tournoi</a>
           <a href="{% url 'players' %}" class="nav-button">Joueurs</a>
           <a href="{% url 'teams' %}" class="nav-button">Teams</a>
-          <a href="{% url 'login' %}" class="nav-button">Scores</a>
+          <a href="{% url 'scores' %}" class="nav-button">Scores</a>
           <a href="{% url 'pool_list' %}" class="nav-button">Pools</a>
           <a href="{% url 'rankings_list' %}" class="nav-button">Classements</a>
         {% endif %}
+
       </div>
     </div>
-    {% endif %}
->>>>>>> ange
 
     <div class="container-fluid mt-4">
       <div class="row">
