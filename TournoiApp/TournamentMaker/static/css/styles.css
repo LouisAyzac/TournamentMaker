@@ -1,15 +1,15 @@
 .header-bar {
-  background-color: #f8f9fa;
-  padding: 20px;
+  background-color: #eeeeee;
+  padding: 80px;
   text-align: center;
   border-bottom: 2px solid #ddd;
 }
 
 .header-title {
-  font-size: 1.8rem;
+  font-size: 3.8rem;
   font-weight: bold;
   margin-bottom: 10px;
-  color: #333;
+  color: #04d3f7;
 }
 
 .nav-buttons {
@@ -17,23 +17,45 @@
   justify-content: center;
   gap: 15px;
   flex-wrap: wrap;
+  margin-top: 20px;
 }
 
 .nav-button {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #4CAF50, #2E7D32);
+  background: linear-gradient(135deg, #2c18df, #2c18df);
   color: white;
   text-decoration: none;
   border-radius: 8px;
   font-weight: bold;
-  transition: background 0.3s ease, transform 0.1s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  animation: fadeIn 2s ease forwards;
+  animation-delay: 0.2s;
+  transition: 
+    background 0.4s ease-in-out,
+    transform 0.3s ease-in-out,
+    box-shadow 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
 
 .nav-button:hover {
-  background: linear-gradient(135deg, #66BB6A, #388E3C);
-  transform: translateY(-2px);
+  background: linear-gradient(135deg, #2c18df, #2c18df);
+  transform: scale(1.07);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
 }
 
 .nav-button:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.nav-button:focus {
+  outline: 2px solid #2c18df;
+  outline-offset: 2px;
 }
