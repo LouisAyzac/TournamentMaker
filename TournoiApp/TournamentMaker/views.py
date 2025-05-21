@@ -103,6 +103,14 @@ def rankings_list(request):
 
     return render(request, 'rankings.html', {'pool_rankings': pool_rankings})
 
+from django.shortcuts import render
+from .models import Match
+
+def matchs_en_cours(request):
+    matchs = Match.objects.filter(en_cours=True)
+    return render(request, 'matchs_en_cours.html', {'matchs': matchs})
+
+
 from django.shortcuts import render, redirect
 from .models import Match
 from django.views.decorators.http import require_http_methods

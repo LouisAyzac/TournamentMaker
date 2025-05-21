@@ -7,10 +7,7 @@ from .models import Tournament, Team, Player, Match, Ranking, Pool
 
 # Enregistre les modèles standards
 admin.site.register(Tournament)
-
 admin.site.register(Team)
-
-
 
 
 @admin.register(Pool)
@@ -121,13 +118,11 @@ class MatchForm(forms.ModelForm):
         return cleaned_data
 
 
-# Filtre personnalisé pour la Pool
 from django.contrib.admin import SimpleListFilter
 
 class PoolFilter(SimpleListFilter):
     title = 'Pool'
     parameter_name = 'pool'
-    
 
     def lookups(self, request, model_admin):
         return [(pool.id, pool.name) for pool in Pool.objects.all()]
@@ -142,7 +137,7 @@ class PoolFilter(SimpleListFilter):
 class MatchAdmin(admin.ModelAdmin):
     form = MatchForm
     list_display = (
-        'pool', 'team_a', 'team_b',
+        'pool', 'team_a', 'team_b', 'en_cours',  # 👈 Ajouté ici
         'set1_team_a', 'set1_team_b',
         'set2_team_a', 'set2_team_b',
         'set3_team_a', 'set3_team_b',
@@ -150,6 +145,7 @@ class MatchAdmin(admin.ModelAdmin):
         'set5_team_a', 'set5_team_b',
     )
     list_editable = (
+        'en_cours',  # 👈 Ajouté ici aussi
         'set1_team_a', 'set1_team_b',
         'set2_team_a', 'set2_team_b',
         'set3_team_a', 'set3_team_b',
@@ -159,17 +155,19 @@ class MatchAdmin(admin.ModelAdmin):
     list_filter = (PoolFilter,)
 
 
+
+
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
     search_fields = ['first_name', 'last_name', 'team__name']
 
+
 @admin.register(Ranking)
 class RankingAdmin(admin.ModelAdmin):
     list_display = ('team', 'rank', 'pools_names')
-    list_filter = ['team__pools', 'team__tournament']  # filtre sur les pools des teams et tournoi
+    list_filter = ['team__pools', 'team__tournament']
 
     def pools_names(self, obj):
-        # Récupère toutes les pools de l’équipe et renvoie leurs noms séparés par une virgule
         return ", ".join(pool.name for pool in obj.team.pools.all())
     pools_names.short_description = "Pool(s)"
 
