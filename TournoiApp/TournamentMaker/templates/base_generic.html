@@ -25,7 +25,7 @@
         <a href="{% url 'home' %}" class="nav-button">Accueil</a>
         <a href="{% url 'index' %}" class="nav-button">Tournoi</a>
 
-    {% if request.session.selected_tournament_id %}
+        {% if request.session.selected_tournament_id %}
           <a href="{% url 'select_tournament' %}" class="nav-button">Sélectionner un tournoi</a>
           <a href="{% url 'players' %}" class="nav-button">Joueurs</a>
           <a href="{% url 'teams' %}" class="nav-button">Teams</a>
