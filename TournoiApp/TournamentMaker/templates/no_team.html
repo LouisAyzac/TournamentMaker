@@ -1,0 +1,12 @@
+<!-- templates/matches/no_team.html -->
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <div class="alert alert-warning" role="alert" style="margin-top: 20px;">
+    <h4 class="alert-heading">Aucune équipe associée</h4>
+    <p>Vous n'êtes actuellement affilié à aucune équipe.</p>
+    <hr>
+    <p class="mb-0">Veuillez contacter un administrateur pour rejoindre une équipe.</p>
+  </div>
+  <a href="{% url 'index' %}" class="btn btn-primary mt-3">Retour au menu</a>
+{% endblock %}

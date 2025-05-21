@@ -19,5 +19,8 @@ urlpatterns = [
     path('rankings/', views.rankings_list, name='rankings_list'),
     path('select_tournament/', views.select_tournament, name='select_tournament'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('signup/', views.signup, name='signup'),
+    path('signup/success/', views.signup_success, name='signup_success'),
+
 ]
 
