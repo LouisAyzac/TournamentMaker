@@ -4,7 +4,12 @@ from django.shortcuts import render
 from TournamentMaker.models import Player, Team
 
 def home(request):
-    return render(request, 'home.html', {'hide_nav': True})
+    request.session.flush()
+    return render(request, 'home.html')
+
+
+
+
 
 def index(request):
     """View function for home page of site."""
@@ -98,6 +103,14 @@ def rankings_list(request):
 
     return render(request, 'rankings.html', {'pool_rankings': pool_rankings})
 
+from django.shortcuts import render
+from .models import Match
+
+def matchs_en_cours(request):
+    matchs = Match.objects.filter(en_cours=True)
+    return render(request, 'matchs_en_cours.html', {'matchs': matchs})
+
+
 from django.shortcuts import render, redirect
 from .models import Match
 from django.views.decorators.http import require_http_methods
@@ -125,20 +138,33 @@ def scores(request):
 
     # GET : afficher les matchs
     matches = Match.objects.all()
+
     return render(request, "scores.html", {"matches": matches})
+
+
+
+
+
 from .models import Tournament
+
+
+
+
 from django.shortcuts import render, redirect, get_object_or_404
 
 def select_tournament(request):
     if request.method == 'POST':
         selected_id = request.POST.get('tournament_id')
         if selected_id:
-            request.session['selected_tournament_id'] = selected_id
-            tournoi = get_object_or_404(Tournament, id=selected_id)
-            return redirect('dashboard')
+
+            tournoi = get_object_or_404(Tournament, id= selected_id)
+            request.session['selected_tournament_id'] = tournoi.id
+            request.session['selected_tournament_name'] = tournoi.name
+            return redirect('dashboard')  # Redirige vers dashboard où le menu s’adapte
 
     tournois = Tournament.objects.all()
     return render(request, 'select_tournament.html', {'tournois': tournois})
+
 
 def player_list(request):
     tournament_id = request.session.get('selected_tournament_id')
@@ -153,9 +179,93 @@ def landing(request):
     return render(request, 'landing.html')
 
 def dashboard(request):
-    tournament_id = request.session.get('selected_tournament_id')
-    if not tournament_id:
-        return redirect('index') 
+    selected_id = request.session.get('selected_tournament_id')
+    print("Selected tournament ID:", selected_id)  # juste pour debug dans la console
+    tournoi_name = request.session.get('selected_tournament_name', 'Aucun tournoi sélectionné')
+    return render(request, 'dashboard.html', {'tournoi_name': tournoi_name})
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.shortcuts import render, redirect
+from .models import Match, UserProfile
 
-    tournament = get_object_or_404(Tournament, id=tournament_id)
-    return render(request, 'dashboard.html', {'tournament': tournament})
+@login_required
+def scores(request):
+    try:
+        team = request.user.userprofile.team
+    except UserProfile.DoesNotExist:
+        return render(request, 'no_team.html')
+
+    if not team:
+        return render(request, 'no_team.html')
+
+    # Filtrer les matchs de l'équipe du user
+    matches = Match.objects.filter(Q(team_a=team) | Q(team_b=team))
+
+    if request.method == 'POST':
+        for match in matches:
+            for i in range(1, 4):  # gère sets 1 à 3 (tu peux ajouter 4 et 5 ensuite)
+                setattr(match, f'set{i}_team_a', int(request.POST.get(f'match_{match.id}_set{i}_team_a', 0)))
+                setattr(match, f'set{i}_team_b', int(request.POST.get(f'match_{match.id}_set{i}_team_b', 0)))
+            match.save()
+        return redirect('scores')  # évite les resoumissions de formulaire
+
+    return render(request, 'scores.html', {'matches': matches})
+
+from django.shortcuts import render
+from .models import Team, UserProfile
+from django.db import transaction
+
+from django.shortcuts import render, redirect
+from .models import Team, UserProfile
+from .models import Tournament  # si nécessaire
+from django.utils.dateparse import parse_date
+
+LEVEL_MAP = {
+    'debutant': 1,
+    'intermediaire': 2,
+    'avance': 3,
+    'expert': 4,
+}
+
+def signup(request):
+    if request.method == 'POST':
+        team_name = request.POST.get('team_name')
+        if not team_name:
+            return render(request, 'signup.html', {'error': 'Le nom de l’équipe est requis.'})
+
+        # (Facultatif) Associer à un tournoi si nécessaire
+        tournament = Tournament.objects.first()  # à adapter selon ton projet
+        team = Team.objects.create(name=team_name, tournament=tournament)
+
+        # Créer les joueurs (au moins le premier)
+        for i in range(1, 6):
+            first_name = request.POST.get(f'first_name_{i}')
+            last_name = request.POST.get(f'last_name_{i}')
+            birthdate_str = request.POST.get(f'birthdate_{i}')
+            email = request.POST.get(f'email_{i}')
+            level_str = request.POST.get(f'level_{i}')
+
+            # Ne créer un profil que si prénom et nom sont fournis
+            if first_name and last_name:
+                if not (birthdate_str and email and level_str):
+                    continue  # skip si champs manquants
+
+                birthdate = parse_date(birthdate_str)
+                level = LEVEL_MAP.get(level_str.lower(), 1)
+
+                UserProfile.objects.create(
+                    first_name=first_name,
+                    last_name=last_name,
+                    date_of_birth=birthdate,
+                    level=level,
+                    email=email,
+                    team=team
+                )
+
+        return redirect('signup_success')  # Redirige vers la page de confirmation
+
+    return render(request, 'signup.html')
+
+def signup_success(request):
+    return render(request, 'signup_success.html')
+
