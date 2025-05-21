@@ -129,3 +129,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/TournamentMaker/scores/'
 
+
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [BASE_DIR / 'TournoiApp' / 'TournamentMaker' / 'static']
