@@ -4,7 +4,9 @@ from django.shortcuts import render
 from TournamentMaker.models import Player, Team
 
 def home(request):
+    request.session.flush()
     return render(request, 'home.html')
+
 
 
 
