@@ -227,44 +227,74 @@ LEVEL_MAP = {
     'expert': 4,
 }
 
+from django.shortcuts import render, redirect
+from .models import Team, Tournament, Player, UserProfile
+from django.contrib.auth.models import User
+from django.utils.dateparse import parse_date
+from django.contrib import messages
+
+LEVEL_MAP = {
+    'débutant': 1,
+    'intermédiaire': 2,
+    'avancé': 3,
+    'expert': 4,
+    'maître': 5,
+}
+
 def signup(request):
     if request.method == 'POST':
         team_name = request.POST.get('team_name')
         if not team_name:
             return render(request, 'signup.html', {'error': 'Le nom de l’équipe est requis.'})
 
-        # (Facultatif) Associer à un tournoi si nécessaire
-        tournament = Tournament.objects.first()  # à adapter selon ton projet
+        tournament = Tournament.objects.first()  # adapte selon ton projet
         team = Team.objects.create(name=team_name, tournament=tournament)
 
-        # Créer les joueurs (au moins le premier)
         for i in range(1, 6):
             first_name = request.POST.get(f'first_name_{i}')
             last_name = request.POST.get(f'last_name_{i}')
             birthdate_str = request.POST.get(f'birthdate_{i}')
             email = request.POST.get(f'email_{i}')
             level_str = request.POST.get(f'level_{i}')
+            is_captain = request.POST.get('is_captain') == str(i)
 
-            # Ne créer un profil que si prénom et nom sont fournis
-            if first_name and last_name:
-                if not (birthdate_str and email and level_str):
-                    continue  # skip si champs manquants
-
+            if first_name and last_name and birthdate_str and level_str:
                 birthdate = parse_date(birthdate_str)
                 level = LEVEL_MAP.get(level_str.lower(), 1)
 
-                UserProfile.objects.create(
+                # 1️⃣ Créer le Player (toujours)
+                Player.objects.create(
                     first_name=first_name,
                     last_name=last_name,
-                    date_of_birth=birthdate,
+                    birth_date=birthdate,
                     level=level,
-                    email=email,
                     team=team
                 )
 
-        return redirect('signup_success')  # Redirige vers la page de confirmation
+                # 2️⃣ Si capitaine → créer un compte User et UserProfile
+                if is_captain and email:
+                    username = request.POST.get('username')
+                    password = request.POST.get('password')
+
+                    if not (username and password):
+                        return render(request, 'signup.html', {'error': 'Nom d’utilisateur et mot de passe requis pour le capitaine.'})
+
+                    user = User.objects.create_user(username=username, password=password)
+
+                    UserProfile.objects.create(
+                        user=user,
+                        first_name=first_name,
+                        last_name=last_name,
+                        date_of_birth=birthdate,
+                        level=level,
+                        email=email,
+                        team=team
+                    )
+
+        return redirect('signup_success')
 
     return render(request, 'signup.html')
+
 
 def signup_success(request):
     return render(request, 'signup_success.html')
