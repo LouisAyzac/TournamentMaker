@@ -2,10 +2,15 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django import forms
 import random
-from .models import Tournament, Team, Player, Match, Ranking, Pool
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from .models import Tournament, Team, Player, Match, Ranking, Pool, UserProfile
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.admin import SimpleListFilter
 
 
-# Enregistre les modèles standards
 admin.site.register(Tournament)
 admin.site.register(Team)
 
@@ -15,6 +20,7 @@ class PoolAdmin(admin.ModelAdmin):
     list_display = ('name', 'current_team_count', 'list_teams')
     filter_horizontal = ('teams',)
     readonly_fields = ('display_teams',)
+    actions = ['generate_matches']
 
     def get_form(self, request, obj=None, **kwargs):
         self.instance = obj
@@ -40,8 +46,6 @@ class PoolAdmin(admin.ModelAdmin):
         return "\n".join(f"- {team.name}" for team in obj.teams.all())
     display_teams.short_description = "Équipes dans cette pool"
 
-    actions = ['generate_matches']
-
     def generate_matches(self, request, queryset):
         for pool in queryset:
             teams = list(pool.teams.all())
@@ -50,24 +54,15 @@ class PoolAdmin(admin.ModelAdmin):
                 self.message_user(request, f"La pool '{pool.name}' doit contenir au moins 2 équipes.")
                 continue
 
+            Match.objects.filter(pool=pool, phase='pool').delete()
+
             created_count = 0
             for i in range(n):
                 for j in range(i + 1, n):
                     team_a = teams[i]
                     team_b = teams[j]
-                    match_exists = Match.objects.filter(
-                        pool=pool,
-                        team_a=team_a,
-                        team_b=team_b
-                    ).exists() or Match.objects.filter(
-                        pool=pool,
-                        team_a=team_b,
-                        team_b=team_a
-                    ).exists()
-
-                    if not match_exists:
-                        Match.objects.create(pool=pool, team_a=team_a, team_b=team_b)
-                        created_count += 1
+                    Match.objects.create(pool=pool, team_a=team_a, team_b=team_b, phase='pool')
+                    created_count += 1
 
             self.message_user(request, f"{created_count} matchs créés pour la pool '{pool.name}'.")
     generate_matches.short_description = "Générer tous les matchs round robin pour chaque pool"
@@ -118,8 +113,6 @@ class MatchForm(forms.ModelForm):
         return cleaned_data
 
 
-from django.contrib.admin import SimpleListFilter
-
 class PoolFilter(SimpleListFilter):
     title = 'Pool'
     parameter_name = 'pool'
@@ -133,11 +126,30 @@ class PoolFilter(SimpleListFilter):
         return queryset
 
 
+class PhaseFilter(SimpleListFilter):
+    title = 'Phase'
+    parameter_name = 'phase'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('pool', 'Phase de poules'),
+            ('quarter', 'Quarts de finale'),
+            ('semi', 'Demi-finales'),
+            ('final', 'Finale'),
+            ('third_place', 'Petite finale'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(phase=self.value())
+        return queryset
+
+
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
     form = MatchForm
     list_display = (
-        'pool', 'team_a', 'team_b', 'en_cours',  # 👈 Ajouté ici
+        'phase', 'pool', 'team_a', 'team_b', 'en_cours',
         'set1_team_a', 'set1_team_b',
         'set2_team_a', 'set2_team_b',
         'set3_team_a', 'set3_team_b',
@@ -145,16 +157,14 @@ class MatchAdmin(admin.ModelAdmin):
         'set5_team_a', 'set5_team_b',
     )
     list_editable = (
-        'en_cours',  # 👈 Ajouté ici aussi
+        'en_cours',
         'set1_team_a', 'set1_team_b',
         'set2_team_a', 'set2_team_b',
         'set3_team_a', 'set3_team_b',
         'set4_team_a', 'set4_team_b',
         'set5_team_a', 'set5_team_b',
     )
-    list_filter = (PoolFilter,)
-
-
+    list_filter = (PoolFilter, PhaseFilter)
 
 
 @admin.register(Player)
@@ -175,20 +185,207 @@ class RankingAdmin(admin.ModelAdmin):
 class TeamAdmin(admin.ModelAdmin):
     list_display = ('name', 'tournament', 'player_count')
     search_fields = ('name', 'tournament__name')
-    
-from django.contrib.auth.models import User
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.db import models
-from .models import UserProfile
+
+
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
 
+
 class UserAdmin(BaseUserAdmin):
     inlines = (UserProfileInline,)
 
-admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'team')
+
+def is_match_finished(match):
+    score_a = 0
+    score_b = 0
+    for i in range(1, 6):
+        sa = getattr(match, f'set{i}_team_a')
+        sb = getattr(match, f'set{i}_team_b')
+        if sa is None or sb is None:
+            continue
+        if sa > sb:
+            score_a += 1
+        elif sb > sa:
+            score_b += 1
+    return score_a >= 3 or score_b >= 3
+
+
+def get_winner(match):
+    score_a = 0
+    score_b = 0
+    for i in range(1, 6):
+        sa = getattr(match, f'set{i}_team_a')
+        sb = getattr(match, f'set{i}_team_b')
+        if sa is not None and sb is not None:
+            if sa > sb:
+                score_a += 1
+            elif sb > sa:
+                score_b += 1
+    if score_a > score_b:
+        return match.team_a
+    elif score_b > score_a:
+        return match.team_b
+    else:
+        return None
+
+
+@receiver(post_save, sender=Match)
+def auto_generate_quarters(sender, instance, **kwargs):
+    if instance.phase != 'pool':
+        return
+
+    pool = instance.pool
+    if not pool:
+        return
+
+    unfinished = Match.objects.filter(pool=pool, phase='pool', en_cours=True).exists()
+    if unfinished:
+        return
+
+    required_pool_names = ['A', 'B', 'C', 'D']
+    pools = Pool.objects.filter(name__in=required_pool_names).order_by('name')
+    if pools.count() != 4:
+        return
+
+    pool_teams = {}
+    for p in pools:
+        rankings = Ranking.objects.filter(team__pools=p).order_by('rank')[:2]
+        if rankings.count() < 2:
+            return
+        pool_teams[p.name] = [rankings[0].team, rankings[1].team]
+
+    Match.objects.filter(phase='quarter').delete()
+
+    matchups = [
+        (pool_teams['A'][0], pool_teams['B'][1]),
+        (pool_teams['A'][1], pool_teams['B'][0]),
+        (pool_teams['C'][0], pool_teams['D'][1]),
+        (pool_teams['C'][1], pool_teams['D'][0]),
+    ]
+
+    for team_a, team_b in matchups:
+        Match.objects.create(pool=None, team_a=team_a, team_b=team_b, phase='quarter')
+
+
+@receiver(post_save, sender=Match)
+def auto_generate_semi_finals(sender, instance, **kwargs):
+    if instance.phase != 'quarter':
+        return
+
+    quarter_finals = Match.objects.filter(phase='quarter').order_by('id')
+    if quarter_finals.count() != 4:
+        return
+
+    for match in quarter_finals:
+        if not is_match_finished(match):
+            return
+
+    winners = []
+    for match in quarter_finals:
+        winner = get_winner(match)
+        if not winner:
+            return
+        winners.append(winner)
+
+    Match.objects.filter(phase='semi').delete()
+
+    Match.objects.create(pool=None, team_a=winners[0], team_b=winners[1], phase='semi')
+    Match.objects.create(pool=None, team_a=winners[2], team_b=winners[3], phase='semi')
+
+
+@receiver(post_save, sender=Match)
+def auto_generate_final(sender, instance, **kwargs):
+    if instance.phase != 'semi':
+        return
+
+    semi_finals = Match.objects.filter(phase='semi').order_by('id')
+    if semi_finals.count() != 2:
+        return
+
+    for match in semi_finals:
+        if not is_match_finished(match):
+            return
+
+    winners = []
+    losers = []
+    for match in semi_finals:
+        winner = get_winner(match)
+        if not winner:
+            return
+        winners.append(winner)
+        loser = match.team_a if match.team_b == winner else match.team_b
+        losers.append(loser)
+
+    Match.objects.filter(phase='final').delete()
+    Match.objects.filter(phase='third_place').delete()
+
+    Match.objects.create(pool=None, team_a=winners[0], team_b=winners[1], phase='final')
+    Match.objects.create(pool=None, team_a=losers[0], team_b=losers[1], phase='third_place')
+
+from django.db import models
+class FinalRankingProxy(Ranking):
+    class Meta:
+        proxy = True
+        verbose_name = "Ranking Final"
+        verbose_name_plural = "Ranking Final"
+
+@admin.register(FinalRankingProxy)
+class FinalRankingAdmin(admin.ModelAdmin):
+    list_display = ('team', 'final_rank_display', 'wins_display')
+    # Ne pas mettre ordering ici car final_rank n'est pas champ réel
+
+    def get_queryset(self, request):
+        return super().get_queryset(request)
+
+    def final_rank_display(self, obj):
+        final_ranking = self.get_final_ranking()
+        return final_ranking.get(obj.team.id, {}).get('rank', obj.rank)
+    final_rank_display.short_description = "Rang final"
+    final_rank_display.admin_order_field = 'rank'  # optionnel si 'rank' est champ réel
+
+    def wins_display(self, obj):
+        final_ranking = self.get_final_ranking()
+        return final_ranking.get(obj.team.id, {}).get('wins', 0)
+    wins_display.short_description = "Victoires"
+
+    def get_final_ranking(self):
+        teams = Team.objects.all()
+        wins_count = {team.id: 0 for team in teams}
+
+        matches = Match.objects.filter(phase__in=['pool', 'quarter', 'semi', 'final', 'third_place'])
+        for match in matches:
+            winner = self.get_winner(match)
+            if winner:
+                wins_count[winner.id] += 1
+
+        # Trie les équipes par nombre de victoires décroissant
+        sorted_teams = sorted(teams, key=lambda t: wins_count[t.id], reverse=True)
+
+        final_ranking = {}
+        rank = 1
+        for team in sorted_teams:
+            final_ranking[team.id] = {
+                'rank': rank,
+                'wins': wins_count[team.id],
+            }
+            rank += 1
+        return final_ranking
+
+    def get_winner(self, match):
+        score_a = 0
+        score_b = 0
+        for i in range(1, 6):
+            sa = getattr(match, f'set{i}_team_a')
+            sb = getattr(match, f'set{i}_team_b')
+            if sa is not None and sb is not None:
+                if sa > sb:
+                    score_a += 1
+                elif sb > sa:
+                    score_b += 1
+        if score_a > score_b:
+            return match.team_a
+        elif score_b > score_a:
+            return match.team_b
+        else:
+            return None
