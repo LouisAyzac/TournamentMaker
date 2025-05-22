@@ -15,7 +15,8 @@ class Tournament(models.Model):
 class Team(models.Model):
     name = models.CharField(max_length=100)
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
-
+    captain = models.OneToOneField('UserProfile', on_delete=models.CASCADE, related_name='captained_team', null=True, blank=True)
+    
     def __str__(self):
         return self.name
 
@@ -35,7 +36,8 @@ class Player(models.Model):
     birth_date = models.DateField()
     level = models.CharField(max_length=1, choices=LEVEL_CHOICES)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
-
+    email = models.EmailField(blank=True, null=True) 
+    
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
@@ -196,12 +198,7 @@ class UserProfile(models.Model):
         (5, 'Maître'),
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-    first_name = models.CharField(max_length=30, default='John')
-    last_name = models.CharField(max_length=30, default='Smith')
-    date_of_birth = models.DateField(default='2000-01-01')
     level = models.IntegerField(choices=LEVEL_CHOICES)
-    email = models.EmailField(default='default@example.com')
-
     team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='members')
 
 from django.db.models.signals import post_save
@@ -210,4 +207,6 @@ from django.dispatch import receiver
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance)
+        # On ne crée pas automatiquement un UserProfile vide,
+        # car on n'a pas toutes les infos (notamment team)
+        pass
