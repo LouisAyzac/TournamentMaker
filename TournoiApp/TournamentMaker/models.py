@@ -69,9 +69,7 @@ class Pool(models.Model):
         return self.teams.all()
 
     def all_matches_played(self):
-        """
-        Vérifie si tous les matchs de cette pool ont des scores valides.
-        """
+
         for match in self.matches.all():
             if match.winner() is None:
                 return False
@@ -117,13 +115,12 @@ class Pool(models.Model):
             )
 
 
-
-
 class Match(models.Model):
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
     team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a')
     team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')
 
+    en_cours = models.BooleanField(default=False)  # ✅ NOUVEAU CHAMP
 
     set1_team_a = models.PositiveIntegerField(default=0)
     set1_team_b = models.PositiveIntegerField(default=0)
@@ -170,7 +167,9 @@ class Match(models.Model):
             return None
 
 
+
 from django.db import models
+
 
 class Ranking(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)

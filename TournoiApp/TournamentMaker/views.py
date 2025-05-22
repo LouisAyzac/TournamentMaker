@@ -3,6 +3,14 @@ from django.shortcuts import render
 # Create your views here.
 from TournamentMaker.models import Player, Team
 
+def home(request):
+    request.session.flush()
+    return render(request, 'home.html')
+
+
+
+
+
 def index(request):
     """View function for home page of site."""
 
@@ -95,6 +103,14 @@ def rankings_list(request):
 
     return render(request, 'rankings.html', {'pool_rankings': pool_rankings})
 
+from django.shortcuts import render
+from .models import Match
+
+def matchs_en_cours(request):
+    matchs = Match.objects.filter(en_cours=True)
+    return render(request, 'matchs_en_cours.html', {'matchs': matchs})
+
+
 from django.shortcuts import render, redirect
 from .models import Match
 from django.views.decorators.http import require_http_methods
@@ -122,8 +138,51 @@ def scores(request):
 
     # GET : afficher les matchs
     matches = Match.objects.all()
+
     return render(request, "scores.html", {"matches": matches})
 
+
+
+
+
+from .models import Tournament
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+
+def select_tournament(request):
+    if request.method == 'POST':
+        selected_id = request.POST.get('tournament_id')
+        if selected_id:
+
+            tournoi = get_object_or_404(Tournament, id= selected_id)
+            request.session['selected_tournament_id'] = tournoi.id
+            request.session['selected_tournament_name'] = tournoi.name
+            return redirect('dashboard')  # Redirige vers dashboard où le menu s’adapte
+
+    tournois = Tournament.objects.all()
+    return render(request, 'select_tournament.html', {'tournois': tournois})
+
+
+def player_list(request):
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    players = Player.objects.filter(team__tournament_id=tournament_id)
+    return render(request, 'players.html', {'players': players})
+
+def landing(request):
+    request.session.pop("selected_tournament", None)
+    return render(request, 'landing.html')
+
+def dashboard(request):
+    selected_id = request.session.get('selected_tournament_id')
+    print("Selected tournament ID:", selected_id)  # juste pour debug dans la console
+    tournoi_name = request.session.get('selected_tournament_name', 'Aucun tournoi sélectionné')
+    return render(request, 'dashboard.html', {'tournoi_name': tournoi_name})
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect
