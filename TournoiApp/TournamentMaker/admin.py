@@ -324,6 +324,9 @@ def auto_generate_final(sender, instance, **kwargs):
     Match.objects.create(pool=None, team_a=losers[0], team_b=losers[1], phase='third_place')
 
 from django.db import models
+from django.contrib import admin
+from .models import Ranking, Team, Match  # à adapter selon ton projet
+
 class FinalRankingProxy(Ranking):
     class Meta:
         proxy = True
@@ -332,8 +335,7 @@ class FinalRankingProxy(Ranking):
 
 @admin.register(FinalRankingProxy)
 class FinalRankingAdmin(admin.ModelAdmin):
-    list_display = ('team', 'final_rank_display', 'wins_display')
-    # Ne pas mettre ordering ici car final_rank n'est pas champ réel
+    list_display = ('team', 'final_rank_display', 'wins_display', 'pool_wins_display')
 
     def get_queryset(self, request):
         return super().get_queryset(request)
@@ -342,34 +344,68 @@ class FinalRankingAdmin(admin.ModelAdmin):
         final_ranking = self.get_final_ranking()
         return final_ranking.get(obj.team.id, {}).get('rank', obj.rank)
     final_rank_display.short_description = "Rang final"
-    final_rank_display.admin_order_field = 'rank'  # optionnel si 'rank' est champ réel
+    
 
     def wins_display(self, obj):
         final_ranking = self.get_final_ranking()
         return final_ranking.get(obj.team.id, {}).get('wins', 0)
-    wins_display.short_description = "Victoires"
+    wins_display.short_description = "Points totaux"
+
+    def pool_wins_display(self, obj):
+        final_ranking = self.get_final_ranking()
+        return final_ranking.get(obj.team.id, {}).get('pool_wins', 0)
+    pool_wins_display.short_description = "Victoires en poule"
 
     def get_final_ranking(self):
         teams = Team.objects.all()
-        wins_count = {team.id: 0 for team in teams}
+        points = {team.id: 0 for team in teams}
+        pool_wins = {team.id: 0 for team in teams}
 
-        matches = Match.objects.filter(phase__in=['pool', 'quarter', 'semi', 'final', 'third_place'])
+        matches = Match.objects.all()
         for match in matches:
             winner = self.get_winner(match)
+            loser = None
             if winner:
-                wins_count[winner.id] += 1
+                loser = match.team_a if winner == match.team_b else match.team_b
 
-        # Trie les équipes par nombre de victoires décroissant
-        sorted_teams = sorted(teams, key=lambda t: wins_count[t.id], reverse=True)
+            phase = match.phase
+            if phase == 'final':
+                if winner:
+                    points[winner.id] += 100
+                if loser:
+                    points[loser.id] += 90
+            elif phase == 'third_place':
+                if winner:
+                    points[winner.id] += 80
+                if loser:
+                    points[loser.id] += 70
+            elif phase == 'semi':
+                if winner:
+                    points[winner.id] += 60
+                if loser:
+                    points[loser.id] += 50
+            elif phase == 'quarter':
+                if winner:
+                    points[winner.id] += 40
+                if loser:
+                    points[loser.id] += 30
+            elif phase == 'pool':
+                if winner:
+                    points[winner.id] += 3
+                    pool_wins[winner.id] += 1
+
+        sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
 
         final_ranking = {}
         rank = 1
         for team in sorted_teams:
             final_ranking[team.id] = {
                 'rank': rank,
-                'wins': wins_count[team.id],
+                'wins': points[team.id],
+                'pool_wins': pool_wins[team.id],
             }
             rank += 1
+
         return final_ranking
 
     def get_winner(self, match):

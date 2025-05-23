@@ -17,11 +17,9 @@ class Team(models.Model):
     name = models.CharField(max_length=100)
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
     captain = models.OneToOneField('UserProfile', on_delete=models.CASCADE, related_name='captained_team', null=True, blank=True)
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> louis
+
+    
     def __str__(self):
         return self.name
 
@@ -40,14 +38,11 @@ class Player(models.Model):
     last_name = models.CharField(max_length=100)
     birth_date = models.DateField()
     level = models.CharField(max_length=1, choices=LEVEL_CHOICES)
+
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
-<<<<<<< HEAD
+
     email = models.EmailField(blank=True, null=True) 
     
-=======
-    email = models.EmailField(blank=True, null=True)
-
->>>>>>> louis
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
@@ -216,11 +211,7 @@ class UserProfile(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-<<<<<<< HEAD
-        # On ne crée pas automatiquement un UserProfile vide,
-        # car on n'a pas toutes les infos (notamment team)
-        pass
-=======
+
         # Ne pas créer automatiquement de UserProfile vide ici
         pass
 
@@ -270,4 +261,4 @@ def assign_teams_to_pools(tournament):
 
     for pool in pools:
         pool.save()
->>>>>>> louis
+        
