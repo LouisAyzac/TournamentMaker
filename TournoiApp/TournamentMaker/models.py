@@ -2,11 +2,24 @@ import random
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from datetime import date
 
 
 class Tournament(models.Model):
+    SPORT_CHOICES = [
+        ('football', 'Football'),
+        ('volleyball', 'Volleyball'),
+        ('basketball', 'Basketball'),
+        ('rugby', 'Rugby'),
+    ]
+
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
+    address = models.CharField(max_length=255, blank=True, null=True)  # ✅ Adresse exacte
+    is_indoor = models.BooleanField(default=True)  # ✅ Intérieur/extérieur
+    start_date = models.DateField(default=date.today) # ✅ Date de début
+    end_date = models.DateField(default=date.today)    # ✅ Date de fin
+    sport = models.CharField(max_length=50, default='Football')  # ✅ Choix du sport
 
     def __str__(self):
         return self.name

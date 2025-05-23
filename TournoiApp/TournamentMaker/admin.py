@@ -6,7 +6,6 @@ from .models import Tournament, Team, Player, Match, Ranking, Pool
 
 
 # Enregistre les modèles standards
-admin.site.register(Tournament)
 admin.site.register(Team)
 
 
@@ -192,3 +191,9 @@ admin.site.register(User, UserAdmin)
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'team')
+
+@admin.register(Tournament)
+class TournamentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'department', 'address', 'is_indoor', 'start_date', 'end_date', 'sport')
+    list_filter = ('sport', 'is_indoor', 'start_date', 'end_date')
+    search_fields = ('name', 'department', 'address')
