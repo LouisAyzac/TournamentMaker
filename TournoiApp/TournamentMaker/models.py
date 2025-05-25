@@ -2,11 +2,24 @@ import random
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from datetime import date
 
 
 class Tournament(models.Model):
+    SPORT_CHOICES = [
+        ('football', 'Football'),
+        ('volleyball', 'Volleyball'),
+        ('basketball', 'Basketball'),
+        ('rugby', 'Rugby'),
+    ]
+
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
+    address = models.CharField(max_length=255, blank=True, null=True)  # ✅ Adresse exacte
+    is_indoor = models.BooleanField(default=True)  # ✅ Intérieur/extérieur
+    start_date = models.DateField(default=date.today) # ✅ Date de début
+    end_date = models.DateField(default=date.today)    # ✅ Date de fin
+    sport = models.CharField(max_length=50, default='Football')  # ✅ Choix du sport
 
     def __str__(self):
         return self.name
@@ -69,9 +82,7 @@ class Pool(models.Model):
         return self.teams.all()
 
     def all_matches_played(self):
-        """
-        Vérifie si tous les matchs de cette pool ont des scores valides.
-        """
+
         for match in self.matches.all():
             if match.winner() is None:
                 return False
@@ -117,13 +128,12 @@ class Pool(models.Model):
             )
 
 
-
-
 class Match(models.Model):
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
     team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a')
     team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')
 
+    en_cours = models.BooleanField(default=False)  # ✅ NOUVEAU CHAMP
 
     set1_team_a = models.PositiveIntegerField(default=0)
     set1_team_b = models.PositiveIntegerField(default=0)
@@ -171,6 +181,9 @@ class Match(models.Model):
 
 
 
+from django.db import models
+
+
 class Ranking(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)
     rank = models.PositiveIntegerField()
@@ -184,3 +197,30 @@ def update_rankings_on_match_save(sender, instance, **kwargs):
     pool = instance.pool
     if pool and pool.all_matches_played():
         pool.calculate_rankings()
+
+from django.contrib.auth.models import User
+
+class UserProfile(models.Model):
+    LEVEL_CHOICES = [
+        (1, 'Débutant'),
+        (2, 'Intermédiaire'),
+        (3, 'Avancé'),
+        (4, 'Expert'),
+        (5, 'Maître'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    first_name = models.CharField(max_length=30, default='John')
+    last_name = models.CharField(max_length=30, default='Smith')
+    date_of_birth = models.DateField(default='2000-01-01')
+    level = models.IntegerField(choices=LEVEL_CHOICES)
+    email = models.EmailField(default='default@example.com')
+
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='members')
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)

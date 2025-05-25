@@ -1,24 +1,7 @@
-{% extends 'base_generic.html' %}
-
-{% block title %}
-  <title>Tableau de bord - Tournament Maker</title>
-{% endblock %}
+{% extends "base_generic.html" %}
 
 {% block content %}
   <div class="text-center mt-5">
-    <h2>Tournoi sélectionné</h2>
-    <p>Bienvenue dans le tableau de bord du tournoi n°{{ request.session.selected_tournament }}.</p>
-
-    <div class="btn-group mt-4">
-      <a href="{% url 'players' %}" class="btn btn-outline-secondary">Joueurs</a>
-      <a href="{% url 'teams' %}" class="btn btn-outline-secondary">Teams</a>
-      <a href="{% url 'login' %}" class="btn btn-outline-secondary">Scores</a>
-      <a href="{% url 'pool_list' %}" class="btn btn-outline-secondary">Pools</a>
-      <a href="{% url 'rankings_list' %}" class="btn btn-outline-secondary">Classements</a>
-    </div>
-
-    <div class="mt-4">
-      <a href="{% url 'select_tournament' %}" class="btn btn-link">Changer de tournoi</a>
-    </div>
+    <h2>Voici le tournoi sélectionné : {{ request.session.selected_tournament_name }}</h2>
   </div>
 {% endblock %}
