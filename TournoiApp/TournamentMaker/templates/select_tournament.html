@@ -15,7 +15,7 @@
         <select class="form-control w-50 mx-auto" id="tournamentSelect" name="tournament_id" required>
           <option value="" disabled selected>-- Choisissez un tournoi --</option>
           {% for tournoi in tournois %}
-            <option value="{{ tournoi.id }}">{{ tournoi.name }}</option>
+            <option value="{{ tournoi.id }}">{{ tournoi.name }} - {{ tournoi.department }} - {{ tournoi.address }} - {{ tournoi.is_indoor }} - {{ tournoi.start_date }} - {{ tournoi.end_date }} - {{ tournoi.sport }}</option>
           {% endfor %}
         </select>
       </div>

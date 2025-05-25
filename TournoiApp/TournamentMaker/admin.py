@@ -11,7 +11,9 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.admin import SimpleListFilter
 
 
-admin.site.register(Tournament)
+
+# Enregistre les modèles standards
+
 admin.site.register(Team)
 
 
@@ -425,3 +427,14 @@ class FinalRankingAdmin(admin.ModelAdmin):
             return match.team_b
         else:
             return None
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'team')
+
+@admin.register(Tournament)
+class TournamentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'department', 'address', 'is_indoor', 'start_date', 'end_date', 'sport')
+    list_filter = ('sport', 'is_indoor', 'start_date', 'end_date')
+    search_fields = ('name', 'department', 'address')

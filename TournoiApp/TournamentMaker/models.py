@@ -3,11 +3,25 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
+from datetime import date
+
 
 
 class Tournament(models.Model):
+    SPORT_CHOICES = [
+        ('football', 'Football'),
+        ('volleyball', 'Volleyball'),
+        ('basketball', 'Basketball'),
+        ('rugby', 'Rugby'),
+    ]
+
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
+    address = models.CharField(max_length=255, blank=True, null=True)  # ✅ Adresse exacte
+    is_indoor = models.BooleanField(default=True)  # ✅ Intérieur/extérieur
+    start_date = models.DateField(default=date.today) # ✅ Date de début
+    end_date = models.DateField(default=date.today)    # ✅ Date de fin
+    sport = models.CharField(max_length=50, default='Football')  # ✅ Choix du sport
 
     def __str__(self):
         return self.name
@@ -145,8 +159,11 @@ class Match(models.Model):
         ('quarter', 'Quart de finale'),
         ('semi', 'Demi-finale'),
         ('final', 'Finale'),
+        ('third_place', 'Petite finale'),
+
+        
     ]
-    phase = models.CharField(max_length=10, choices=PHASE_CHOICES, default='pool')
+    phase = models.CharField(max_length=20, choices=PHASE_CHOICES, default='pool')
 
     def __str__(self):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"
