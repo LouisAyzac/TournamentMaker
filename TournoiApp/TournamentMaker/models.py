@@ -159,8 +159,11 @@ class Match(models.Model):
         ('quarter', 'Quart de finale'),
         ('semi', 'Demi-finale'),
         ('final', 'Finale'),
+        ('third_place', 'Petite finale'),
+
+        
     ]
-    phase = models.CharField(max_length=10, choices=PHASE_CHOICES, default='pool')
+    phase = models.CharField(max_length=20, choices=PHASE_CHOICES, default='pool')
 
     def __str__(self):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"

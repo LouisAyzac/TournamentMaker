@@ -11,11 +11,9 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.admin import SimpleListFilter
 
 
-<<<<<<< HEAD
-admin.site.register(Tournament)
-=======
+
 # Enregistre les modèles standards
->>>>>>> ange
+
 admin.site.register(Team)
 
 
@@ -199,7 +197,6 @@ class UserProfileInline(admin.StackedInline):
 class UserAdmin(BaseUserAdmin):
     inlines = (UserProfileInline,)
 
-<<<<<<< HEAD
 
 def is_match_finished(match):
     score_a = 0
@@ -430,7 +427,6 @@ class FinalRankingAdmin(admin.ModelAdmin):
             return match.team_b
         else:
             return None
-=======
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 @admin.register(UserProfile)
@@ -442,4 +438,3 @@ class TournamentAdmin(admin.ModelAdmin):
     list_display = ('name', 'department', 'address', 'is_indoor', 'start_date', 'end_date', 'sport')
     list_filter = ('sport', 'is_indoor', 'start_date', 'end_date')
     search_fields = ('name', 'department', 'address')
->>>>>>> ange
