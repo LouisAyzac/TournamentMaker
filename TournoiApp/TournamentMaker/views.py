@@ -29,13 +29,22 @@ def index(request):
 from django.shortcuts import render
 
 def players(request):
-    all_players = Player.objects.all()  # récupère tous les joueurs
-    return render(request, 'players.html', {'players': all_players})
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    players = Player.objects.filter(team__tournament_id=tournament_id)
+    return render(request, 'players.html', {'players': players})
+
 
 def teams(request):
-    all_teams = Team.objects.all()
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
 
-    return render(request, 'teams.html', {'teams': all_teams})
+    teams = Team.objects.filter(tournament_id=tournament_id)
+    return render(request, 'teams.html', {'teams': teams})
+
 
 def scores(request):
     
@@ -72,8 +81,13 @@ from django.shortcuts import render, get_object_or_404
 from .models import Pool
 
 def pool_list(request):
-    pools = Pool.objects.all()
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    pools = Pool.objects.filter(tournament_id=tournament_id)
     return render(request, 'pools.html', {'pools': pools})
+
 
 def pool_detail(request, pk):
     pool = get_object_or_404(Pool, pk=pk)
@@ -89,10 +103,13 @@ from django.shortcuts import render
 from .models import Pool, Ranking
 
 def rankings_list(request):
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
     pool_rankings = []
 
-    for pool in Pool.objects.all():
-        # Récupère les rankings des équipes de cette pool
+    for pool in Pool.objects.filter(tournament_id=tournament_id):
         teams_in_pool = pool.teams.all()
         rankings = Ranking.objects.filter(team__in=teams_in_pool).select_related('team').order_by('rank')
         
@@ -103,12 +120,19 @@ def rankings_list(request):
 
     return render(request, 'rankings.html', {'pool_rankings': pool_rankings})
 
+
 from django.shortcuts import render
 from .models import Match
 
 def matchs_en_cours(request):
-    matchs = Match.objects.filter(en_cours=True)
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    matchs = Match.objects.filter(en_cours=True, tournament_id=tournament_id)
     return render(request, 'matchs_en_cours.html', {'matchs': matchs})
+
+
 
 
 from django.shortcuts import render, redirect

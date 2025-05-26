@@ -65,6 +65,8 @@ class Pool(models.Model):
     name = models.CharField(max_length=50)
     max_size = models.PositiveIntegerField(default=4)
     teams = models.ManyToManyField('Team', blank=True, related_name='pools')
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='pools', null=True, blank=True)
+
 
     def __str__(self):
         return self.name
@@ -137,6 +139,8 @@ class Pool(models.Model):
 
 
 class Match(models.Model):
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
+ 
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
     team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a')
     team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')
@@ -267,7 +271,11 @@ def assign_teams_to_pools(tournament):
     pool_names = ['A', 'B', 'C', 'D']
     pools = []
     for name in pool_names:
-        pool, created = Pool.objects.get_or_create(name=name, defaults={'max_size': 4})
+        pool, created = Pool.objects.get_or_create(
+            name=name,
+            tournament=tournament,
+            defaults={'max_size': 4}
+        )
         pool.teams.clear()
         pools.append(pool)
 
