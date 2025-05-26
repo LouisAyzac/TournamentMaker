@@ -3,6 +3,11 @@
 {% block content %}
   <h2>Classement par Pool</h2>
 
+  <!-- BOUTON vers le classement final -->
+  <div style="margin-bottom: 20px;">
+    <a href="{% url 'classement_final' %}" class="btn btn-primary">Voir le classement final</a>
+  </div>
+
   {% if pool_rankings %}
     {% for item in pool_rankings %}
       <h3>{{ item.pool.name }}</h3>
