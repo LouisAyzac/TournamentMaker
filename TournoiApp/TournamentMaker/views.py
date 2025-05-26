@@ -210,22 +210,8 @@ def scores(request):
         return redirect('scores')  # évite les resoumissions de formulaire
 
     return render(request, 'scores.html', {'matches': matches})
-
-from django.shortcuts import render
 from .models import Team, UserProfile
 from django.db import transaction
-
-from django.shortcuts import render, redirect
-from .models import Team, UserProfile
-from .models import Tournament  # si nécessaire
-from django.utils.dateparse import parse_date
-
-LEVEL_MAP = {
-    'debutant': 1,
-    'intermediaire': 2,
-    'avance': 3,
-    'expert': 4,
-}
 
 from django.shortcuts import render, redirect
 from .models import Team, Tournament, Player, UserProfile
@@ -240,6 +226,13 @@ LEVEL_MAP = {
     'expert': 4,
     'maître': 5,
 }
+from django.contrib.sites.models import Site
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.shortcuts import render, redirect
+from django.utils.dateparse import parse_date
 
 def signup(request):
     if request.method == 'POST':
@@ -247,7 +240,7 @@ def signup(request):
         if not team_name:
             return render(request, 'signup.html', {'error': 'Le nom de l’équipe est requis.'})
 
-        tournament = Tournament.objects.first()  # adapte selon ton projet
+        tournament = Tournament.objects.first()
         team = Team.objects.create(name=team_name, tournament=tournament)
 
         for i in range(1, 6):
@@ -256,40 +249,45 @@ def signup(request):
             birthdate_str = request.POST.get(f'birthdate_{i}')
             email = request.POST.get(f'email_{i}')
             level_str = request.POST.get(f'level_{i}')
-            is_captain = request.POST.get('is_captain') == str(i)
 
             if first_name and last_name and birthdate_str and level_str:
                 birthdate = parse_date(birthdate_str)
                 level = LEVEL_MAP.get(level_str.lower(), 1)
 
-                # 1️⃣ Créer le Player (toujours)
-                Player.objects.create(
+                # Crée le joueur
+                player = Player.objects.create(
                     first_name=first_name,
                     last_name=last_name,
                     birth_date=birthdate,
                     level=level,
+                    email=email,
                     team=team
                 )
 
-                # 2️⃣ Si capitaine → créer un compte User et UserProfile
-                if is_captain and email:
-                    username = request.POST.get('username')
-                    password = request.POST.get('password')
+                if i == 1 and email:  # Le premier joueur est le capitaine
+                    username = email.split('@')[0]  # Par exemple, crée un username à partir de l’email
+                    user = User.objects.create_user(username=username, email=email)
+                    user_profile = UserProfile.objects.create(user=user, level=level, team=team)
 
-                    if not (username and password):
-                        return render(request, 'signup.html', {'error': 'Nom d’utilisateur et mot de passe requis pour le capitaine.'})
+                    # Envoie un mail pour définir le mot de passe
+                    uid = urlsafe_base64_encode(force_bytes(user.pk))
+                    token = default_token_generator.make_token(user)
+                    domain = '127.0.0.1:8000'  # ou localhost:8000 si tu préfères
+                    link = f"http://{domain}/accounts/reset/{uid}/{token}/"
 
-                    user = User.objects.create_user(username=username, password=password)
+                    subject = f"Bienvenue capitaine de l'équipe {team.name} !"
+                    message = f"""
+Bonjour {first_name},
 
-                    UserProfile.objects.create(
-                        user=user,
-                        first_name=first_name,
-                        last_name=last_name,
-                        date_of_birth=birthdate,
-                        level=level,
-                        email=email,
-                        team=team
-                    )
+Vous avez été inscrit comme capitaine de l'équipe {team.name}.
+Veuillez cliquer sur le lien suivant pour définir ou modifier votre mot de passe :
+
+{link}
+
+Merci,
+L'équipe du tournoi
+"""
+                    send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
 
         return redirect('signup_success')
 

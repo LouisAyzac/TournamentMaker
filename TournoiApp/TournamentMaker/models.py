@@ -32,8 +32,6 @@ class Team(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
     captain = models.OneToOneField('UserProfile', on_delete=models.CASCADE, related_name='captained_team', null=True, blank=True)
 
-
-    
     def __str__(self):
         return self.name
 
@@ -43,9 +41,11 @@ class Team(models.Model):
 
 class Player(models.Model):
     LEVEL_CHOICES = [
-        ('D', 'Débutant'),
-        ('I', 'Intermédiaire'),
-        ('A', 'Avancé'),
+        (1, 'Débutant'),
+        (2, 'Intermédiaire'),
+        (3, 'Avancé'),
+        (4, 'Expert'),
+        (5, 'Maître'),
     ]
 
     first_name = models.CharField(max_length=100)
@@ -220,17 +220,23 @@ class UserProfile(models.Model):
         (4, 'Expert'),
         (5, 'Maître'),
     ]
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
     level = models.IntegerField(choices=LEVEL_CHOICES)
     team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='members')
+    def __str__(self):  
+        return f"{self.user.username} - {self.get_level_display()} (Équipe: {self.team.name})"
 
 
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.sites.models import Site
 
-        # Ne pas créer automatiquement de UserProfile vide ici
-        pass
+from .models import Team, UserProfile, Player
 
 
 def generate_quarter_finals():
