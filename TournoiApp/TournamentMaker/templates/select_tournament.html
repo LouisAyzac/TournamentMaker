@@ -1,0 +1,26 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}
+  <title>Sélectionner un tournoi</title>
+{% endblock %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2 class="text-center">Sélectionnez un tournoi</h2>
+
+    <form method="POST" class="mt-4 text-center">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="tournamentSelect">Tournoi :</label>
+        <select class="form-control w-50 mx-auto" id="tournamentSelect" name="tournament_id" required>
+          <option value="" disabled selected>-- Choisissez un tournoi --</option>
+          {% for tournoi in tournois %}
+            <option value="{{ tournoi.id }}">{{ tournoi.name }} - {{ tournoi.department }} - {{ tournoi.address }} - {{ tournoi.is_indoor }} - {{ tournoi.start_date }} - {{ tournoi.end_date }} - {{ tournoi.sport }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary mt-3">Valider</button>
+    </form>
+  </div>
+{% endblock %}

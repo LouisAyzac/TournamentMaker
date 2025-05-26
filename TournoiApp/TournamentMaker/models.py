@@ -2,23 +2,44 @@ import random
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.contrib.auth.models import User
+from datetime import date
+
+
 
 class Tournament(models.Model):
+    SPORT_CHOICES = [
+        ('football', 'Football'),
+        ('volleyball', 'Volleyball'),
+        ('basketball', 'Basketball'),
+        ('rugby', 'Rugby'),
+    ]
+
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
+    address = models.CharField(max_length=255, blank=True, null=True)  # ✅ Adresse exacte
+    is_indoor = models.BooleanField(default=True)  # ✅ Intérieur/extérieur
+    start_date = models.DateField(default=date.today) # ✅ Date de début
+    end_date = models.DateField(default=date.today)    # ✅ Date de fin
+    sport = models.CharField(max_length=50, default='Football')  # ✅ Choix du sport
 
     def __str__(self):
         return self.name
 
+
 class Team(models.Model):
     name = models.CharField(max_length=100)
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
+    captain = models.OneToOneField('UserProfile', on_delete=models.CASCADE, related_name='captained_team', null=True, blank=True)
 
+
+    
     def __str__(self):
         return self.name
 
     def player_count(self):
         return self.players.count()
+
 
 class Player(models.Model):
     LEVEL_CHOICES = [
@@ -31,10 +52,14 @@ class Player(models.Model):
     last_name = models.CharField(max_length=100)
     birth_date = models.DateField()
     level = models.CharField(max_length=1, choices=LEVEL_CHOICES)
+
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
 
+    email = models.EmailField(blank=True, null=True) 
+    
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+
 
 class Pool(models.Model):
     name = models.CharField(max_length=50)
@@ -55,7 +80,10 @@ class Pool(models.Model):
 
         teams_list = list(filtered_teams)
         random.shuffle(teams_list)
-        for team in teams_list:
+
+        available_slots = self.max_size - self.teams.count()
+
+        for team in teams_list[:available_slots]:
             self.teams.add(team)
         self.save()
 
@@ -107,12 +135,13 @@ class Pool(models.Model):
                 defaults={"rank": i}
             )
 
+
 class Match(models.Model):
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
     team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a')
     team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')
 
-    en_cours = models.BooleanField(default=False)  # ✅ NOUVEAU CHAMP
+    en_cours = models.BooleanField(default=False)
 
     set1_team_a = models.PositiveIntegerField(default=0)
     set1_team_b = models.PositiveIntegerField(default=0)
@@ -124,6 +153,17 @@ class Match(models.Model):
     set4_team_b = models.PositiveIntegerField(null=True, blank=True)
     set5_team_a = models.PositiveIntegerField(null=True, blank=True)
     set5_team_b = models.PositiveIntegerField(null=True, blank=True)
+
+    PHASE_CHOICES = [
+        ('pool', 'Phase de poule'),
+        ('quarter', 'Quart de finale'),
+        ('semi', 'Demi-finale'),
+        ('final', 'Finale'),
+        ('third_place', 'Petite finale'),
+
+        
+    ]
+    phase = models.CharField(max_length=20, choices=PHASE_CHOICES, default='pool')
 
     def __str__(self):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"
@@ -156,6 +196,7 @@ class Match(models.Model):
         else:
             return None
 
+
 class Ranking(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)
     rank = models.PositiveIntegerField()
@@ -163,8 +204,78 @@ class Ranking(models.Model):
     def __str__(self):
         return f"{self.team.name} - Rang {self.rank}"
 
+
 @receiver(post_save, sender=Match)
 def update_rankings_on_match_save(sender, instance, **kwargs):
     pool = instance.pool
     if pool and pool.all_matches_played():
         pool.calculate_rankings()
+
+
+class UserProfile(models.Model):
+    LEVEL_CHOICES = [
+        (1, 'Débutant'),
+        (2, 'Intermédiaire'),
+        (3, 'Avancé'),
+        (4, 'Expert'),
+        (5, 'Maître'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    level = models.IntegerField(choices=LEVEL_CHOICES)
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='members')
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+
+        # Ne pas créer automatiquement de UserProfile vide ici
+        pass
+
+
+def generate_quarter_finals():
+    from .models import Match, Pool, Ranking
+
+    pool_names = ['A', 'B', 'C', 'D']
+    pools = {p.name: p for p in Pool.objects.filter(name__in=pool_names)}
+
+    if len(pools) < 4:
+        return
+
+    if not all(p.all_matches_played() for p in pools.values()):
+        return
+
+    if Match.objects.filter(phase='quarter').exists():
+        return
+
+    def get_top_two(pool):
+        return Ranking.objects.filter(team__pools=pool).order_by('rank')[:2]
+
+    r = {name: get_top_two(pools[name]) for name in pool_names}
+
+    # Exemple d’appairage classique des quarts de finale
+    Match.objects.create(pool=None, team_a=r['A'][0].team, team_b=r['D'][1].team, phase='quarter')
+    Match.objects.create(pool=None, team_a=r['B'][0].team, team_b=r['C'][1].team, phase='quarter')
+    Match.objects.create(pool=None, team_a=r['C'][0].team, team_b=r['B'][1].team, phase='quarter')
+    Match.objects.create(pool=None, team_a=r['D'][0].team, team_b=r['A'][1].team, phase='quarter')
+
+
+def assign_teams_to_pools(tournament):
+    teams = list(tournament.teams.all())
+    random.shuffle(teams)
+
+    pool_names = ['A', 'B', 'C', 'D']
+    pools = []
+    for name in pool_names:
+        pool, created = Pool.objects.get_or_create(name=name, defaults={'max_size': 4})
+        pool.teams.clear()
+        pools.append(pool)
+
+    for i, team in enumerate(teams):
+        pool_index = i // 4  # 4 équipes par pool
+        if pool_index < len(pools):
+            pools[pool_index].teams.add(team)
+
+    for pool in pools:
+        pool.save()
+        

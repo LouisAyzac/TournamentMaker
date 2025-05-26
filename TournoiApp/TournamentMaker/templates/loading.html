@@ -1,0 +1,14 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}
+  <title>Accueil - Tournament Maker</title>
+{% endblock %}
+
+{% block content %}
+  <div class="header-bar">
+      <div class="header-title">>Bienvenue sur Tournament Maker</div>
+      <div class="nav-buttons">
+    <p>Veuillez sélectionner un tournoi pour continuer.</p>
+    <a href="{% url 'select_tournament' %}" class="nav-button">Sélectionner un tournoi</a>
+  </div>
+{% endblock %}

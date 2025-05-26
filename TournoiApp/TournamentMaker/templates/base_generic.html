@@ -1,45 +1,91 @@
 <!doctype html>
-<html lang="en">
-  <head>
+<html lang="fr">
+<head>
     {% block title %}
-      <title>Bibliothèque locale</title>
+      <title>VolleyTournoi</title>
     {% endblock %}
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link
-      rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
-      crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
-  </head>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="icon" href="{% static 'images/favicon.ico' %}">
+</head>
 
-  
-  <body>
-    <div class="header-bar">
-      <div class="header-title">Tournament Maker</div>
-      <div class="nav-buttons">
-        <a href="{% url 'index' %}" class="nav-button">Acceuil</a>
-        <a href="{% url 'players' %}" class="nav-button">Joueurs</a>
-        <a href="{% url 'teams' %}" class="nav-button">Teams</a>
-        <a href="{% url 'scores' %}" class="nav-button">Scores</a>
-<a href="{% url 'pool_list' %}" class="nav-button">Pools</a>
-<a href="{% url 'rankings_list' %}" class="nav-button">Classements</a>
-<a href="{% url 'matchs_en_cours' %}" class="nav-button">Match en cours</a>
-
-
-
-
-      </div>
-    </div>
-
-    <div class="container-fluid mt-4">
-      <div class="row">
-        <div class="col-sm-12">
-          {% block content %} {% endblock %}
+<body>
+    <!-- Header -->
+    <header class="header-bar">
+        <div class="container">
+            <h1 class="header-title">Volleyball</h1>
+            <p class="header-subtitle">Organisez. Jouez. Gagnez.</p>
         </div>
-      </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav-buttons-container">
+    <div class="nav-buttons">
+        <a href="{% url 'home' %}" class="nav-button">
+            <i class="fas fa-home"></i> Accueil
+        </a>
+        <a href="{% url 'index' %}" class="nav-button">
+            <i class="fas fa-landmark"></i> Tournoi
+        </a>
+
+        {% if request.session.selected_tournament_id %}
+            <a href="{% url 'players' %}" class="nav-button">
+                <i class="fas fa-users"></i> Joueurs
+            </a>
+            <a href="{% url 'teams' %}" class="nav-button">
+                <i class="fas fa-tshirt"></i> Équipes
+            </a>
+            <a href="{% url 'login' %}" class="nav-button">
+                <i class="fas fa-star"></i> Scores
+            </a>
+            <a href="{% url 'pool_list' %}" class="nav-button">
+                <i class="fas fa-trophy"></i> Poules
+            </a>
+            <a href="{% url 'rankings_list' %}" class="nav-button">
+                <i class="fas fa-medal"></i> Classements
+            </a>
+            <a href="{% url 'signup' %}" class="nav-button">
+                <i class="fas fa-file-alt"></i> Inscription
+
+            </a>
+
+            <a href="{% url 'matchs_en_cours' %}" class="nav-button">
+                              <i class="fas fa-clock"></i> Matchs en cours
+</a>
+
+        {% endif %}
     </div>
-  </body>
+</nav>
+
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+            <p class="copyright">© 2025 VolleyTournoi. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
 </html>

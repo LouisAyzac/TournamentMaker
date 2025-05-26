@@ -1,0 +1,7 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <div class="text-center mt-5">
+    <h2>Voici le tournoi sélectionné : {{ request.session.selected_tournament_name }}</h2>
+  </div>
+{% endblock %}
