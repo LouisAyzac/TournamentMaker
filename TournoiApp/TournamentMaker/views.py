@@ -37,9 +37,7 @@ def teams(request):
 
     return render(request, 'teams.html', {'teams': all_teams})
 
-def scores(request):
-    
-    return render(request, 'scores.html')
+
 
 
 from django.shortcuts import render, get_object_or_404
@@ -49,18 +47,72 @@ def player_detail(request, pk):
     player = get_object_or_404(Player, pk=pk)
     return render(request, 'players_detail.html', {'player': player})
 
-from TournamentMaker.models import Team, Ranking
+from TournamentMaker.models import Team, Ranking    
 
 from TournamentMaker.models import Team, Ranking
 from django.shortcuts import get_object_or_404, render
 
+from django.shortcuts import get_object_or_404, render
+from TournamentMaker.models import Team, Ranking, Match
+
 def team_detail(request, pk):
     team = get_object_or_404(Team, pk=pk)
-    ranking = Ranking.objects.filter(team=team).first()  # Pas .ranking, mais .filter()
+    ranking = Ranking.objects.filter(team=team).first()
+
+    # Calcul du classement final (copié de ta fonction classement_final_view, mais juste pour un seul team)
+    teams = Team.objects.all()
+    points = {t.id: 0 for t in teams}
+    pool_wins = {t.id: 0 for t in teams}
+    matches = Match.objects.all()
+
+    def get_winner(match):
+        score_a = 0
+        score_b = 0
+        for i in range(1, 6):
+            sa = getattr(match, f'set{i}_team_a')
+            sb = getattr(match, f'set{i}_team_b')
+            if sa is not None and sb is not None:
+                if sa > sb:
+                    score_a += 1
+                elif sb > sa:
+                    score_b += 1
+        if score_a > score_b:
+            return match.team_a
+        elif score_b > score_a:
+            return match.team_b
+        else:
+            return None
+
+    for match in matches:
+        winner = get_winner(match)
+        if winner:
+            if match.phase == 'final':
+                points[winner.id] += 100
+            elif match.phase == 'third_place':
+                points[winner.id] += 80
+            elif match.phase == 'semi':
+                points[winner.id] += 60
+            elif match.phase == 'quarter':
+                points[winner.id] += 40
+            elif match.phase == 'pool':
+                points[winner.id] += 3
+                pool_wins[winner.id] += 1
+
+    # Tri des équipes par points pour calculer le rang final
+    sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
+
+    final_ranking = {}
+    rank = 1
+    for t in sorted_teams:
+        final_ranking[t.id] = rank
+        rank += 1
+
+    final_rank = final_ranking.get(team.id)  # récupère le rang final de l'équipe affichée
 
     return render(request, 'teams_detail.html', {
         'team': team,
-        'ranking': ranking  # clé correcte ici
+        'ranking': ranking,
+        'final_rank': final_rank,
     })
 
 
@@ -298,4 +350,76 @@ def signup(request):
 
 def signup_success(request):
     return render(request, 'signup_success.html')
+
+from django.shortcuts import render
+from .admin import FinalRankingAdmin
+from .models import Ranking, Team
+# views.py
+
+from django.shortcuts import render
+from .models import Pool, Ranking
+
+from django.shortcuts import render
+from .models import Team, Match
+
+def classement_final_view(request):
+    teams = Team.objects.all()
+    points = {team.id: 0 for team in teams}
+    pool_wins = {team.id: 0 for team in teams}
+
+    matches = Match.objects.all()
+
+    def get_winner(match):
+        score_a = 0
+        score_b = 0
+        for i in range(1, 6):
+            sa = getattr(match, f'set{i}_team_a')
+            sb = getattr(match, f'set{i}_team_b')
+            if sa is not None and sb is not None:
+                if sa > sb:
+                    score_a += 1
+                elif sb > sa:
+                    score_b += 1
+        if score_a > score_b:
+            return match.team_a
+        elif score_b > score_a:
+            return match.team_b
+        else:
+            return None
+
+    for match in matches:
+        winner = get_winner(match)
+        if winner:
+            if match.phase == 'final':
+                points[winner.id] += 100
+            elif match.phase == 'third_place':
+                points[winner.id] += 80
+            elif match.phase == 'semi':
+                points[winner.id] += 60
+            elif match.phase == 'quarter':
+                points[winner.id] += 40
+            elif match.phase == 'pool':
+                points[winner.id] += 3
+                pool_wins[winner.id] += 1
+
+    # Trier les équipes par points
+    sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
+
+    # Préparer final_ranking pour le template
+    final_ranking = []
+    rank = 1
+    for team in sorted_teams:
+        final_ranking.append((team, {
+            'rank': rank,
+            'wins': points[team.id],
+            'pool_wins': pool_wins[team.id],
+        }))
+        rank += 1
+
+    context = {
+        'final_ranking': final_ranking
+    }
+
+    return render(request, 'classement_final.html', context)
+
 
