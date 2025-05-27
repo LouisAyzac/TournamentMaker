@@ -302,7 +302,6 @@ from django.core.mail import send_mail
 from django.shortcuts import render, redirect
 from django.utils.dateparse import parse_date
 
-
 def signup(request):
     if request.method == 'POST':
         team_name = request.POST.get('team_name')
@@ -319,15 +318,12 @@ def signup(request):
             email = request.POST.get(f'email_{i}')
             level_str = request.POST.get(f'level_{i}')
 
-
             if first_name and last_name and birthdate_str and level_str:
                 birthdate = parse_date(birthdate_str)
                 level = LEVEL_MAP.get(level_str.lower(), 1)
 
-
                 # Crée le joueur
                 player = Player.objects.create(
-
                     first_name=first_name,
                     last_name=last_name,
                     birth_date=birthdate,
@@ -336,12 +332,10 @@ def signup(request):
                     team=team
                 )
 
-
                 if i == 1 and email:  # Le premier joueur est le capitaine
                     username = email
                     user = User.objects.create_user(username=username, email=email)
                     user_profile = UserProfile.objects.create(user=user, level=level, team=team)
-
 
                     # Envoie un mail pour définir le mot de passe
                     uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -366,6 +360,7 @@ L'équipe du tournoi
         return redirect('signup_success')
 
     return render(request, 'signup.html')
+
 
 def signup_success(request):
     return render(request, 'signup_success.html')
