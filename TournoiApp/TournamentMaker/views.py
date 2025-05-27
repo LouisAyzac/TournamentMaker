@@ -31,20 +31,19 @@ def teams(request):
     all_teams = Team.objects.all()
     return render(request, 'teams.html', {'teams': all_teams})
 
-<<<<<<< HEAD
+
 
 
 
 from django.shortcuts import render, get_object_or_404
 from TournamentMaker.models import Player, Team
 
-=======
->>>>>>> Remy
+
 def player_detail(request, pk):
     player = get_object_or_404(Player, pk=pk)
     return render(request, 'players_detail.html', {'player': player})
 
-<<<<<<< HEAD
+
 from TournamentMaker.models import Team, Ranking    
 
 from TournamentMaker.models import Team, Ranking
@@ -120,12 +119,7 @@ from .models import Pool
 
 from django.shortcuts import render, get_object_or_404
 from .models import Pool
-=======
-def team_detail(request, pk):
-    team = get_object_or_404(Team, pk=pk)
-    ranking = Ranking.objects.filter(team=team).first()
-    return render(request, 'teams_detail.html', {'team': team, 'ranking': ranking})
->>>>>>> Remy
+
 
 def pool_list(request):
     pools = Pool.objects.all()
@@ -311,7 +305,7 @@ def signup(request):
 
 def signup_success(request):
     return render(request, 'signup_success.html')
-<<<<<<< HEAD
+
 
 from django.shortcuts import render
 from .admin import FinalRankingAdmin
@@ -385,5 +379,4 @@ def classement_final_view(request):
     return render(request, 'classement_final.html', context)
 
 
-=======
->>>>>>> Remy
+
