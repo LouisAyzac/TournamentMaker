@@ -265,7 +265,7 @@ def signup(request):
                 )
 
                 if i == 1 and email:  # Le premier joueur est le capitaine
-                    username = email.split('@')[0]  # Par exemple, crée un username à partir de l’email
+                    username = email
                     user = User.objects.create_user(username=username, email=email)
                     user_profile = UserProfile.objects.create(user=user, level=level, team=team)
 
