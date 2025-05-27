@@ -10,12 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.admin import SimpleListFilter
 
-
-
-# Enregistre les modèles standards
-
 admin.site.register(Team)
-
 
 @admin.register(Pool)
 class PoolAdmin(admin.ModelAdmin):
@@ -71,17 +66,38 @@ class PoolAdmin(admin.ModelAdmin):
 
 
 class MatchForm(forms.ModelForm):
+    WINNER_CHOICES = [
+        ('', '---------'),
+        ('A', 'Team A'),
+        ('B', 'Team B'),
+    ]
+
+    winner_choice = forms.ChoiceField(
+        choices=WINNER_CHOICES,
+        required=False,
+        label="Vainqueur",
+        help_text="Choisir Team A ou Team B"
+    )
+
     class Meta:
         model = Match
-        fields = '__all__'
+        exclude = ['winner_side']  # Masque le champ technique dans le formulaire admin
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        pool = None
-        if self.instance and self.instance.pk:
-            pool = self.instance.pool
-        else:
+        instance = kwargs.get('instance')
+
+        # Initialise le choix vainqueur selon la valeur en base
+        if instance and instance.team_a and instance.team_b:
+            if instance.winner_side == 'A':
+                self.fields['winner_choice'].initial = 'A'
+            elif instance.winner_side == 'B':
+                self.fields['winner_choice'].initial = 'B'
+
+        # Restreint les équipes aux équipes de la pool
+        pool = instance.pool if instance and instance.pk else None
+        if not pool:
             pool_id = self.data.get('pool') or (self.initial.get('pool') if self.initial else None)
             if pool_id:
                 try:
@@ -94,25 +110,32 @@ class MatchForm(forms.ModelForm):
             self.fields['team_a'].queryset = teams_qs
             self.fields['team_b'].queryset = teams_qs
 
-            if not self.instance.pk:
-                teams_list = list(teams_qs)
-                if len(teams_list) >= 2:
-                    team_a, team_b = random.sample(teams_list, 2)
-                    self.fields['team_a'].initial = team_a.pk
-                    self.fields['team_b'].initial = team_b.pk
+            if not instance.pk and len(teams_qs) >= 2:
+                team_a, team_b = random.sample(list(teams_qs), 2)
+                self.fields['team_a'].initial = team_a.pk
+                self.fields['team_b'].initial = team_b.pk
 
     def clean(self):
         cleaned_data = super().clean()
-        pool = cleaned_data.get('pool')
         team_a = cleaned_data.get('team_a')
         team_b = cleaned_data.get('team_b')
+        choice = cleaned_data.get('winner_choice')
 
-        if pool and (team_a not in pool.teams.all() or team_b not in pool.teams.all()):
-            raise ValidationError("Les équipes doivent appartenir à la pool sélectionnée.")
-        if team_a == team_b:
+        # Équipes différentes
+        if team_a and team_b and team_a == team_b:
             raise ValidationError("Les équipes doivent être différentes.")
 
+        # Stocke le vainqueur dans winner_side
+        if choice == 'A':
+            self.instance.winner_side = 'A'
+        elif choice == 'B':
+            self.instance.winner_side = 'B'
+        else:
+            self.instance.winner_side = None
+
         return cleaned_data
+
+
 
 
 class PoolFilter(SimpleListFilter):
@@ -151,7 +174,8 @@ class PhaseFilter(SimpleListFilter):
 class MatchAdmin(admin.ModelAdmin):
     form = MatchForm
     list_display = (
-        'phase', 'pool', 'team_a', 'team_b', 'en_cours',
+        'phase', 'pool', 'team_a', 'team_b', 'statut',
+        'start_time', 'end_time', 'terrain_number','winner_team',
         'set1_team_a', 'set1_team_b',
         'set2_team_a', 'set2_team_b',
         'set3_team_a', 'set3_team_b',
@@ -159,7 +183,7 @@ class MatchAdmin(admin.ModelAdmin):
         'set5_team_a', 'set5_team_b',
     )
     list_editable = (
-        'en_cours',
+        'statut', 'start_time', 'end_time', 'terrain_number',
         'set1_team_a', 'set1_team_b',
         'set2_team_a', 'set2_team_b',
         'set3_team_a', 'set3_team_b',
@@ -167,6 +191,8 @@ class MatchAdmin(admin.ModelAdmin):
         'set5_team_a', 'set5_team_b',
     )
     list_filter = (PoolFilter, PhaseFilter)
+
+
 
 
 @admin.register(Player)
