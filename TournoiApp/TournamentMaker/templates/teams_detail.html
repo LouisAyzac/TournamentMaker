@@ -30,6 +30,8 @@
     {% endif %}
   </p>
 
+  <p><strong>Niveau de l'équipe :</strong> {{ team.level|floatformat:1 }}</p>
+  
   <h3>Joueurs dans cette équipe :</h3>
   <ul>
     {% for player in team.players.all %}

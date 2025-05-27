@@ -24,6 +24,7 @@ urlpatterns = [
     path('matchs-en-cours/', views.matchs_en_cours, name='matchs_en_cours'),
     path('classement/final/', views.classement_final_view, name='classement_final'),
     path('classement/final/', views.classement_final_view, name='rankings'),
+    path('generate_pools/', views.generate_pools, name='generate_pools'),
     
 ]
 

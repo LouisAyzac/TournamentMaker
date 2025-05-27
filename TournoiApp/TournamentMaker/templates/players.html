@@ -9,6 +9,42 @@
     <!-- Champ de recherche -->
     <input type="text" id="searchInput" onkeyup="searchPlayer()" placeholder="Rechercher un joueur par nom...">
 
+    <form method="get">
+      <label>Niveau :
+        <select name="level">
+          <option value="">Tous</option>
+          {% for value, label in levels %}
+            <option value="{{ value }}" {% if request.GET.level == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>Année de naissance :
+        <input type="number" name="birth_year" value="{{ request.GET.birth_year }}">
+      </label>
+
+      <label>Équipe :
+        <select name="team_id">
+          <option value="">Toutes</option>
+          {% for team in all_teams %}
+            <option value="{{ team.id }}" {% if request.GET.team_id == team.id|stringformat:"s" %}selected{% endif %}>{{ team.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>Âge min :
+        <input type="number" name="age_min" value="{{ request.GET.age_min }}">
+      </label>
+
+      <label>Âge max :
+        <input type="number" name="age_max" value="{{ request.GET.age_max }}">
+      </label>
+
+      <button type="submit">Filtrer</button>
+      <a href="{% url 'players' %}"><button type="button">Réinitialiser les filtres</button></a>
+
+    </form>
+
     <ul id="playersList">
       {% for player in players %}
         <a href="{% url 'player_detail' player.id %}">

@@ -14,15 +14,66 @@ from django.contrib.admin import SimpleListFilter
 
 # Enregistre les modèles standards
 
-admin.site.register(Team)
+
 
 
 @admin.register(Pool)
 class PoolAdmin(admin.ModelAdmin):
-    list_display = ('name', 'current_team_count', 'list_teams')
+    list_display = ('name', 'current_team_count', 'average_team_level', 'list_teams')
     filter_horizontal = ('teams',)
     readonly_fields = ('display_teams',)
-    actions = ['generate_matches']
+    actions = ['generate_matches', 'rebalance_pools']
+
+    def rebalance_pools(self, request, queryset):
+        all_pools = list(queryset)
+        all_teams = set()
+        for pool in all_pools:
+            all_teams.update(pool.teams.all())
+            pool.teams.clear()
+
+        teams = sorted(list(all_teams), key=lambda t: -t.level)  # Tri par niveau décroissant
+
+        num_pools = len(all_pools)
+        POOL_CAPACITY = all_pools[0].max_size if all_pools else 4  # suppose qu'elles ont le même max_size
+
+        # Initialisation : dictionnaire avec moyenne courante et équipes
+        pool_data = [
+            {"pool": pool, "teams": [], "total_level": 0}
+            for pool in all_pools
+        ]
+
+        for team in teams:
+            # Trouver la pool avec :
+            # - le moins d'équipes
+            # - à défaut, la plus faible moyenne
+            eligible = [p for p in pool_data if len(p["teams"]) < POOL_CAPACITY]
+
+            best_pool = min(
+                eligible,
+                key=lambda p: (
+                    len(p["teams"]),
+                    p["total_level"] / len(p["teams"]) if p["teams"] else 0
+                )
+            )
+
+            best_pool["teams"].append(team)
+            best_pool["total_level"] += team.level
+
+        # Assigner les équipes aux pools
+        for data in pool_data:
+            pool = data["pool"]
+            pool.teams.set(data["teams"])
+            pool.save()
+
+        self.message_user(request, "Les équipes ont été redistribuées équitablement entre les pools.")
+
+    def average_team_level(self, obj):
+        teams = obj.teams.all()
+        if not teams.exists():
+            return "-"
+        total = sum(team.level for team in teams)
+        return f"{total / teams.count():.2f}"
+    average_team_level.short_description = "Moyenne des niveaux"
 
     def get_form(self, request, obj=None, **kwargs):
         self.instance = obj
@@ -173,6 +224,17 @@ class MatchAdmin(admin.ModelAdmin):
 class PlayerAdmin(admin.ModelAdmin):
     search_fields = ['first_name', 'last_name', 'team__name']
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if obj.team:
+            obj.team.update_level()
+
+    def delete_model(self, request, obj):
+        team = obj.team
+        super().delete_model(request, obj)
+        if team:
+            team.update_level()
+
 
 @admin.register(Ranking)
 class RankingAdmin(admin.ModelAdmin):
@@ -183,10 +245,19 @@ class RankingAdmin(admin.ModelAdmin):
         return ", ".join(pool.name for pool in obj.team.pools.all())
     pools_names.short_description = "Pool(s)"
 
-
+@admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tournament', 'player_count')
+    list_display = ('name', 'tournament', 'player_count', 'average_level_display')
     search_fields = ('name', 'tournament__name')
+    readonly_fields = ('level',)
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        obj.update_level()
+
+    def average_level_display(self, obj):
+        return round(obj.level, 1)
+    average_level_display.short_description = "Niveau moyen"
 
 
 class UserProfileInline(admin.StackedInline):

@@ -27,17 +27,111 @@ def index(request):
     return render(request, 'index.html', context=context)
 
 from django.shortcuts import render
+from .models import Player, Team
+from datetime import datetime
+from datetime import date
 
 def players(request):
-    all_players = Player.objects.all()  # récupère tous les joueurs
-    return render(request, 'players.html', {'players': all_players})
-
-def teams(request):
+    players = Player.objects.all()
+    levels = Player.LEVEL_CHOICES
     all_teams = Team.objects.all()
 
-    return render(request, 'teams.html', {'teams': all_teams})
+    # Filtrage par niveau
+    level = request.GET.get('level')
+    if level:
+        players = players.filter(level=level)
 
+    # Filtrage par année de naissance
+    birth_year = request.GET.get('birth_year')
+    if birth_year:
+        players = players.filter(birth_date__year=birth_year)
 
+    # Filtrage par équipe
+    team_id = request.GET.get('team_id')
+    if team_id:
+        players = players.filter(team__id=team_id)
+
+    age_min = request.GET.get('age_min')
+    age_max = request.GET.get('age_max')
+    today = date.today()
+
+    if age_min:
+        born_after = date(today.year - int(age_min), today.month, today.day)
+        players = players.filter(birth_date__lte=born_after)
+
+    if age_max:
+        born_before = date(today.year - int(age_max) - 1, today.month, today.day)
+        players = players.filter(birth_date__gte=born_before)
+
+    return render(request, 'players.html', {
+        'players': players,
+        'levels': levels,
+        'all_teams': all_teams
+    })
+
+from TournamentMaker.models import Team, Ranking, Match
+from django.db.models import Q
+
+def teams(request):
+    teams = Team.objects.all()
+
+    # Récupère les rankings en cache pour accès rapide
+    rankings = {r.team_id: r for r in Ranking.objects.select_related('team')}
+
+    filtered = []
+    for team in teams:
+        team.rank = rankings.get(team.id).rank if team.id in rankings else None
+        team.level = team.level
+
+        # Nombre de matchs joués
+        matches_played = Match.objects.filter(
+            Q(team_a=team) | Q(team_b=team)
+        ).count()
+
+        # Nombre de victoires
+        wins = sum(1 for match in Match.objects.filter(Q(team_a=team) | Q(team_b=team))
+                   if match.winner() == team)
+        
+        losses = matches_played - wins
+
+        # Appliquer les filtres depuis la requête
+        level_min = request.GET.get('level_min')
+        if level_min and team.level < float(level_min):
+            continue
+
+        level_max = request.GET.get('level_max')
+        if level_max and team.level > float(level_max):
+            continue
+
+        rank_max = request.GET.get('rank_max')
+        if rank_max and (team.rank is None or team.rank > int(rank_max)):
+            continue
+
+        matches_min = request.GET.get('matches_min')
+        if matches_min and matches_played < int(matches_min):
+            continue
+
+        matches_max = request.GET.get('matches_max')
+        if matches_max and matches_played > int(matches_max):
+            continue
+
+        wins_min = request.GET.get('wins_min')
+        if wins_min and wins < int(wins_min):
+            continue
+
+        losses_max = request.GET.get('losses_max')
+        if losses_max and losses > int(losses_max):
+            continue
+
+        # Attache les données pour l'affichage
+        team.matches_played = matches_played
+        team.wins = wins
+        team.losses = losses
+        filtered.append(team)
+
+    return render(request, 'teams.html', {
+        'teams': filtered
+    })
 
 
 from django.shortcuts import render, get_object_or_404
@@ -343,6 +437,7 @@ def signup(request):
                         team=team
                     )
 
+        team.update_level()
         return redirect('signup_success')
 
     return render(request, 'signup.html')
@@ -353,8 +448,32 @@ def signup_success(request):
 
 from django.shortcuts import render
 from .admin import FinalRankingAdmin
-from .models import Ranking, Team
-# views.py
+from .models import Ranking, Team, Pool, Tournament
+
+@transaction.atomic
+def generate_pools(request):
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    tournament = Tournament.objects.get(id=tournament_id)
+    teams = Team.objects.filter(tournament=tournament).order_by('level')
+
+    POOL_SIZE = 4
+    num_pools = (len(teams) + POOL_SIZE - 1) // POOL_SIZE
+
+    # Supprimer les pools existants de ce tournoi si nécessaire
+    Pool.objects.filter(teams__in=teams).delete()
+
+    for i in range(num_pools):
+        subset = teams[i * POOL_SIZE:(i + 1) * POOL_SIZE]
+        if not subset:
+            continue
+        pool = Pool.objects.create(name=f"Pool {chr(65 + i)}")
+        pool.teams.set(subset)
+        pool.save()
+
+    return redirect('pool_list')
 
 from django.shortcuts import render
 from .models import Pool, Ranking

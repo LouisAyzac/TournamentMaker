@@ -31,6 +31,15 @@ class Team(models.Model):
     name = models.CharField(max_length=100)
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
     captain = models.OneToOneField('UserProfile', on_delete=models.CASCADE, related_name='captained_team', null=True, blank=True)
+    level = models.FloatField(editable=False, default=0)
+
+    def update_level(self):
+        players = self.players.all()
+        if players.exists():
+            self.level = sum(player.level for player in players) / players.count()
+        else:
+            self.level = 0
+        self.save()
 
 
     
@@ -43,18 +52,18 @@ class Team(models.Model):
 
 class Player(models.Model):
     LEVEL_CHOICES = [
-        ('D', 'Débutant'),
-        ('I', 'Intermédiaire'),
-        ('A', 'Avancé'),
+        (1, 'Débutant'),
+        (2, 'Intermédiaire'),
+        (3, 'Avancé'),
+        (4, 'Expert'),
+        (5, 'Maître'),
     ]
 
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     birth_date = models.DateField()
-    level = models.CharField(max_length=1, choices=LEVEL_CHOICES)
-
+    level = models.PositiveSmallIntegerField(choices=LEVEL_CHOICES, default=1)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
-
     email = models.EmailField(blank=True, null=True) 
     
     def __str__(self):
@@ -261,21 +270,53 @@ def generate_quarter_finals():
 
 
 def assign_teams_to_pools(tournament):
-    teams = list(tournament.teams.all())
-    random.shuffle(teams)
+    teams = list(tournament.teams.all().order_by('-level'))  # 🔽 Trie par niveau décroissant
+    pool_names = ['A', 'B', 'C', 'D']  # ou adapte dynamiquement
+    POOL_SIZE = 4
+    num_pools = (len(teams) + POOL_SIZE - 1) // POOL_SIZE
 
-    pool_names = ['A', 'B', 'C', 'D']
+    # Si plus de pools sont nécessaires, ajoute dynamiquement :
+    while len(pool_names) < num_pools:
+        pool_names.append(chr(65 + len(pool_names)))  # 'E', 'F', ...
+
     pools = []
-    for name in pool_names:
-        pool, created = Pool.objects.get_or_create(name=name, defaults={'max_size': 4})
+    for name in pool_names[:num_pools]:
+        pool, _ = Pool.objects.get_or_create(name=name, defaults={'max_size': POOL_SIZE})
         pool.teams.clear()
         pools.append(pool)
 
-    for i, team in enumerate(teams):
-        pool_index = i // 4  # 4 équipes par pool
-        if pool_index < len(pools):
-            pools[pool_index].teams.add(team)
+    direction = 1  # 1 = vers la droite, -1 = vers la gauche
+    index = 0
+
+    for team in teams:
+        pools[index].teams.add(team)
+
+        # Avance dans la direction
+        if direction == 1:
+            if index < num_pools - 1:
+                index += 1
+            else:
+                direction = -1
+                index -= 1
+        else:
+            if index > 0:
+                index -= 1
+            else:
+                direction = 1
+                index += 1
 
     for pool in pools:
         pool.save()
         
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Player)
+def update_team_level_on_player_save(sender, instance, **kwargs):
+    if instance.team:
+        instance.team.update_level()
+
+@receiver(post_delete, sender=Player)
+def update_team_level_on_player_delete(sender, instance, **kwargs):
+    if instance.team:
+        instance.team.update_level()

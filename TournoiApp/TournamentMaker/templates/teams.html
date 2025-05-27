@@ -6,11 +6,51 @@
   <!-- Champ de recherche -->
   <input type="text" id="searchInput" onkeyup="searchTeam()" placeholder="Rechercher une équipe...">
 
+  <form method="get" style="margin-bottom: 1em;">
+    <label>Niveau min :
+      <input type="number" name="level_min" step="0.1" value="{{ request.GET.level_min }}">
+    </label>
+
+    <label>Niveau max :
+      <input type="number" name="level_max" step="0.1" value="{{ request.GET.level_max }}">
+    </label>
+
+    <label>Classement :
+      <input type="number" name="rank_max" value="{{ request.GET.rank_max }}">
+    </label>
+
+    <label>Matchs joués min :
+      <input type="number" name="matches_min" value="{{ request.GET.matches_min }}">
+    </label>
+
+    <label>Matchs joués max :
+      <input type="number" name="matches_max" value="{{ request.GET.matches_max }}">
+    </label>
+
+    <label>Victoires :
+      <input type="number" name="wins_min" value="{{ request.GET.wins_min }}">
+    </label>
+
+    <label>Défaites :
+      <input type="number" name="losses_max" value="{{ request.GET.losses_max }}">
+    </label>
+
+    <button type="submit">Filtrer</button>
+    <a href="{% url 'teams' %}"><button type="button">Réinitialiser</button></a>
+  </form>
+
+  
+
   <ul id="teamsList">
     {% for team in teams %}
       <li class="team">
-        <!-- Lien vers la page de détail de l'équipe -->
         <a href="{% url 'team_detail' team.id %}">{{ team.name }}</a>
+        <br>
+        Niveau : {{ team.level }} |
+        Classement : {{ team.rank|default:"N/A" }} |
+        Matchs joués : {{ team.matches_played }} |
+        Victoires : {{ team.wins }}
+        Défaites : {{ team.losses }}
       </li>
     {% empty %}
       <li>Aucune équipe trouvée.</li>
