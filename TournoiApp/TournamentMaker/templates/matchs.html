@@ -1,0 +1,147 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<h2>Matchs</h2>
+
+<!-- Style local -->
+<style>
+    thead th {
+        background-color: #f2f2f2 !important;
+        border: 1px solid #ddd;
+    }
+    tbody td {
+        border: 1px solid #ddd;
+    }
+</style>
+
+<!-- Filtres par statut -->
+<div class="mb-3">
+    <strong>Filtrer par statut :</strong><br>
+    {% for code, label, btn_class in statuts %}
+        <a href="?statut={{ code }}{% if selected_phase %}&phase={{ selected_phase }}{% endif %}"
+           class="btn btn-sm {% if selected_statut == code %}
+                {% if btn_class == 'btn-outline-warning' %}btn-warning text-white
+                {% elif btn_class == 'btn-outline-success' %}btn-success text-white
+                {% elif btn_class == 'btn-outline-secondary' %}btn-secondary text-white
+                {% else %}{{ btn_class }}
+                {% endif %}
+           {% else %}{{ btn_class }}{% endif %}">
+            {{ label }}
+        </a>
+    {% endfor %}
+    <a href="{% url 'matchs' %}{% if selected_phase %}?phase={{ selected_phase }}{% endif %}"
+       class="btn btn-sm {% if not selected_statut %}btn-dark text-white{% else %}btn-outline-dark{% endif %}">
+        Tout
+    </a>
+</div>
+
+<!-- Filtres par phase -->
+<div class="mb-3">
+    <strong>Filtrer par phase :</strong><br>
+    {% for code, label in phases %}
+        <a href="?phase={{ code }}{% if selected_statut %}&statut={{ selected_statut }}{% endif %}"
+           class="btn btn-sm {% if selected_phase == code %}btn-primary text-white{% else %}btn-outline-primary{% endif %}">
+            {{ label }}
+        </a>
+    {% endfor %}
+    <a href="{% url 'matchs' %}{% if selected_statut %}?statut={{ selected_statut }}{% endif %}"
+       class="btn btn-sm {% if not selected_phase %}btn-dark text-white{% else %}btn-outline-dark{% endif %}">
+        Toutes les phases
+    </a>
+</div>
+
+<!-- Table des matchs -->
+{% if matchs %}
+<table class="table table-bordered table-sm text-center align-middle" style="table-layout: fixed; width: 100%;">
+<thead>
+    <tr>
+        <th style="width: 20%;">Match</th>
+        {% if selected_statut in "ECT" %}
+            <th style="width: 20%;">Score</th>
+        {% endif %}
+        {% if selected_statut == "T" %}
+            <th style="width: 15%;">Vainqueur</th>
+        {% endif %}
+        <th style="width: 15%;">Phase</th>
+        <th style="width: 10%;">Terrain</th>
+        {% if selected_statut == "T" %}
+            <th style="width: 10%;">Début</th>
+            <th style="width: 10%;">Fin</th>
+        {% else %}
+            <th style="width: 10%;">Heure de début</th>
+            <th style="width: 10%;">Statut</th>
+        {% endif %}
+    </tr>
+</thead>
+
+<tbody>
+    {% for match in matchs %}
+    <tr>
+        <td>
+            <a href="{% url 'team_detail' match.team_a.id %}" style="color: red; font-weight: bold;">{{ match.team_a }}</a>
+            <b>vs</b>
+            <a href="{% url 'team_detail' match.team_b.id %}" style="color: blue; font-weight: bold;">{{ match.team_b }}</a>
+        </td>
+
+        {% if selected_statut in "ECT" %}
+        <td>
+            {% for set in match.score_sets %}
+                <span>
+                    Set {{ set.set_number }} :
+                    <span style="color: red; font-weight: bold;">{{ set.team_a_score }}</span>
+                    -
+                    <span style="color: blue; font-weight: bold;">{{ set.team_b_score }}</span>
+                </span><br>
+            {% endfor %}
+        </td>
+        {% endif %}
+
+        {% if selected_statut == "T" %}
+            <td>
+                {% if match.winner_team %}
+                    <span style="color: {% if match.winner_team == match.team_a %}red{% else %}blue{% endif %}; font-weight: bold;">
+                        {{ match.winner_team }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        {% endif %}
+
+        <td>{{ match.get_phase_display }}</td>
+
+        <td>
+            {% if match.terrain_number %}
+                Terrain {{ match.terrain_number }}
+            {% else %}
+                À définir
+            {% endif %}
+        </td>
+
+        {% if selected_statut == "T" %}
+            <td>
+                {% if match.start_time %}
+                    {{ match.start_time|time:"H:i" }}
+                {% else %} - {% endif %}
+            </td>
+            <td>
+                {% if match.end_time %}
+                    {{ match.end_time|time:"H:i" }}
+                {% else %} - {% endif %}
+            </td>
+        {% else %}
+            <td>
+                {% if match.start_time %}
+                    {{ match.start_time|time:"H:i" }}
+                {% else %}À définir{% endif %}
+            </td>
+            <td>{{ match.get_statut_display }}</td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>Aucun match trouvé.</p>
+{% endif %}
+{% endblock %}
