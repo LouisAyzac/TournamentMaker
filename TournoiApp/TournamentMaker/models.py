@@ -22,6 +22,33 @@ class Team(models.Model):
     def player_count(self):
         return self.players.count()
 
+    def win_percentage(self):
+        total_matches = self.matches_as_team_a.count() + self.matches_as_team_b.count()
+        if total_matches == 0:
+            return 0
+        wins = 0
+        for match in self.matches_as_team_a.all():
+            if match.winner() == self:
+                wins += 1
+        for match in self.matches_as_team_b.all():
+            if match.winner() == self:
+                wins += 1
+        return (wins / total_matches) * 100
+
+    def get_last_results(self, n=5):
+        matches = list(self.matches_as_team_a.all()) + list(self.matches_as_team_b.all())
+        matches.sort(key=lambda x: x.id, reverse=True)
+        results = []
+        for match in matches[:n]:
+            winner = match.winner()
+            if winner == self:
+                results.append('W')
+            elif winner is None:
+                results.append('D')
+            else:
+                results.append('L')
+        return results
+
 
 class Player(models.Model):
     LEVEL_CHOICES = [
