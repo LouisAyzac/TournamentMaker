@@ -1,43 +1,102 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-  <h2>Liste des équipes</h2>
+<div class="teams-container animate__animated animate__fadeIn">
+  <div class="teams-header">
+    <h2 class="section-title"><i class="fas fa-tshirt"></i> Liste des Équipes</h2>
 
-  <!-- Champ de recherche -->
-  <input type="text" id="searchInput" onkeyup="searchTeam()" placeholder="Rechercher une équipe...">
+    <div class="search-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="searchInput" onkeyup="searchTeam()"
+             placeholder="Rechercher une équipe..." class="search-input">
+      <div class="filter-buttons">
+        <button class="filter-btn active" onclick="filterTeams('all')">Toutes</button>
+        <button class="filter-btn" onclick="filterTeams('men')">Masculin</button>
+        <button class="filter-btn" onclick="filterTeams('women')">Féminin</button>
+        <button class="filter-btn" onclick="filterTeams('mixed')">Mixte</button>
+      </div>
+    </div>
+  </div>
 
-  <ul id="teamsList">
+  <div class="teams-grid" id="teamsList">
     {% for team in teams %}
-      <li class="team">
-        <!-- Lien vers la page de détail de l'équipe -->
-        <a href="{% url 'team_detail' team.id %}">{{ team.name }}</a>
-      </li>
+    <a href="{% url 'team_detail' team.id %}" class="team-card">
+      <div class="team-banner">
+        <div class="team-logo-container">
+          {% if team.logo %}
+            <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="team-logo">
+          {% else %}
+            <div class="default-logo">
+              <i class="fas fa-volleyball-ball"></i>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="team-info">
+        <h3 class="team-name">{{ team.name }}</h3>
+
+        <div class="team-stats">
+          <div class="stat">
+            <i class="fas fa-trophy"></i>
+            <span>{{ team.wins }}V</span>
+          </div>
+          <div class="stat">
+            <i class="fas fa-times"></i>
+            <span>{{ team.losses }}D</span>
+          </div>
+          <div class="stat">
+            <i class="fas fa-chart-line"></i>
+            <span>{{ team.win_percentage }}%</span>
+          </div>
+        </div>
+
+        <div class="team-players-count">
+          <i class="fas fa-users"></i> {{ team.player_count }} joueurs
+        </div>
+      </div>
+    </a>
     {% empty %}
-      <li>Aucune équipe trouvée.</li>
+    <div class="no-teams">
+      <i class="fas fa-exclamation-circle"></i>
+      <p>Aucune équipe trouvée</p>
+    </div>
     {% endfor %}
-  </ul>
+  </div>
+</div>
 
+<script>
+  function searchTeam() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const teams = document.querySelectorAll('.team-card');
 
-  <script>
-    function searchTeam() {
-      // Récupérer la valeur de recherche
-      var input = document.getElementById('searchInput');
-      var filter = input.value.toLowerCase();
-
-      // Récupérer la liste des équipes
-      var teamsList = document.getElementById('teamsList');
-      var teams = teamsList.getElementsByClassName('team');
-
-      // Parcourir les équipes et les afficher ou les masquer
-      for (var i = 0; i < teams.length; i++) {
-        var teamName = teams[i].textContent || teams[i].innerText;
-        if (teamName.toLowerCase().indexOf(filter) > -1) {
-          teams[i].style.display = ""; // Afficher l'équipe
-        } else {
-          teams[i].style.display = "none"; // Masquer l'équipe
-        }
+    teams.forEach(team => {
+      const teamName = team.querySelector('.team-name').textContent.toLowerCase();
+      if (teamName.includes(filter)) {
+        team.style.display = "block";
+      } else {
+        team.style.display = "none";
       }
-    }
-  </script>
+    });
+  }
 
+  function filterTeams(category) {
+    const teams = document.querySelectorAll('.team-card');
+    const buttons = document.querySelectorAll('.filter-btn');
+
+    buttons.forEach(btn => {
+      btn.classList.toggle('active',
+        btn.textContent.toLowerCase().includes(category) || category === 'all');
+    });
+
+    teams.forEach(team => {
+      if (category === 'all') {
+        team.style.display = "block";
+      } else {
+        team.style.display = "none";
+      }
+    });
+  }
+</script>
 {% endblock %}
