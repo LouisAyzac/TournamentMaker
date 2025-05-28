@@ -43,10 +43,10 @@ class Team(models.Model):
             return 0
         wins = 0
         for match in self.matches_as_team_a.all():
-            if match.winner() == self:
+            if match.winner_team() == self:
                 wins += 1
         for match in self.matches_as_team_b.all():
-            if match.winner() == self:
+            if match.winner_team() == self:
                 wins += 1
         return (wins / total_matches) * 100
 
