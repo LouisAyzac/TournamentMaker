@@ -1,46 +1,89 @@
-<!doctype html>
-<html lang="fr">
-  <body>
-    {% extends "base_generic.html" %}
+{% extends "base_generic.html" %}
 
-    {% block content %}
-    <h2>Liste des Joueurs</h2>
+{% block content %}
+<div class="players-container animate__animated animate__fadeIn">
+  <div class="players-header">
+    <h2 class="section-title"><i class="fas fa-users"></i> Liste des Joueurs</h2>
+    
+    <!-- Barre de recherche améliorée -->
+    <div class="search-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="searchInput" onkeyup="searchPlayer()" 
+             placeholder="Rechercher un joueur..." class="search-input">
+      <div class="filter-buttons">
+        <button class="filter-btn active" onclick="filterPlayers('all')">Tous</button>
+        <button class="filter-btn" onclick="filterPlayers('pro')">Pro</button>
+        <button class="filter-btn" onclick="filterPlayers('amateur')">Amateur</button>
+        <button class="filter-btn" onclick="filterPlayers('junior')">Junior</button>
+      </div>
+    </div>
+  </div>
 
-    <!-- Champ de recherche -->
-    <input type="text" id="searchInput" onkeyup="searchPlayer()" placeholder="Rechercher un joueur par nom...">
+  <!-- Grille des joueurs -->
+  <div class="players-grid" id="playersList">
+    {% for player in players %}
+    <a href="{% url 'player_detail' player.id %}" class="player-card {{ player.level|lower }}">
+      <div class="player-image">
+        {% if player.photo %}
+          <img src="{{ player.photo.url }}" alt="{{ player.first_name }} {{ player.last_name }}">
+        {% else %}
+          <div class="default-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+        {% endif %}
+        <span class="player-age">{{ player.birth_date }}</span>
+      </div>
+      
+      <div class="player-info">
+        <h3 class="player-name">{{ player.first_name }} <strong>{{ player.last_name }}</strong></h3>
+        <div class="player-level {{ player.level|lower }}">
+          {{ player.get_level_display }}
+        </div>
+        
+      </div>
+    </a>
+    {% empty %}
+    <div class="no-players">
+      <i class="fas fa-exclamation-circle"></i>
+      <p>Aucun joueur trouvé</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
 
-    <ul id="playersList">
-      {% for player in players %}
-        <a href="{% url 'player_detail' player.id %}">
-          <li class="player">{{ player.first_name }} - {{ player.last_name }}</li>
-        </a>
-      {% empty %}
-        <li>Aucun joueur trouvé.</li>
-      {% endfor %}
-    </ul>
+<script>
+  function searchPlayer() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const players = document.querySelectorAll('.player-card');
 
-    <script>
-      function searchPlayer() {
-        // Récupérer la valeur de recherche
-        var input = document.getElementById('searchInput');
-        var filter = input.value.toLowerCase();
-
-        // Récupérer la liste des joueurs
-        var playersList = document.getElementById('playersList');
-        var players = playersList.getElementsByClassName('player');
-
-        // Parcourir les joueurs et les afficher ou les masquer
-        for (var i = 0; i < players.length; i++) {
-          var playerName = players[i].textContent || players[i].innerText;
-          if (playerName.toLowerCase().indexOf(filter) > -1) {
-            players[i].style.display = ""; // Afficher le joueur
-          } else {
-            players[i].style.display = "none"; // Masquer le joueur
-          }
-        }
+    players.forEach(player => {
+      const playerName = player.querySelector('.player-name').textContent.toLowerCase();
+      if (playerName.includes(filter)) {
+        player.style.display = "block";
+      } else {
+        player.style.display = "none";
       }
-    </script>
+    });
+  }
 
-    {% endblock %}
-  </body>
-</html>
+  function filterPlayers(level) {
+    const players = document.querySelectorAll('.player-card');
+    const buttons = document.querySelectorAll('.filter-btn');
+    
+    // Gestion des boutons actifs
+    buttons.forEach(btn => {
+      btn.classList.toggle('active', btn.textContent.toLowerCase().includes(level) || level === 'all');
+    });
+
+    // Filtrage des joueurs
+    players.forEach(player => {
+      if (level === 'all' || player.classList.contains(level)) {
+        player.style.display = "block";
+      } else {
+        player.style.display = "none";
+      }
+    });
+  }
+</script>
+{% endblock %}

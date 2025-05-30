@@ -4,11 +4,19 @@
   <h2>Détails de l'équipe</h2>
   <p><strong>Nom :</strong> {{ team.name }}</p>
 
-  <p><strong>Classement :</strong> 
+  <p><strong>Classement par pool :</strong> 
     {% if ranking %}
       Rang {{ ranking.rank }}
     {% else %}
       Non classée
+    {% endif %}
+  </p>
+
+  <p><strong>Classement final :</strong>
+    {% if final_rank %}
+      Rang final {{ final_rank }}
+    {% else %}
+      Non classé dans le classement final
     {% endif %}
   </p>
 

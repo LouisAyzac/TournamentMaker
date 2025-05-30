@@ -23,6 +23,12 @@ urlpatterns = [
     path('signup/', views.signup, name='signup'),
     path('signup/success/', views.signup_success, name='signup_success'),
     path('matchs-en-cours/', views.matchs_en_cours, name='matchs_en_cours'),
+    
+    
+
+    path('classement/final/', views.classement_final_view, name='classement_final'),
+    path('classement/final/', views.classement_final_view, name='rankings'),
+
     path('accounts/reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
         template_name='registration/password_reset_confirm.html'
     ), name='password_reset_confirm'),
@@ -31,5 +37,10 @@ urlpatterns = [
         template_name='registration/password_reset_complete.html'
     ), name='password_reset_complete'),
 
+
+    path('matchs/', views.matchs, name='matchs'),
+
+
+    
 ]
 

@@ -1,0 +1,39 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h2>Classement Final</h2>
+
+  <!-- Bouton retour -->
+  <div style="margin-bottom: 20px;">
+    <a href="{% url 'rankings_list' %}" class="btn btn-secondary">← Retour au classement par pool</a>
+  </div>
+
+  {% if final_ranking %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Rang</th>
+          <th>Équipe</th>
+          <th>Points totaux</th>
+          <th>Victoires en poule</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for team, data in final_ranking %}
+          <tr>
+            <td>{{ data.rank }}</td>
+            <td>
+              <a href="{% url 'team_detail' team.id %}">
+                {{ team.name }}
+              </a>
+            </td>
+            <td>{{ data.wins }}</td>
+            <td>{{ data.pool_wins }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Aucun classement final disponible.</p>
+  {% endif %}
+{% endblock %}
