@@ -287,6 +287,17 @@ from django.contrib.auth.models import User
 from django.utils.dateparse import parse_date
 from django.contrib import messages
 
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.shortcuts import render, redirect
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.db import IntegrityError
+from django.utils.dateparse import parse_date
+from .models import Team, Player, Tournament, UserProfile
+
+# Utilise exactement ton dictionnaire
 LEVEL_MAP = {
     'débutant': 1,
     'intermédiaire': 2,
@@ -294,12 +305,14 @@ LEVEL_MAP = {
     'expert': 4,
     'maître': 5,
 }
-from django.contrib.sites.models import Site
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.shortcuts import render, redirect
+from .models import Tournament, Team, Player, UserProfile
 from django.utils.dateparse import parse_date
 
 def signup(request):
@@ -322,7 +335,6 @@ def signup(request):
                 birthdate = parse_date(birthdate_str)
                 level = LEVEL_MAP.get(level_str.lower(), 1)
 
-                # Crée le joueur
                 player = Player.objects.create(
                     first_name=first_name,
                     last_name=last_name,
@@ -335,12 +347,18 @@ def signup(request):
                 if i == 1 and email:  # Le premier joueur est le capitaine
                     username = email
                     user = User.objects.create_user(username=username, email=email)
+                    print(f"Team : {team} (id: {team.id if team else 'None'})")
+
                     user_profile = UserProfile.objects.create(user=user, level=level, team=team)
+
+                    # Associer le capitaine à l'équipe
+                    team.captain = user_profile
+                    team.save()
 
                     # Envoie un mail pour définir le mot de passe
                     uid = urlsafe_base64_encode(force_bytes(user.pk))
                     token = default_token_generator.make_token(user)
-                    domain = '127.0.0.1:8000'  # ou localhost:8000 si tu préfères
+                    domain = '127.0.0.1:8000'
                     link = f"http://{domain}/accounts/reset/{uid}/{token}/"
 
                     subject = f"Bienvenue capitaine de l'équipe {team.name} !"
@@ -361,8 +379,8 @@ L'équipe du tournoi
 
     return render(request, 'signup.html')
 
-
 def signup_success(request):
+    print("Page de succès atteinte.")
     return render(request, 'signup_success.html')
 
 
