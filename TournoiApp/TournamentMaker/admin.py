@@ -10,10 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.admin import SimpleListFilter
 
-
-admin.site.register(Tournament)
 admin.site.register(Team)
-
 
 @admin.register(Pool)
 class PoolAdmin(admin.ModelAdmin):
@@ -69,17 +66,38 @@ class PoolAdmin(admin.ModelAdmin):
 
 
 class MatchForm(forms.ModelForm):
+    WINNER_CHOICES = [
+        ('', '---------'),
+        ('A', 'Team A'),
+        ('B', 'Team B'),
+    ]
+
+    winner_choice = forms.ChoiceField(
+        choices=WINNER_CHOICES,
+        required=False,
+        label="Vainqueur",
+        help_text="Choisir Team A ou Team B"
+    )
+
     class Meta:
         model = Match
-        fields = '__all__'
+        exclude = ['winner_side']  # Masque le champ technique dans le formulaire admin
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        pool = None
-        if self.instance and self.instance.pk:
-            pool = self.instance.pool
-        else:
+        instance = kwargs.get('instance')
+
+        # Initialise le choix vainqueur selon la valeur en base
+        if instance and instance.team_a and instance.team_b:
+            if instance.winner_side == 'A':
+                self.fields['winner_choice'].initial = 'A'
+            elif instance.winner_side == 'B':
+                self.fields['winner_choice'].initial = 'B'
+
+        # Restreint les équipes aux équipes de la pool
+        pool = instance.pool if instance and instance.pk else None
+        if not pool:
             pool_id = self.data.get('pool') or (self.initial.get('pool') if self.initial else None)
             if pool_id:
                 try:
@@ -92,25 +110,32 @@ class MatchForm(forms.ModelForm):
             self.fields['team_a'].queryset = teams_qs
             self.fields['team_b'].queryset = teams_qs
 
-            if not self.instance.pk:
-                teams_list = list(teams_qs)
-                if len(teams_list) >= 2:
-                    team_a, team_b = random.sample(teams_list, 2)
-                    self.fields['team_a'].initial = team_a.pk
-                    self.fields['team_b'].initial = team_b.pk
+            if not instance.pk and len(teams_qs) >= 2:
+                team_a, team_b = random.sample(list(teams_qs), 2)
+                self.fields['team_a'].initial = team_a.pk
+                self.fields['team_b'].initial = team_b.pk
 
     def clean(self):
         cleaned_data = super().clean()
-        pool = cleaned_data.get('pool')
         team_a = cleaned_data.get('team_a')
         team_b = cleaned_data.get('team_b')
+        choice = cleaned_data.get('winner_choice')
 
-        if pool and (team_a not in pool.teams.all() or team_b not in pool.teams.all()):
-            raise ValidationError("Les équipes doivent appartenir à la pool sélectionnée.")
-        if team_a == team_b:
+        # Équipes différentes
+        if team_a and team_b and team_a == team_b:
             raise ValidationError("Les équipes doivent être différentes.")
 
+        # Stocke le vainqueur dans winner_side
+        if choice == 'A':
+            self.instance.winner_side = 'A'
+        elif choice == 'B':
+            self.instance.winner_side = 'B'
+        else:
+            self.instance.winner_side = None
+
         return cleaned_data
+
+
 
 
 class PoolFilter(SimpleListFilter):
@@ -149,7 +174,8 @@ class PhaseFilter(SimpleListFilter):
 class MatchAdmin(admin.ModelAdmin):
     form = MatchForm
     list_display = (
-        'phase', 'pool', 'team_a', 'team_b', 'en_cours',
+        'phase', 'pool', 'team_a', 'team_b', 'statut',
+        'start_time', 'end_time', 'terrain_number','winner_team',
         'set1_team_a', 'set1_team_b',
         'set2_team_a', 'set2_team_b',
         'set3_team_a', 'set3_team_b',
@@ -157,7 +183,7 @@ class MatchAdmin(admin.ModelAdmin):
         'set5_team_a', 'set5_team_b',
     )
     list_editable = (
-        'en_cours',
+        'statut', 'start_time', 'end_time', 'terrain_number',
         'set1_team_a', 'set1_team_b',
         'set2_team_a', 'set2_team_b',
         'set3_team_a', 'set3_team_b',
@@ -165,6 +191,8 @@ class MatchAdmin(admin.ModelAdmin):
         'set5_team_a', 'set5_team_b',
     )
     list_filter = (PoolFilter, PhaseFilter)
+
+
 
 
 @admin.register(Player)
@@ -324,6 +352,9 @@ def auto_generate_final(sender, instance, **kwargs):
     Match.objects.create(pool=None, team_a=losers[0], team_b=losers[1], phase='third_place')
 
 from django.db import models
+from django.contrib import admin
+from .models import Ranking, Team, Match  # à adapter selon ton projet
+
 class FinalRankingProxy(Ranking):
     class Meta:
         proxy = True
@@ -332,8 +363,7 @@ class FinalRankingProxy(Ranking):
 
 @admin.register(FinalRankingProxy)
 class FinalRankingAdmin(admin.ModelAdmin):
-    list_display = ('team', 'final_rank_display', 'wins_display')
-    # Ne pas mettre ordering ici car final_rank n'est pas champ réel
+    list_display = ('team', 'final_rank_display', 'wins_display', 'pool_wins_display')
 
     def get_queryset(self, request):
         return super().get_queryset(request)
@@ -342,34 +372,68 @@ class FinalRankingAdmin(admin.ModelAdmin):
         final_ranking = self.get_final_ranking()
         return final_ranking.get(obj.team.id, {}).get('rank', obj.rank)
     final_rank_display.short_description = "Rang final"
-    final_rank_display.admin_order_field = 'rank'  # optionnel si 'rank' est champ réel
+    
 
     def wins_display(self, obj):
         final_ranking = self.get_final_ranking()
         return final_ranking.get(obj.team.id, {}).get('wins', 0)
-    wins_display.short_description = "Victoires"
+    wins_display.short_description = "Points totaux"
+
+    def pool_wins_display(self, obj):
+        final_ranking = self.get_final_ranking()
+        return final_ranking.get(obj.team.id, {}).get('pool_wins', 0)
+    pool_wins_display.short_description = "Victoires en poule"
 
     def get_final_ranking(self):
         teams = Team.objects.all()
-        wins_count = {team.id: 0 for team in teams}
+        points = {team.id: 0 for team in teams}
+        pool_wins = {team.id: 0 for team in teams}
 
-        matches = Match.objects.filter(phase__in=['pool', 'quarter', 'semi', 'final', 'third_place'])
+        matches = Match.objects.all()
         for match in matches:
             winner = self.get_winner(match)
+            loser = None
             if winner:
-                wins_count[winner.id] += 1
+                loser = match.team_a if winner == match.team_b else match.team_b
 
-        # Trie les équipes par nombre de victoires décroissant
-        sorted_teams = sorted(teams, key=lambda t: wins_count[t.id], reverse=True)
+            phase = match.phase
+            if phase == 'final':
+                if winner:
+                    points[winner.id] += 100
+                if loser:
+                    points[loser.id] += 90
+            elif phase == 'third_place':
+                if winner:
+                    points[winner.id] += 80
+                if loser:
+                    points[loser.id] += 70
+            elif phase == 'semi':
+                if winner:
+                    points[winner.id] += 60
+                if loser:
+                    points[loser.id] += 50
+            elif phase == 'quarter':
+                if winner:
+                    points[winner.id] += 40
+                if loser:
+                    points[loser.id] += 30
+            elif phase == 'pool':
+                if winner:
+                    points[winner.id] += 3
+                    pool_wins[winner.id] += 1
+
+        sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
 
         final_ranking = {}
         rank = 1
         for team in sorted_teams:
             final_ranking[team.id] = {
                 'rank': rank,
-                'wins': wins_count[team.id],
+                'wins': points[team.id],
+                'pool_wins': pool_wins[team.id],
             }
             rank += 1
+
         return final_ranking
 
     def get_winner(self, match):
@@ -389,3 +453,14 @@ class FinalRankingAdmin(admin.ModelAdmin):
             return match.team_b
         else:
             return None
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'team')
+
+@admin.register(Tournament)
+class TournamentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'department', 'address', 'is_indoor', 'start_date', 'end_date', 'sport')
+    list_filter = ('sport', 'is_indoor', 'start_date', 'end_date')
+    search_fields = ('name', 'department', 'address')
