@@ -2,6 +2,9 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 
+from .views import create_tournament
+
+
 
 urlpatterns = [
 
@@ -39,6 +42,8 @@ urlpatterns = [
 
 
     path('matchs/', views.matchs, name='matchs'),
+
+    path('create_tournament/', create_tournament, name='create_tournament'),
 
 
     

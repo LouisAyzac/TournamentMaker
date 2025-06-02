@@ -455,4 +455,38 @@ def classement_final_view(request):
 
     return render(request, 'classement_final.html', context)
 
+from django.shortcuts import render, redirect
+from .models import Tournament
+from datetime import datetime
 
+def create_tournament(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        department = request.POST.get('department')
+        address = request.POST.get('address')
+        is_indoor = bool(request.POST.get('is_indoor'))
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        sport = request.POST.get('sport')
+        team_count = request.POST.get('team_count')
+        players_per_team = request.POST.get('players_per_team')
+        pool_count = request.POST.get('pool_count')
+
+        tournament = Tournament.objects.create(
+            name=name,
+            department=department,
+            address=address,
+            is_indoor=is_indoor,
+            start_date=start_date,
+            end_date=end_date,
+            sport=sport,
+        )
+
+        # Tu peux utiliser team_count, players_per_team, pool_count ensuite ici pour générer
+        # automatiquement les équipes / poules (optionnel pour l’instant)
+
+        request.session['selected_tournament_id'] = tournament.id
+        request.session['selected_tournament_name'] = tournament.name
+        return redirect('dashboard')
+
+    return render(request, 'create_tournament.html')
