@@ -10,11 +10,28 @@ from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.admin import SimpleListFilter
 
+<<<<<<< HEAD
 admin.site.register(Team)
+=======
+
+class PoolTournamentFilter(SimpleListFilter):
+    title = 'Tournoi'
+    parameter_name = 'tournament'
+
+    def lookups(self, request, model_admin):
+        tournaments = Tournament.objects.all()
+        return [(t.id, t.name) for t in tournaments]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(teams__tournament__id=self.value()).distinct()
+        return queryset
+>>>>>>> louis
 
 @admin.register(Pool)
 class PoolAdmin(admin.ModelAdmin):
-    list_display = ('name', 'current_team_count', 'list_teams')
+    list_display = ('name', 'tournament', 'current_team_count', 'list_teams')  # ➕ tournament ici
+    list_filter = ('tournament',)  # tu peux supprimer PoolTournamentFilter si plus utilisé
     filter_horizontal = ('teams',)
     readonly_fields = ('display_teams',)
     actions = ['generate_matches']
@@ -170,12 +187,31 @@ class PhaseFilter(SimpleListFilter):
         return queryset
 
 
+class TournamentFilter(SimpleListFilter):
+    title = 'Tournoi'
+    parameter_name = 'tournament'
+
+    def lookups(self, request, model_admin):
+        tournaments = Tournament.objects.all()
+        return [(t.id, t.name) for t in tournaments]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            # Filtre tous les matchs où team_a OU team_b appartient à ce tournoi
+            return queryset.filter(
+                models.Q(team_a__tournament__id=self.value()) |
+                models.Q(team_b__tournament__id=self.value())
+            )
+        return queryset
+
+
+
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
     form = MatchForm
     list_display = (
         'phase', 'pool', 'team_a', 'team_b', 'statut',
-        'start_time', 'end_time', 'terrain_number','winner_team',
+        'start_time', 'end_time', 'terrain_number', 'winner_team',
         'set1_team_a', 'set1_team_b',
         'set2_team_a', 'set2_team_b',
         'set3_team_a', 'set3_team_b',
@@ -190,7 +226,11 @@ class MatchAdmin(admin.ModelAdmin):
         'set4_team_a', 'set4_team_b',
         'set5_team_a', 'set5_team_b',
     )
-    list_filter = (PoolFilter, PhaseFilter)
+
+    list_filter = (PoolFilter, PhaseFilter, TournamentFilter)  # ajoute TournamentFilter ici
+
+
+
 
 
 
@@ -198,6 +238,7 @@ class MatchAdmin(admin.ModelAdmin):
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
     search_fields = ['first_name', 'last_name', 'team__name']
+    
 
 
 @admin.register(Ranking)
@@ -213,6 +254,10 @@ class RankingAdmin(admin.ModelAdmin):
 class TeamAdmin(admin.ModelAdmin):
     list_display = ('name', 'tournament', 'player_count')
     search_fields = ('name', 'tournament__name')
+    list_filter = ('tournament',)
+
+admin.site.register(Team, TeamAdmin)
+
 
 
 class UserProfileInline(admin.StackedInline):
@@ -364,6 +409,7 @@ class FinalRankingProxy(Ranking):
 @admin.register(FinalRankingProxy)
 class FinalRankingAdmin(admin.ModelAdmin):
     list_display = ('team', 'final_rank_display', 'wins_display', 'pool_wins_display')
+    list_filter = ['team__pools', 'team__tournament']
 
     def get_queryset(self, request):
         return super().get_queryset(request)
@@ -464,3 +510,4 @@ class TournamentAdmin(admin.ModelAdmin):
     list_display = ('name', 'department', 'address', 'is_indoor', 'start_date', 'end_date', 'sport')
     list_filter = ('sport', 'is_indoor', 'start_date', 'end_date')
     search_fields = ('name', 'department', 'address')
+

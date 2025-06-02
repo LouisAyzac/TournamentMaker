@@ -208,8 +208,7 @@ h1, h2, h3, h4, h5, h6 {
       font-size: 1rem;
   }
 }
-<<<<<<< HEAD
-=======
+
 
 @keyframes pulse {
   0% { transform: scale(1); }
@@ -1144,4 +1143,28 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--primary-color);
   opacity: 0.7;
 }
->>>>>>> Florian
+
+
+/* Thème clair spécial pour la page de création de tournoi */
+.tournament-page {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --primary-color: #1a1a1a;
+  --secondary-color: #333;
+  --highlight-color: #ffcc00;
+  --light-color: #f8f8f8;
+  --dark-color: #000000;
+
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+/* Applique les textes noirs à tous les éléments internes */
+.tournament-page *,
+.tournament-page *::before,
+.tournament-page *::after {
+  color: var(--text-color) !important;
+  background-color: transparent;
+  border-color: var(--text-color);
+}
+

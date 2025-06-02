@@ -76,7 +76,7 @@ class Player(models.Model):
 
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    birth_date = models.DateField()
+    birth_date = models.DateField(null=True, blank=True)
     level = models.CharField(max_length=1, choices=LEVEL_CHOICES)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     email = models.EmailField(blank=True, null=True)
@@ -85,13 +85,21 @@ class Player(models.Model):
         return f"{self.first_name} {self.last_name}"
 
 
+
 class Pool(models.Model):
     name = models.CharField(max_length=50)
     max_size = models.PositiveIntegerField(default=4)
     teams = models.ManyToManyField('Team', blank=True, related_name='pools')
 
+    tournament = models.ForeignKey(
+        'Tournament',
+        on_delete=models.CASCADE,
+        related_name='pools'
+    )
+
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.tournament.name})"
+
 
     def add_teams_randomly(self, teams_to_add):
         assigned_team_ids = set(
@@ -288,3 +296,6 @@ def assign_teams_to_pools(tournament):
         if i // 4 < len(pools):
             pools[i // 4].teams.add(team)
     for p in pools: p.save()
+
+
+
