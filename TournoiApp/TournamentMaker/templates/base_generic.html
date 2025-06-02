@@ -52,9 +52,6 @@
         </a>
 
         {% if request.session.selected_tournament_id %}
-            <a href="{% url 'players' %}" class="nav-button">
-                <i class="fas fa-users"></i> Joueurs
-            </a>
             <a href="{% url 'teams' %}" class="nav-button">
                 <i class="fas fa-tshirt"></i> Équipes
             </a>

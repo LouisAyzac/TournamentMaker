@@ -250,9 +250,13 @@ class UserProfile(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
+<<<<<<< HEAD
 
         pass
     
+=======
+        pass
+>>>>>>> antoine
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -297,5 +301,21 @@ def assign_teams_to_pools(tournament):
             pools[i // 4].teams.add(team)
     for p in pools: p.save()
 
+<<<<<<< HEAD
 
 
+=======
+from django.shortcuts import render, get_object_or_404
+from .models import Team, Player
+
+
+def team_detail(request, team_id):
+    team = get_object_or_404(Team, id=team_id)
+    players = Player.objects.filter(team=team)  # récupère les joueurs de cette équipe
+
+    context = {
+        'team': team,
+        'players': players,
+    }
+    return render(request, 'team_detail.html', context)
+>>>>>>> antoine
