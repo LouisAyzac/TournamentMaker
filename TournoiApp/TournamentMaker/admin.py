@@ -10,9 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.admin import SimpleListFilter
 
-<<<<<<< HEAD
-admin.site.register(Team)
-=======
+
 
 class PoolTournamentFilter(SimpleListFilter):
     title = 'Tournoi'
@@ -26,7 +24,7 @@ class PoolTournamentFilter(SimpleListFilter):
         if self.value():
             return queryset.filter(teams__tournament__id=self.value()).distinct()
         return queryset
->>>>>>> louis
+    
 
 @admin.register(Pool)
 class PoolAdmin(admin.ModelAdmin):
