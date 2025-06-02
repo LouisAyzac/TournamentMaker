@@ -286,3 +286,17 @@ def assign_teams_to_pools(tournament):
         if i // 4 < len(pools):
             pools[i // 4].teams.add(team)
     for p in pools: p.save()
+
+from django.shortcuts import render, get_object_or_404
+from .models import Team, Player
+
+
+def team_detail(request, team_id):
+    team = get_object_or_404(Team, id=team_id)
+    players = Player.objects.filter(team=team)  # récupère les joueurs de cette équipe
+
+    context = {
+        'team': team,
+        'players': players,
+    }
+    return render(request, 'team_detail.html', context)
