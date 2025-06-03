@@ -370,10 +370,26 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 
+from django.shortcuts import render, redirect
+from django.utils.dateparse import parse_date
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+
+from .models import Tournament, Team, Player, UserProfile
+
+LEVEL_MAP = {
+    'debutant': 1,
+    'intermediaire': 2,
+    'avance': 3,
+    'expert': 4,
+}
+
 def signup(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
-        # Rediriger vers la sélection du tournoi si non défini
         return redirect('select_tournament')
 
     try:
@@ -381,31 +397,50 @@ def signup(request):
     except Tournament.DoesNotExist:
         return redirect('select_tournament')
 
+    max_teams = tournament.max_teams
+    current_teams_count = Team.objects.filter(tournament=tournament).count()
+
+    if current_teams_count >= max_teams:
+        return render(request, 'signup.html', {
+            'error': 'Le nombre maximum d’équipes pour ce tournoi est atteint.',
+            'players_per_team': tournament.players_per_team,
+            'total_players': range(tournament.players_per_team + 2),
+        })
+
+    players_per_team = tournament.players_per_team
+    total_players = range(players_per_team + 2)
+
     if request.method == 'POST':
         team_name = request.POST.get('team_name')
         if not team_name:
-            return render(request, 'signup.html', {'error': 'Le nom de l’équipe est requis.'})
+            return render(request, 'signup.html', {
+                'error': 'Le nom de l’équipe est requis.',
+                'players_per_team': players_per_team,
+                'total_players': total_players
+            })
 
         team = Team.objects.create(name=team_name, tournament=tournament)
 
-        # Flag pour vérifier que le capitaine est bien renseigné
         capitaine_valide = False
 
-        for i in range(1, 6):
-            first_name = request.POST.get(f'first_name_{i}')
-            last_name = request.POST.get(f'last_name_{i}')
-            birthdate_str = request.POST.get(f'birthdate_{i}')
-            email = request.POST.get(f'email_{i}')
-            level_str = request.POST.get(f'level_{i}')
+        for i in total_players:
+            index = i + 1
+            first_name = request.POST.get(f'first_name_{index}')
+            last_name = request.POST.get(f'last_name_{index}')
+            birthdate_str = request.POST.get(f'birthdate_{index}')
+            email = request.POST.get(f'email_{index}')
+            level_str = request.POST.get(f'level_{index}')
 
-            # Le capitaine doit avoir prénom, nom et email obligatoires, les autres joueurs sont optionnels
-            if i == 1:
+            if i == 0:
                 if not (first_name and last_name and email):
-                    team.delete()  # On supprime l'équipe si capitaine non complet
-                    return render(request, 'signup.html', {'error': 'Le capitaine doit avoir un prénom, nom et email.'})
+                    team.delete()
+                    return render(request, 'signup.html', {
+                        'error': 'Le capitaine doit avoir un prénom, nom et email.',
+                        'players_per_team': players_per_team,
+                        'total_players': total_players
+                    })
                 capitaine_valide = True
 
-            # On crée le joueur seulement si prénom et nom sont fournis (au moins)
             if first_name and last_name:
                 birthdate = parse_date(birthdate_str) if birthdate_str else None
                 level = LEVEL_MAP.get(level_str.lower(), 1) if level_str else 1
@@ -419,20 +454,17 @@ def signup(request):
                     team=team,
                 )
 
-                if i == 1:
-                    # Création du user Django pour le capitaine
+                if i == 0:
                     username = email
                     user = User.objects.create_user(username=username, email=email)
                     user_profile = UserProfile.objects.create(user=user, level=level, team=team)
 
-                    # Associer le capitaine à l'équipe
                     team.captain = user_profile
                     team.save()
 
-                    # Envoyer email pour définir mot de passe
                     uid = urlsafe_base64_encode(force_bytes(user.pk))
                     token = default_token_generator.make_token(user)
-                    domain = '127.0.0.1:8000'  # adapter selon le déploiement
+                    domain = '127.0.0.1:8000'
                     link = f"http://{domain}/accounts/reset/{uid}/{token}/"
 
                     subject = f"Bienvenue capitaine de l'équipe {team.name} !"
@@ -451,11 +483,19 @@ L'équipe du tournoi
 
         if not capitaine_valide:
             team.delete()
-            return render(request, 'signup.html', {'error': 'Le capitaine est obligatoire.'})
+            return render(request, 'signup.html', {
+                'error': 'Le capitaine est obligatoire.',
+                'players_per_team': players_per_team,
+                'total_players': total_players
+            })
 
         return redirect('signup_success')
 
-    return render(request, 'signup.html')
+    return render(request, 'signup.html', {
+        'players_per_team': players_per_team,
+        'total_players': total_players
+    })
+
 
 def signup_success(request):
     print("Page de succès atteinte.")
@@ -540,6 +580,16 @@ from .models import Tournament
 from django.contrib import messages
 from django.utils.dateparse import parse_date
 
+from django.utils.dateparse import parse_date
+from django.contrib import messages
+from django.shortcuts import redirect, render
+from .models import Tournament
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils.dateparse import parse_date
+from .models import Tournament
+
 def create_tournament(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -550,17 +600,25 @@ def create_tournament(request):
         end_date = parse_date(request.POST.get('end_date'))
         sport = request.POST.get('sport')
 
-        # Nouveaux champs
+        # Champs supplémentaires
         nb_teams = request.POST.get('nb_teams')
         players_per_team = request.POST.get('players_per_team')
         nb_pools = request.POST.get('nb_pools')
 
         # Validation basique
-        if not all([name, department, start_date, end_date, sport]):
+        if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team]):
             messages.error(request, "Tous les champs requis ne sont pas remplis.")
             return redirect('create_tournament')
 
-        # Création du tournoi
+        # Vérification et conversion
+        try:
+            nb_teams = int(nb_teams)
+            players_per_team = int(players_per_team)
+        except ValueError:
+            messages.error(request, "Le nombre d'équipes et de joueurs par équipe doivent être des entiers.")
+            return redirect('create_tournament')
+
+        # Création du tournoi avec max_teams et players_per_team
         tournoi = Tournament.objects.create(
             name=name,
             department=department,
@@ -568,16 +626,38 @@ def create_tournament(request):
             is_indoor=is_indoor,
             start_date=start_date,
             end_date=end_date,
-            sport=sport
+            sport=sport,
+            max_teams=nb_teams,
+            players_per_team=players_per_team,
         )
 
-        # Stocker les infos en session pour usage ultérieur si besoin
+        # Sauvegarde optionnelle en session
         request.session['tournament_created_id'] = tournoi.id
         request.session['nb_teams'] = nb_teams
         request.session['players_per_team'] = players_per_team
         request.session['nb_pools'] = nb_pools
 
-        messages.success(request, f"Tournament '{name}' créé avec succès.")
+        messages.success(request, f"Tournoi '{name}' créé avec succès.")
         return redirect('select_tournament')
 
     return render(request, 'create_tournament.html')
+
+
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseBadRequest
+
+def create_team(request, tournament_id):
+    tournoi = get_object_or_404(Tournament, id=tournament_id)
+
+    if tournoi.teams.count() >= tournoi.max_teams:
+        return HttpResponseBadRequest("Nombre maximum d'équipes atteint pour ce tournoi.")
+
+    if request.method == 'POST':
+        team_name = request.POST.get('team_name')
+        if team_name:
+            Team.objects.create(name=team_name, tournament=tournoi)
+            messages.success(request, f"Équipe '{team_name}' créée avec succès.")
+            return redirect('some_view')  # adapter selon ta navigation
+
+    return render(request, 'create_team.html', {'tournament': tournoi})
+

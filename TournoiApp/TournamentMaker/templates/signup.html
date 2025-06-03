@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    
     <meta charset="UTF-8" />
     <title>Inscription équipe</title>
     <style>
@@ -57,6 +56,15 @@
             color: #555;
             margin-top: 0;
         }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin: 20px 0;
+            background-color: #ffe6e6;
+            padding: 10px;
+            border: 1px solid #ffb3b3;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -65,53 +73,42 @@
     <form method="POST" action="{% url 'signup' %}">
         {% csrf_token %}
 
+        {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+        {% endif %}
+
         <label for="team_name">Nom de l’équipe :</label>
         <input type="text" id="team_name" name="team_name" required />
 
-        <!-- Joueur 1 obligatoire -->
+        {% for i in total_players %}
         <div class="joueur">
-            <h2>Joueur 1 (capitaine) <span style="color:red">*</span></h2>
-            <label for="first_name_1">Prénom :</label>
-            <input type="text" id="first_name_1" name="first_name_1" required />
+            {% if i < players_per_team %}
+                <h2>Joueur {{ i|add:1 }} {% if i == 0 %}<span style="color:red">*</span> (Capitaine){% endif %}</h2>
+            {% else %}
+                <h2>Remplaçant {{ i|add:1 }}</h2>
+            {% endif %}
 
-            <label for="last_name_1">Nom :</label>
-            <input type="text" id="last_name_1" name="last_name_1" required />
+            <label for="first_name_{{ i|add:1 }}">Prénom :</label>
+            <input type="text" id="first_name_{{ i|add:1 }}" name="first_name_{{ i|add:1 }}"
+                   {% if i == 0 %}required{% endif %} />
 
-            <label for="birthdate_1">Date de naissance :</label>
-            <input type="date" id="birthdate_1" name="birthdate_1" required />
+            <label for="last_name_{{ i|add:1 }}">Nom :</label>
+            <input type="text" id="last_name_{{ i|add:1 }}" name="last_name_{{ i|add:1 }}"
+                   {% if i == 0 %}required{% endif %} />
 
-            <label for="email_1">Email :</label>
-            <input type="email" id="email_1" name="email_1" required />
+            <label for="birthdate_{{ i|add:1 }}">Date de naissance :</label>
+            <input type="date" id="birthdate_{{ i|add:1 }}" name="birthdate_{{ i|add:1 }}"
+                   {% if i == 0 %}required{% endif %} />
 
-            <label for="level_1">Niveau :</label>
-            <select id="level_1" name="level_1" required>
-                <option value="">-- Sélectionnez --</option>
-                <option value="debutant">Débutant</option>
-                <option value="intermediaire">Intermédiaire</option>
-                <option value="avance">Avancé</option>
-                <option value="expert">Expert</option>
-            </select>
-        </div>
+            <label for="email_{{ i|add:1 }}">Email :</label>
+            <input type="email" id="email_{{ i|add:1 }}" name="email_{{ i|add:1 }}"
+                   {% if i == 0 %}required{% endif %} />
 
-        <!-- Joueurs 2 à 5 optionnels -->
-        {% for i in "2345" %}
-        <div class="joueur">
-            <h2>Joueur {{ i }} <span class="optionnel">(optionnel)</span></h2>
-
-            <label for="first_name_{{ i }}">Prénom :</label>
-            <input type="text" id="first_name_{{ i }}" name="first_name_{{ i }}" />
-
-            <label for="last_name_{{ i }}">Nom :</label>
-            <input type="text" id="last_name_{{ i }}" name="last_name_{{ i }}" />
-
-            <label for="birthdate_{{ i }}">Date de naissance :</label>
-            <input type="date" id="birthdate_{{ i }}" name="birthdate_{{ i }}" />
-
-            <label for="email_{{ i }}">Email :</label>
-            <input type="email" id="email_{{ i }}" name="email_{{ i }}" />
-
-            <label for="level_{{ i }}">Niveau :</label>
-            <select id="level_{{ i }}" name="level_{{ i }}">
+            <label for="level_{{ i|add:1 }}">Niveau :</label>
+            <select id="level_{{ i|add:1 }}" name="level_{{ i|add:1 }}"
+                    {% if i == 0 %}required{% endif %}>
                 <option value="">-- Sélectionnez --</option>
                 <option value="debutant">Débutant</option>
                 <option value="intermediaire">Intermédiaire</option>
