@@ -578,20 +578,7 @@ from django.shortcuts import render, redirect
 from .models import Tournament
 from django.contrib import messages
 from django.utils.dateparse import parse_date
-
-<<<<<<< HEAD
-=======
-from django.utils.dateparse import parse_date
-from django.contrib import messages
-from django.shortcuts import redirect, render
-from .models import Tournament
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.utils.dateparse import parse_date
-from .models import Tournament
-
->>>>>>> louis
+ 
 def create_tournament(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -602,23 +589,15 @@ def create_tournament(request):
         end_date = parse_date(request.POST.get('end_date'))
         sport = request.POST.get('sport')
 
-<<<<<<< HEAD
-        # Nouveaux champs
-=======
+        
         # Champs supplémentaires
->>>>>>> louis
+        
         nb_teams = request.POST.get('nb_teams')
         players_per_team = request.POST.get('players_per_team')
         nb_pools = request.POST.get('nb_pools')
 
         # Validation basique
-<<<<<<< HEAD
-        if not all([name, department, start_date, end_date, sport]):
-            messages.error(request, "Tous les champs requis ne sont pas remplis.")
-            return redirect('create_tournament')
-
-        # Création du tournoi
-=======
+        
         if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team]):
             messages.error(request, "Tous les champs requis ne sont pas remplis.")
             return redirect('create_tournament')
@@ -632,7 +611,7 @@ def create_tournament(request):
             return redirect('create_tournament')
 
         # Création du tournoi avec max_teams et players_per_team
->>>>>>> louis
+ 
         tournoi = Tournament.objects.create(
             name=name,
             department=department,
@@ -640,30 +619,19 @@ def create_tournament(request):
             is_indoor=is_indoor,
             start_date=start_date,
             end_date=end_date,
-<<<<<<< HEAD
-            sport=sport
-        )
-
-        # Stocker les infos en session pour usage ultérieur si besoin
-=======
+ 
             sport=sport,
             max_teams=nb_teams,
             players_per_team=players_per_team,
         )
 
         # Sauvegarde optionnelle en session
->>>>>>> louis
+ 
         request.session['tournament_created_id'] = tournoi.id
         request.session['nb_teams'] = nb_teams
         request.session['players_per_team'] = players_per_team
         request.session['nb_pools'] = nb_pools
-
-<<<<<<< HEAD
-        messages.success(request, f"Tournament '{name}' créé avec succès.")
-        return redirect('select_tournament')
-
-    return render(request, 'create_tournament.html')
-=======
+ 
         messages.success(request, f"Tournoi '{name}' créé avec succès.")
         return redirect('select_tournament')
 
@@ -688,4 +656,4 @@ def create_team(request, tournament_id):
 
     return render(request, 'create_team.html', {'tournament': tournoi})
 
->>>>>>> louis
+ 
