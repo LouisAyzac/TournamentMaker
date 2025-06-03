@@ -24,11 +24,20 @@ def index(request):
     return render(request, 'index.html', {'num_Player': num_Player})
 
 def players(request):
-    all_players = Player.objects.all()
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    all_players = Player.objects.filter(team__tournament_id=tournament_id)
     return render(request, 'players.html', {'players': all_players})
 
+
 def teams(request):
-    all_teams = Team.objects.all()
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    all_teams = Team.objects.filter(tournament_id=tournament_id)
     return render(request, 'teams.html', {'teams': all_teams})
 
 
@@ -40,7 +49,11 @@ from TournamentMaker.models import Player, Team
 
 
 def player_detail(request, pk):
-    player = get_object_or_404(Player, pk=pk)
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    player = get_object_or_404(Player, pk=pk, team__tournament_id=tournament_id)
     return render(request, 'players_detail.html', {'player': player})
 
 
@@ -53,14 +66,19 @@ from django.shortcuts import get_object_or_404, render
 from TournamentMaker.models import Team, Ranking, Match
 
 def team_detail(request, pk):
-    team = get_object_or_404(Team, pk=pk)
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    team = get_object_or_404(Team, pk=pk, tournament_id=tournament_id)
     ranking = Ranking.objects.filter(team=team).first()
 
-    # Calcul du classement final (copié de ta fonction classement_final_view, mais juste pour un seul team)
-    teams = Team.objects.all()
+    teams = Team.objects.filter(tournament_id=tournament_id)
+    matches = Match.objects.filter(team_a__tournament_id=tournament_id)
+
     points = {t.id: 0 for t in teams}
     pool_wins = {t.id: 0 for t in teams}
-    matches = Match.objects.all()
+
 
     def get_winner(match):
         score_a = 0
@@ -95,7 +113,6 @@ def team_detail(request, pk):
                 points[winner.id] += 3
                 pool_wins[winner.id] += 1
 
-    # Tri des équipes par points pour calculer le rang final
     sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
 
     final_ranking = {}
@@ -104,13 +121,14 @@ def team_detail(request, pk):
         final_ranking[t.id] = rank
         rank += 1
 
-    final_rank = final_ranking.get(team.id)  # récupère le rang final de l'équipe affichée
+    final_rank = final_ranking.get(team.id)
 
     return render(request, 'teams_detail.html', {
         'team': team,
         'ranking': ranking,
         'final_rank': final_rank,
     })
+
 
 
 
@@ -122,23 +140,37 @@ from .models import Pool
 
 
 def pool_list(request):
-    pools = Pool.objects.all()
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    pools = Pool.objects.filter(teams__tournament_id=tournament_id).distinct()
     return render(request, 'pools.html', {'pools': pools})
+
 
 def pool_detail(request, pk):
     pool = get_object_or_404(Pool, pk=pk)
     return render(request, 'pools_detail.html', {'pool': pool})
 
 def rankings_list(request):
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
     pool_rankings = []
-    for pool in Pool.objects.all():
-        teams_in_pool = pool.teams.all()
+    for pool in Pool.objects.filter(teams__tournament_id=tournament_id).distinct():
+        teams_in_pool = pool.teams.filter(tournament_id=tournament_id)
         rankings = Ranking.objects.filter(team__in=teams_in_pool).select_related('team').order_by('rank')
         pool_rankings.append({'pool': pool, 'rankings': rankings})
     return render(request, 'rankings.html', {'pool_rankings': pool_rankings})
 
+
 def matchs_en_cours(request):
-    matchs = Match.objects.filter(statut='En cours')
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    matchs = Match.objects.filter(statut='En cours', team_a__tournament_id=tournament_id)
 
     for match in matchs:
         match.scores_a = []
@@ -156,7 +188,15 @@ def matchs(request):
     statut = request.GET.get('statut')
     phase = request.GET.get('phase')
 
-    matchs = Match.objects.all()
+def matchs(request):
+    statut = request.GET.get('statut')
+    phase = request.GET.get('phase')
+
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    matchs = Match.objects.filter(team_a__tournament_id=tournament_id)
 
     if statut:
         matchs = matchs.filter(statut=statut)
@@ -201,22 +241,31 @@ def matchs(request):
 
 
 @login_required 
+
 def scores(request):
     try:
         team = request.user.userprofile.team
     except UserProfile.DoesNotExist:
         return render(request, 'no_team.html')
 
-    if not team:
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id or not team or team.tournament_id != tournament_id:
         return render(request, 'no_team.html')
 
-    matches = Match.objects.filter(Q(team_a=team) | Q(team_b=team))
+    matches = Match.objects.filter(
+        Q(team_a=team) | Q(team_b=team),
+        team_a__tournament_id=tournament_id
+    )
 
     if request.method == 'POST':
         for match in matches:
             for i in range(1, 6):
-                setattr(match, f'set{i}_team_a', int(request.POST.get(f'match_{match.id}_set{i}_team_a', 0)))
-                setattr(match, f'set{i}_team_b', int(request.POST.get(f'match_{match.id}_set{i}_team_b', 0)))
+                score_a = request.POST.get(f'match_{match.id}_set{i}_team_a')
+                score_b = request.POST.get(f'match_{match.id}_set{i}_team_b')
+                if score_a is not None and score_a.isdigit():
+                    setattr(match, f'set{i}_team_a', int(score_a))
+                if score_b is not None and score_b.isdigit():
+                    setattr(match, f'set{i}_team_b', int(score_b))
             match.save()
         return redirect('scores')
 
@@ -315,14 +364,32 @@ from django.core.mail import send_mail
 from .models import Tournament, Team, Player, UserProfile
 from django.utils.dateparse import parse_date
 
+from django.utils.dateparse import parse_date
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+
 def signup(request):
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        # Rediriger vers la sélection du tournoi si non défini
+        return redirect('select_tournament')
+
+    try:
+        tournament = Tournament.objects.get(pk=tournament_id)
+    except Tournament.DoesNotExist:
+        return redirect('select_tournament')
+
     if request.method == 'POST':
         team_name = request.POST.get('team_name')
         if not team_name:
             return render(request, 'signup.html', {'error': 'Le nom de l’équipe est requis.'})
 
-        tournament = Tournament.objects.first()
         team = Team.objects.create(name=team_name, tournament=tournament)
+
+        # Flag pour vérifier que le capitaine est bien renseigné
+        capitaine_valide = False
 
         for i in range(1, 6):
             first_name = request.POST.get(f'first_name_{i}')
@@ -331,34 +398,41 @@ def signup(request):
             email = request.POST.get(f'email_{i}')
             level_str = request.POST.get(f'level_{i}')
 
-            if first_name and last_name and birthdate_str and level_str:
-                birthdate = parse_date(birthdate_str)
-                level = LEVEL_MAP.get(level_str.lower(), 1)
+            # Le capitaine doit avoir prénom, nom et email obligatoires, les autres joueurs sont optionnels
+            if i == 1:
+                if not (first_name and last_name and email):
+                    team.delete()  # On supprime l'équipe si capitaine non complet
+                    return render(request, 'signup.html', {'error': 'Le capitaine doit avoir un prénom, nom et email.'})
+                capitaine_valide = True
+
+            # On crée le joueur seulement si prénom et nom sont fournis (au moins)
+            if first_name and last_name:
+                birthdate = parse_date(birthdate_str) if birthdate_str else None
+                level = LEVEL_MAP.get(level_str.lower(), 1) if level_str else 1
 
                 player = Player.objects.create(
                     first_name=first_name,
                     last_name=last_name,
                     birth_date=birthdate,
                     level=level,
-                    email=email,
-                    team=team
+                    email=email if email else '',
+                    team=team,
                 )
 
-                if i == 1 and email:  # Le premier joueur est le capitaine
+                if i == 1:
+                    # Création du user Django pour le capitaine
                     username = email
                     user = User.objects.create_user(username=username, email=email)
-                    print(f"Team : {team} (id: {team.id if team else 'None'})")
-
                     user_profile = UserProfile.objects.create(user=user, level=level, team=team)
 
                     # Associer le capitaine à l'équipe
                     team.captain = user_profile
                     team.save()
 
-                    # Envoie un mail pour définir le mot de passe
+                    # Envoyer email pour définir mot de passe
                     uid = urlsafe_base64_encode(force_bytes(user.pk))
                     token = default_token_generator.make_token(user)
-                    domain = '127.0.0.1:8000'
+                    domain = '127.0.0.1:8000'  # adapter selon le déploiement
                     link = f"http://{domain}/accounts/reset/{uid}/{token}/"
 
                     subject = f"Bienvenue capitaine de l'équipe {team.name} !"
@@ -374,6 +448,10 @@ Merci,
 L'équipe du tournoi
 """
                     send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
+
+        if not capitaine_valide:
+            team.delete()
+            return render(request, 'signup.html', {'error': 'Le capitaine est obligatoire.'})
 
         return redirect('signup_success')
 
@@ -396,12 +474,15 @@ from django.shortcuts import render
 from .models import Team, Match
 
 def classement_final_view(request):
-    teams = Team.objects.all()
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    teams = Team.objects.filter(tournament_id=tournament_id)
+    matches = Match.objects.filter(team_a__tournament_id=tournament_id)
+
     points = {team.id: 0 for team in teams}
     pool_wins = {team.id: 0 for team in teams}
-
-    matches = Match.objects.all()
-
     def get_winner(match):
         score_a = 0
         score_b = 0
@@ -438,7 +519,6 @@ def classement_final_view(request):
     # Trier les équipes par points
     sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
 
-    # Préparer final_ranking pour le template
     final_ranking = []
     rank = 1
     for team in sorted_teams:
@@ -457,36 +537,47 @@ def classement_final_view(request):
 
 from django.shortcuts import render, redirect
 from .models import Tournament
-from datetime import datetime
+from django.contrib import messages
+from django.utils.dateparse import parse_date
 
 def create_tournament(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         department = request.POST.get('department')
         address = request.POST.get('address')
-        is_indoor = bool(request.POST.get('is_indoor'))
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
+        is_indoor = request.POST.get('is_indoor') == 'on'
+        start_date = parse_date(request.POST.get('start_date'))
+        end_date = parse_date(request.POST.get('end_date'))
         sport = request.POST.get('sport')
-        team_count = request.POST.get('team_count')
-        players_per_team = request.POST.get('players_per_team')
-        pool_count = request.POST.get('pool_count')
 
-        tournament = Tournament.objects.create(
+        # Nouveaux champs
+        nb_teams = request.POST.get('nb_teams')
+        players_per_team = request.POST.get('players_per_team')
+        nb_pools = request.POST.get('nb_pools')
+
+        # Validation basique
+        if not all([name, department, start_date, end_date, sport]):
+            messages.error(request, "Tous les champs requis ne sont pas remplis.")
+            return redirect('create_tournament')
+
+        # Création du tournoi
+        tournoi = Tournament.objects.create(
             name=name,
             department=department,
             address=address,
             is_indoor=is_indoor,
             start_date=start_date,
             end_date=end_date,
-            sport=sport,
+            sport=sport
         )
 
-        # Tu peux utiliser team_count, players_per_team, pool_count ensuite ici pour générer
-        # automatiquement les équipes / poules (optionnel pour l’instant)
+        # Stocker les infos en session pour usage ultérieur si besoin
+        request.session['tournament_created_id'] = tournoi.id
+        request.session['nb_teams'] = nb_teams
+        request.session['players_per_team'] = players_per_team
+        request.session['nb_pools'] = nb_pools
 
-        request.session['selected_tournament_id'] = tournament.id
-        request.session['selected_tournament_name'] = tournament.name
-        return redirect('dashboard')
+        messages.success(request, f"Tournament '{name}' créé avec succès.")
+        return redirect('select_tournament')
 
     return render(request, 'create_tournament.html')

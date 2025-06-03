@@ -5,79 +5,71 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-5" style="max-width: 800px; color: #000;">
-  <h2 class="text-center mb-4" style="color: #000;">Créer un nouveau tournoi</h2>
+<div class="container mt-5" style="color: black;">
+  <h2 class="text-center mb-4">Créer un nouveau tournoi</h2>
 
-  <form method="POST">
+  <form method="POST" class="w-75 mx-auto p-4 border rounded bg-light shadow" style="color: black;">
     {% csrf_token %}
 
-    <!-- Nom du tournoi -->
-    <div class="form-group mb-3">
-      <label for="name" style="color: #000;"><strong>Nom du tournoi</strong></label>
-      <input type="text" name="name" id="name" class="form-control" required>
+    <div class="form-group">
+      <label for="name"><strong>Nom du tournoi :</strong></label>
+      <input type="text" class="form-control" name="name" required>
     </div>
 
-    <!-- Département -->
-    <div class="form-group mb-3">
-      <label for="department" style="color: #000;"><strong>Département</strong></label>
-      <input type="text" name="department" id="department" class="form-control" required>
+    <div class="form-group">
+      <label for="department"><strong>Département :</strong></label>
+      <input type="text" class="form-control" name="department" required>
     </div>
 
-    <!-- Adresse -->
-    <div class="form-group mb-3">
-      <label for="address" style="color: #000;"><strong>Adresse exacte</strong></label>
-      <input type="text" name="address" id="address" class="form-control">
+    <div class="form-group">
+      <label for="address"><strong>Adresse :</strong></label>
+      <input type="text" class="form-control" name="address">
     </div>
 
-    <!-- Type : intérieur -->
-    <div class="form-check mb-3">
-      <input class="form-check-input" type="checkbox" name="is_indoor" id="is_indoor">
-      <label class="form-check-label" for="is_indoor" style="color: #000;">Tournoi en intérieur</label>
+    <div class="form-group form-check mt-3">
+      <input type="checkbox" class="form-check-input" name="is_indoor" id="indoorCheck">
+      <label class="form-check-label" for="indoorCheck"><strong>Tournoi en intérieur</strong></label>
     </div>
 
-    <!-- Dates -->
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label for="start_date" style="color: #000;"><strong>Date de début</strong></label>
-        <input type="date" name="start_date" id="start_date" class="form-control" required>
-      </div>
-      <div class="col-md-6 mb-3">
-        <label for="end_date" style="color: #000;"><strong>Date de fin</strong></label>
-        <input type="date" name="end_date" id="end_date" class="form-control" required>
-      </div>
+    <div class="form-group mt-3">
+      <label for="start_date"><strong>Date de début :</strong></label>
+      <input type="date" class="form-control" name="start_date" required>
     </div>
 
-    <!-- Sport -->
-    <div class="form-group mb-4">
-      <label for="sport" style="color: #000;"><strong>Sport</strong></label>
-      <input type="text" name="sport" id="sport" class="form-control" required>
+    <div class="form-group mt-3">
+      <label for="end_date"><strong>Date de fin :</strong></label>
+      <input type="date" class="form-control" name="end_date" required>
     </div>
 
-    <hr>
-
-    <!-- Autogénération -->
-    <h5 class="text-dark mb-3" style="color: #000;">Données pour générer le tournoi</h5>
-
-    <div class="form-group mb-3">
-      <label for="team_count" style="color: #000;"><strong>Nombre d’équipes</strong></label>
-      <input type="number" name="team_count" id="team_count" class="form-control" required>
+    <div class="form-group mt-3">
+      <label for="sport"><strong>Sport :</strong></label>
+      <select class="form-control" name="sport" required>
+        <option value="">-- Choisissez un sport --</option>
+        <option value="football">Football</option>
+        <option value="volleyball">Volleyball</option>
+        <option value="basketball">Basketball</option>
+        <option value="rugby">Rugby</option>
+      </select>
     </div>
 
-    <div class="form-group mb-3">
-      <label for="players_per_team" style="color: #000;"><strong>Joueurs par équipe</strong></label>
-      <input type="number" name="players_per_team" id="players_per_team" class="form-control" required>
+    <hr class="my-4">
+
+    <div class="form-group">
+      <label for="nb_teams"><strong>Nombre d’équipes :</strong></label>
+      <input type="number" class="form-control" name="nb_teams" min="1" required>
     </div>
 
-    <div class="form-group mb-4">
-      <label for="pool_count" style="color: #000;"><strong>Nombre de poules</strong></label>
-      <input type="number" name="pool_count" id="pool_count" class="form-control" required>
+    <div class="form-group mt-3">
+      <label for="players_per_team"><strong>Joueurs par équipe :</strong></label>
+      <input type="number" class="form-control" name="players_per_team" min="1" required>
     </div>
 
-    <!-- Boutons -->
-    <div class="d-flex justify-content-between">
-      <button type="submit" class="btn btn-success px-4">Créer</button>
-      <a href="{% url 'select_tournament' %}" class="btn btn-secondary px-4">Retour</a>
+    <div class="form-group mt-3">
+      <label for="nb_pools"><strong>Nombre de poules :</strong></label>
+      <input type="number" class="form-control" name="nb_pools" min="1" required>
     </div>
+
+    <button type="submit" class="btn btn-success mt-4 w-100">Créer le tournoi</button>
   </form>
 </div>
 {% endblock %}

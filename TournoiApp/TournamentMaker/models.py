@@ -21,6 +21,8 @@ class Tournament(models.Model):
     start_date = models.DateField(default=date.today)
     end_date = models.DateField(default=date.today)
     sport = models.CharField(max_length=50, default='Football')
+    max_teams = models.PositiveIntegerField(default=8)  # 🔸 Nombre max d’équipes
+    players_per_team = models.PositiveIntegerField(default=5)  # 🔸 Joueurs max par équipe
 
     def __str__(self):
         return self.name
@@ -76,7 +78,7 @@ class Player(models.Model):
 
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    birth_date = models.DateField()
+    birth_date = models.DateField(null=True, blank=True)
     level = models.CharField(max_length=1, choices=LEVEL_CHOICES)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     email = models.EmailField(blank=True, null=True)
@@ -85,13 +87,23 @@ class Player(models.Model):
         return f"{self.first_name} {self.last_name}"
 
 
+
 class Pool(models.Model):
     name = models.CharField(max_length=50)
     max_size = models.PositiveIntegerField(default=4)
     teams = models.ManyToManyField('Team', blank=True, related_name='pools')
 
+    tournament = models.ForeignKey(
+        'Tournament',
+        on_delete=models.CASCADE,
+        related_name='pools',
+        null=True,
+        blank=True 
+    )
+
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.tournament.name})"
+
 
     def add_teams_randomly(self, teams_to_add):
         assigned_team_ids = set(
@@ -242,7 +254,10 @@ class UserProfile(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
+
+
         pass
+
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -286,3 +301,17 @@ def assign_teams_to_pools(tournament):
         if i // 4 < len(pools):
             pools[i // 4].teams.add(team)
     for p in pools: p.save()
+ 
+from django.shortcuts import render, get_object_or_404
+from .models import Team, Player
+
+
+def team_detail(request, team_id):
+    team = get_object_or_404(Team, id=team_id)
+    players = Player.objects.filter(team=team)  # récupère les joueurs de cette équipe
+
+    context = {
+        'team': team,
+        'players': players,
+    }
+    return render(request, 'team_detail.html', context)
