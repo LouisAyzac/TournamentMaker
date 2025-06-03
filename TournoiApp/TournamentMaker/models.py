@@ -21,6 +21,8 @@ class Tournament(models.Model):
     start_date = models.DateField(default=date.today)
     end_date = models.DateField(default=date.today)
     sport = models.CharField(max_length=50, default='Football')
+    max_teams = models.PositiveIntegerField(default=8)  # 🔸 Nombre max d’équipes
+    players_per_team = models.PositiveIntegerField(default=5)  # 🔸 Joueurs max par équipe
 
     def __str__(self):
         return self.name
@@ -94,7 +96,9 @@ class Pool(models.Model):
     tournament = models.ForeignKey(
         'Tournament',
         on_delete=models.CASCADE,
-        related_name='pools'
+        related_name='pools',
+        null=True,
+        blank=True 
     )
 
     def __str__(self):
@@ -251,8 +255,9 @@ class UserProfile(models.Model):
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
 
+
         pass
-    
+
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -296,6 +301,17 @@ def assign_teams_to_pools(tournament):
         if i // 4 < len(pools):
             pools[i // 4].teams.add(team)
     for p in pools: p.save()
+ 
+from django.shortcuts import render, get_object_or_404
+from .models import Team, Player
 
 
+def team_detail(request, team_id):
+    team = get_object_or_404(Team, id=team_id)
+    players = Player.objects.filter(team=team)  # récupère les joueurs de cette équipe
 
+    context = {
+        'team': team,
+        'players': players,
+    }
+    return render(request, 'team_detail.html', context)

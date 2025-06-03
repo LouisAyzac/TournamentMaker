@@ -57,7 +57,6 @@ def player_detail(request, pk):
     return render(request, 'players_detail.html', {'player': player})
 
 
-
 from TournamentMaker.models import Team, Ranking    
 
 from TournamentMaker.models import Team, Ranking
@@ -113,7 +112,6 @@ def team_detail(request, pk):
             elif match.phase == 'pool':
                 points[winner.id] += 3
                 pool_wins[winner.id] += 1
-
 
     sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
 
@@ -186,6 +184,9 @@ def matchs_en_cours(request):
 
     return render(request, 'matchs_en_cours.html', {'matchs': matchs})
 
+def matchs(request):
+    statut = request.GET.get('statut')
+    phase = request.GET.get('phase')
 
 def matchs(request):
     statut = request.GET.get('statut')
@@ -456,7 +457,6 @@ L'équipe du tournoi
 
     return render(request, 'signup.html')
 
-
 def signup_success(request):
     print("Page de succès atteinte.")
     return render(request, 'signup_success.html')
@@ -519,7 +519,6 @@ def classement_final_view(request):
     # Trier les équipes par points
     sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
 
-
     final_ranking = []
     rank = 1
     for team in sorted_teams:
@@ -536,3 +535,49 @@ def classement_final_view(request):
 
     return render(request, 'classement_final.html', context)
 
+from django.shortcuts import render, redirect
+from .models import Tournament
+from django.contrib import messages
+from django.utils.dateparse import parse_date
+
+def create_tournament(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        department = request.POST.get('department')
+        address = request.POST.get('address')
+        is_indoor = request.POST.get('is_indoor') == 'on'
+        start_date = parse_date(request.POST.get('start_date'))
+        end_date = parse_date(request.POST.get('end_date'))
+        sport = request.POST.get('sport')
+
+        # Nouveaux champs
+        nb_teams = request.POST.get('nb_teams')
+        players_per_team = request.POST.get('players_per_team')
+        nb_pools = request.POST.get('nb_pools')
+
+        # Validation basique
+        if not all([name, department, start_date, end_date, sport]):
+            messages.error(request, "Tous les champs requis ne sont pas remplis.")
+            return redirect('create_tournament')
+
+        # Création du tournoi
+        tournoi = Tournament.objects.create(
+            name=name,
+            department=department,
+            address=address,
+            is_indoor=is_indoor,
+            start_date=start_date,
+            end_date=end_date,
+            sport=sport
+        )
+
+        # Stocker les infos en session pour usage ultérieur si besoin
+        request.session['tournament_created_id'] = tournoi.id
+        request.session['nb_teams'] = nb_teams
+        request.session['players_per_team'] = players_per_team
+        request.session['nb_pools'] = nb_pools
+
+        messages.success(request, f"Tournament '{name}' créé avec succès.")
+        return redirect('select_tournament')
+
+    return render(request, 'create_tournament.html')

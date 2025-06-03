@@ -11,6 +11,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.admin import SimpleListFilter
 
 
+
 class PoolTournamentFilter(SimpleListFilter):
     title = 'Tournoi'
     parameter_name = 'tournament'
@@ -23,7 +24,7 @@ class PoolTournamentFilter(SimpleListFilter):
         if self.value():
             return queryset.filter(teams__tournament__id=self.value()).distinct()
         return queryset
-
+    
 
 @admin.register(Pool)
 class PoolAdmin(admin.ModelAdmin):
@@ -225,6 +226,8 @@ class MatchAdmin(admin.ModelAdmin):
     )
 
     list_filter = (PoolFilter, PhaseFilter, TournamentFilter)  # ajoute TournamentFilter ici
+
+
 
 
 

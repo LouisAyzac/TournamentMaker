@@ -40,7 +40,7 @@ urlpatterns = [
 
     path('matchs/', views.matchs, name='matchs'),
 
-    
+    path('creer_tournoi/', views.create_tournament, name='create_tournament'),
 
 
     

@@ -1,42 +1,6 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<<<<<<< HEAD
-  <h2>Classement par Pool</h2>
-
-  <!-- BOUTON vers le classement final -->
-  <div style="margin-bottom: 20px;">
-    <a href="{% url 'classement_final' %}" class="btn btn-primary">Voir le classement final</a>
-  </div>
-
-  {% if pool_rankings %}
-    {% for item in pool_rankings %}
-      <h3>{{ item.pool.name }}</h3>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Rang</th>
-            <th>Équipe</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for ranking in item.rankings %}
-            <tr>
-              <td>{{ ranking.rank }}</td>
-              <td>
-                <a href="{% url 'team_detail' ranking.team.id %}">
-                  {{ ranking.team.name }}
-                </a>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% endfor %}
-  {% else %}
-    <p>Aucun classement disponible.</p>
-  {% endif %}
-=======
 <div class="ranking-container animate__animated animate__fadeIn">
   <h2 class="section-title"><i class="fas fa-trophy"></i> Classement des Équipes</h2>
   
@@ -84,5 +48,4 @@
     <div><span class="legend-color bronze"></span> 3ème Place</div>
   </div>
 </div>
->>>>>>> Florian
 {% endblock %}

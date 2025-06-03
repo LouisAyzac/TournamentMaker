@@ -51,10 +51,11 @@
             <i class="fas fa-landmark"></i> Tournoi
         </a>
 
+         <a href="{% url 'create_tournament' %}" class="nav-button">
+            <i class="fas fa-landmark"></i> Créer mon tournoi
+        </a>
+
         {% if request.session.selected_tournament_id %}
-            <a href="{% url 'players' %}" class="nav-button">
-                <i class="fas fa-users"></i> Joueurs
-            </a>
             <a href="{% url 'teams' %}" class="nav-button">
                 <i class="fas fa-tshirt"></i> Équipes
             </a>
