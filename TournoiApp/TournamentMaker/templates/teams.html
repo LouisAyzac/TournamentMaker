@@ -39,20 +39,20 @@
         <div class="team-stats">
           <div class="stat">
             <i class="fas fa-trophy"></i>
-            <span>{{ team.wins }}V</span>
+            <span>{{ team.wins|default:"0" }}V</span>
           </div>
           <div class="stat">
             <i class="fas fa-times"></i>
-            <span>{{ team.losses }}D</span>
+            <span>{{ team.losses|default:"0" }}D</span>
           </div>
           <div class="stat">
             <i class="fas fa-chart-line"></i>
-            <span>{{ team.win_percentage }}%</span>
+
           </div>
         </div>
 
         <div class="team-players-count">
-          <i class="fas fa-users"></i> {{ team.player_count }} joueurs
+          <i class="fas fa-users"></i> {{ team.player_count|default:0 }} joueurs
         </div>
       </div>
     </a>

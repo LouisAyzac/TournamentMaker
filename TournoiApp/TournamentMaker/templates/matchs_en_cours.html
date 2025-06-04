@@ -1,0 +1,42 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="card p-3 shadow-sm">
+    <h5 class="mb-3">Matchs en cours</h5>
+
+    {% if matchs %}
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered text-center align-middle">
+            <thead class="thead-light">
+                <tr>
+                    <th>Équipe A</th>
+                    <th>Scores A</th>
+                    <th>Équipe B</th>
+                    <th>Scores B</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in matchs %}
+                <tr>
+                    <td>
+                        <a href="{% url 'team_detail' match.team_a.id %}">{{ match.team_a.name }}</a>
+                    </td>
+                    <td>
+                        {{ match.scores_a|join:" / " }}
+                    </td>
+                    <td>
+                        <a href="{% url 'team_detail' match.team_b.id %}">{{ match.team_b.name }}</a>
+                    </td>
+                    <td>
+                        {{ match.scores_b|join:" / " }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-muted small">Aucun match en cours pour le moment.</p>
+    {% endif %}
+</div>
+{% endblock %}

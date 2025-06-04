@@ -208,6 +208,8 @@ h1, h2, h3, h4, h5, h6 {
       font-size: 1rem;
   }
 }
+ 
+
 
 @keyframes pulse {
   0% { transform: scale(1); }
@@ -433,7 +435,7 @@ h1, h2, h3, h4, h5, h6 {
 .team-header {
   padding: 20px;
   text-align: center;
-  color: white;
+  color: rgb(23, 3, 3);
   position: relative;
 }
 
@@ -1142,3 +1144,68 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--primary-color);
   opacity: 0.7;
 }
+ 
+.player-detail {
+  max-width: 650px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+}
+
+  .player-card-detail {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .player-photo img,
+  .default-avatar-large {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 4rem;
+    color: #0e0c0c;
+  }
+
+  .player-info-detail h3 {
+    margin: 0 0 0.7rem;
+    font-size: 1.6rem;
+    color: black;
+  }
+
+  .player-info-detail p {
+    margin: 0.4rem 0;
+    font-size: 1.1rem;
+    color: black;
+  }
+
+  .team-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .team-link:hover {
+    text-decoration: underline;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 2rem;
+    font-weight: 500;
+    color: #444;
+    text-decoration: none;
+  }
+
+  .back-link:hover {
+    text-decoration: underline;
+  }
+  

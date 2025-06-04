@@ -43,13 +43,19 @@
 
     <!-- Navigation -->
     <nav class="nav-buttons-container">
-        <div class="nav-buttons">
-            <a href="{% url 'index' %}" class="nav-button">
-                <i class="fas fa-home"></i> Accueil
-            </a>
-            <a href="{% url 'players' %}" class="nav-button">
-                <i class="fas fa-users"></i> Joueurs
-            </a>
+    <div class="nav-buttons">
+        <a href="{% url 'home' %}" class="nav-button">
+            <i class="fas fa-home"></i> Accueil
+        </a>
+        <a href="{% url 'index' %}" class="nav-button">
+            <i class="fas fa-landmark"></i> Tournoi
+        </a>
+
+         <a href="{% url 'create_tournament' %}" class="nav-button">
+            <i class="fas fa-landmark"></i> Créer mon tournoi
+        </a>
+
+        {% if request.session.selected_tournament_id %}
             <a href="{% url 'teams' %}" class="nav-button">
                 <i class="fas fa-tshirt"></i> Équipes
             </a>
@@ -62,7 +68,20 @@
             <a href="{% url 'rankings_list' %}" class="nav-button">
                 <i class="fas fa-medal"></i> Classements
             </a>
-        </div>
+            <a href="{% url 'signup' %}" class="nav-button">
+                <i class="fas fa-file-alt"></i> Inscription
+
+            </a>
+
+            <a href="{% url 'matchs' %}" class="nav-button">
+            <i class="fas fa-clock"></i> Matchs
+</a>
+
+
+        {% endif %}
+    </div>
+</nav>
+
     </nav>
 
     <!-- Main Content -->

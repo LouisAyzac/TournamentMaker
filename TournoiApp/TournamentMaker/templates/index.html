@@ -6,8 +6,21 @@
 
   <body>
     {% extends "base_generic.html" %}
-{% block content %}
 
+    {% block content %}
+
+
+      <div class="text-center mt-5">
+        <h1>Bienvenue au tournoi de volleyball</h1>
+        <p>Veuillez sélectionner un tournoi pour commencer.</p>
+
+        {% if not request.session.selected_tournament %}
+          <a href="{% url 'select_tournament' %}" class="nav-button">Sélectionner un tournoi</a>
+        {% endif %}
+      </div>
+
+      
+      
 <h1>Bienvenue au tournoi de volleyball</h1>
 
     {% endblock %}

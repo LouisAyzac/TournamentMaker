@@ -1,36 +1,59 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-  <h2>Détails de l'équipe</h2>
-  <p><strong>Nom :</strong> {{ team.name }}</p>
+<div class="teams-container animate__animated animate__fadeIn">
+  <div class="team-header">
+  <h2 class="section-title"><i class="fas fa-tshirt"></i> Détails de l'Équipe</h2>
+  
+  <p class="team-name-detail">{{ team.name }}</p>
+  
+  {% if team.logo %}
+    <div class="team-logo-detail">
+      <img src="{{ team.logo.url }}" alt="{{ team.name }}">
+    </div>
+  {% else %}
+    <div class="default-logo-detail">
+      <i class="fas fa-volleyball-ball"></i>
+    </div>
+  {% endif %}
+  
+  <p><strong>Type :</strong> {{ team.get_type_display }}</p>
+  <p><strong>Victoires :</strong> {{ team.wins|default:"0" }}</p>
+  <p><strong>Défaites :</strong> {{ team.losses|default:"0" }}</p>
+</div>
 
-  <p><strong>Classement :</strong> 
-    {% if ranking %}
-      Rang {{ ranking.rank }}
-    {% else %}
-      Non classée
-    {% endif %}
-  </p>
 
-  <p><strong>Pool(s) :</strong> 
-    {% if team.pools.all %}
-      {% for pool in team.pools.all %}
-        <a href="{% url 'pool_detail' pool.id %}">{{ pool.name }}</a>{% if not forloop.last %}, {% endif %}
+  <div class="players-grid" id="playersList">
+    {% if team.players.count > 0 %}
+      {% for player in team.players.all %}
+      <a href="{% url 'player_detail' player.id %}" class="player-card {{ player.level|lower }}">
+        <div class="player-image">
+          {% if player.photo %}
+            <img src="{{ player.photo.url }}" alt="{{ player.first_name }} {{ player.last_name }}">
+          {% else %}
+            <div class="default-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+          {% endif %}
+          <span class="player-age">{{ player.birth_date }}</span>
+        </div>
+        
+        <div class="player-info">
+          <h3 class="player-name">{{ player.first_name }} <strong>{{ player.last_name }}</strong></h3>
+          <div class="player-level {{ player.level|lower }}">
+            {{ player.get_level_display }}
+          </div>
+        </div>
+      </a>
       {% endfor %}
     {% else %}
-      Aucune pool assignée.
+      <div class="no-players">
+        <i class="fas fa-exclamation-circle"></i>
+        <p>Aucun joueur dans cette équipe.</p>
+      </div>
     {% endif %}
-  </p>
-
-  <h3>Joueurs dans cette équipe :</h3>
-  <ul>
-    {% for player in team.players.all %}
-      <!-- Lien vers la page de détail du joueur -->
-      <li><a href="{% url 'player_detail' player.id %}">{{ player.first_name }} {{ player.last_name }}</a></li>
-    {% empty %}
-      <li>Aucun joueur dans cette équipe.</li>
-    {% endfor %}
-  </ul>
+  </div>
 
   <p><a href="{% url 'teams' %}">← Retour à la liste des équipes</a></p>
+</div>
 {% endblock %}
