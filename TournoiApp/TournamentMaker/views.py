@@ -422,6 +422,12 @@ def signup(request):
         team = Team.objects.create(name=team_name, tournament=tournament)
 
         capitaine_valide = False
+        for i in range(1, 7):
+            first_name = request.POST.get(f'first_name_{i}')
+            last_name = request.POST.get(f'last_name_{i}')
+            birthdate_str = request.POST.get(f'birthdate_{i}')
+            email = request.POST.get(f'email_{i}')
+            level_str = request.POST.get(f'level_{i}')
 
         for i in total_players:
             index = i + 1
