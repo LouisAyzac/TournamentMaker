@@ -324,7 +324,7 @@ def signup(request):
         tournament = Tournament.objects.first()
         team = Team.objects.create(name=team_name, tournament=tournament)
 
-        for i in range(1, 6):
+        for i in range(1, 7):
             first_name = request.POST.get(f'first_name_{i}')
             last_name = request.POST.get(f'last_name_{i}')
             birthdate_str = request.POST.get(f'birthdate_{i}')
