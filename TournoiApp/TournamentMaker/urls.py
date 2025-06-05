@@ -7,8 +7,8 @@ urlpatterns = [
 
 
     path('', views.home, name='home'), 
-                  # 👉 Nouvelle page d'accueil
-    path('tournoi/', views.index, name='index'),  # 👉 Page tournoi (anciennement à la racine)
+    #  Nouvelle page d'accueil
+    path('tournoi/', views.index, name='index'),  #  Page tournoi (anciennement à la racine)
     path('players/', views.players, name='players'),  
     path('teams/', views.teams, name='teams'),  
     path('scores/', views.scores, name='scores'),  

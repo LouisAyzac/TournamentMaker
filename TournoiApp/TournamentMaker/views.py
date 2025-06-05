@@ -31,7 +31,6 @@ def players(request):
     all_players = Player.objects.filter(team__tournament_id=tournament_id)
     return render(request, 'players.html', {'players': all_players})
 
-
 def teams(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
@@ -39,10 +38,6 @@ def teams(request):
 
     all_teams = Team.objects.filter(tournament_id=tournament_id)
     return render(request, 'teams.html', {'teams': all_teams})
-
-
-
-
 
 from django.shortcuts import render, get_object_or_404
 from TournamentMaker.models import Player, Team

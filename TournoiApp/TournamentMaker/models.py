@@ -315,3 +315,15 @@ def team_detail(request, team_id):
         'players': players,
     }
     return render(request, 'team_detail.html', context)
+
+from django.db import models
+
+class City(models.Model):
+    name = models.CharField(max_length=100)
+    department = models.CharField(max_length=100, default='')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
