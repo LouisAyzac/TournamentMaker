@@ -1,0 +1,16 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+  <h2>Détail du Match</h2>
+  <p><strong>{{ match.team_a }}</strong> vs <strong>{{ match.team_b }}</strong></p>
+  <p>Phase : {{ match.get_phase_display }}</p>
+  <p>Statut : {{ match.get_statut_display }}</p>
+  <p>Score :
+    {{ match.set1_team_a }} - {{ match.set1_team_b }},
+    {{ match.set2_team_a }} - {{ match.set2_team_b }},
+    {{ match.set3_team_a }} - {{ match.set3_team_b }}
+    {% if match.set4_team_a %}, {{ match.set4_team_a }} - {{ match.set4_team_b }}{% endif %}
+    {% if match.set5_team_a %}, {{ match.set5_team_a }} - {{ match.set5_team_b }}{% endif %}
+  </p>
+  <a href="{% url 'matchs_finale' %}">⬅ Retour à l’arbre</a>
+{% endblock %}

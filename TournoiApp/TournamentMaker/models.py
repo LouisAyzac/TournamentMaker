@@ -256,9 +256,10 @@ def create_user_profile(sender, instance, created, **kwargs):
     if created:
 
 
+
         pass
 
-
+ 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
@@ -315,3 +316,15 @@ def team_detail(request, team_id):
         'players': players,
     }
     return render(request, 'team_detail.html', context)
+
+from django.db import models
+
+class City(models.Model):
+    name = models.CharField(max_length=100)
+    department = models.CharField(max_length=100, default='')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
