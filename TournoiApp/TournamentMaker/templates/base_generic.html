@@ -47,14 +47,8 @@
         <a href="{% url 'home' %}" class="nav-button">
             <i class="fas fa-home"></i> Accueil
         </a>
-        <a href="{% url 'index' %}" class="nav-button">
-            <i class="fas fa-landmark"></i> Tournoi
-        </a>
 
         {% if request.session.selected_tournament_id %}
-            <a href="{% url 'players' %}" class="nav-button">
-                <i class="fas fa-users"></i> Joueurs
-            </a>
             <a href="{% url 'teams' %}" class="nav-button">
                 <i class="fas fa-tshirt"></i> Équipes
             </a>
