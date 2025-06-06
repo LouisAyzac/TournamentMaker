@@ -464,3 +464,4 @@ class TournamentAdmin(admin.ModelAdmin):
     list_display = ('name', 'department', 'address', 'is_indoor', 'start_date', 'end_date', 'sport')
     list_filter = ('sport', 'is_indoor', 'start_date', 'end_date')
     search_fields = ('name', 'department', 'address')
+
