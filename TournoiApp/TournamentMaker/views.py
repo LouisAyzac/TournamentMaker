@@ -15,9 +15,25 @@ LEVEL_MAP = {
 }
 
 # === Page d'accueil et généralités ===
+from django.utils.timezone import now
+from .models import Tournament
+
 def home(request):
     request.session.flush()
-    return render(request, 'home.html')
+
+    today = now().date()
+
+    tournois_passes = Tournament.objects.filter(end_date__lt=today)
+    tournois_en_cours = Tournament.objects.filter(start_date__lte=today, end_date__gte=today)
+    tournois_a_venir = Tournament.objects.filter(start_date__gt=today)
+
+    context = {
+        'tournois_passes': tournois_passes,
+        'tournois_en_cours': tournois_en_cours,
+        'tournois_a_venir': tournois_a_venir,
+    }
+
+    return render(request, 'home.html', context)
 
 def index(request):
     num_Player = Player.objects.count()
@@ -27,9 +43,29 @@ def landing(request):
     request.session.pop("selected_tournament", None)
     return render(request, 'landing.html')
 
+from django.utils.timezone import now
+from django.shortcuts import get_object_or_404
+
 def dashboard(request):
-    tournoi_name = request.session.get('selected_tournament_name', 'Aucun tournoi sélectionné')
-    return render(request, 'dashboard.html', {'tournoi_name': tournoi_name})
+    selected_id = request.session.get('selected_tournament_id')
+    if not selected_id:
+        return redirect('select_tournament')
+
+    tournoi = get_object_or_404(Tournament, id=selected_id)
+
+    today = now().date()
+
+    if tournoi.start_date > today:
+        statut = "À venir"
+    elif tournoi.end_date < today:
+        statut = "Terminé"
+    else:
+        statut = "En cours"
+
+    return render(request, 'dashboard.html', {
+        'tournoi': tournoi,
+        'statut': statut
+    })
 
 
 # === Joueurs, équipes, tournois ===
@@ -201,7 +237,18 @@ def scores(request):
 
 
 # === Sélection du tournoi ===
+from django.shortcuts import render, redirect, get_object_or_404
+
 def select_tournament(request):
+    # Si on a cliqué sur un lien avec ?tournament_id=XX
+    if 'tournament_id' in request.GET:
+        selected_id = request.GET.get('tournament_id')
+        tournoi = get_object_or_404(Tournament, id=selected_id)
+        request.session['selected_tournament_id'] = tournoi.id
+        request.session['selected_tournament_name'] = tournoi.name
+        return redirect('dashboard')
+
+    # Si c'est un POST normal (formulaire)
     if request.method == 'POST':
         selected_id = request.POST.get('tournament_id')
         if selected_id:
@@ -210,8 +257,9 @@ def select_tournament(request):
             request.session['selected_tournament_name'] = tournoi.name
             return redirect('dashboard')
 
-    return render(request, 'select_tournament.html', {'tournois': Tournament.objects.all()})
-
+    # Sinon afficher le formulaire
+    tournois = Tournament.objects.all()
+    return render(request, 'select_tournament.html', {'tournois': tournois})
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
