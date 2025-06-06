@@ -623,7 +623,7 @@ class TournamentListView(ListView):
     model = Tournament
     template_name = 'tournament_list.html'
     context_object_name = 'tournois'
-    paginate_by = 6  # 6 tournois par page
+    paginate_by = 2
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -646,3 +646,11 @@ class TournamentListView(ListView):
         context['selected_sport'] = self.request.GET.get('sport', '')
         context['selected_department'] = self.request.GET.get('department', '')
         return context
+    
+from django.views.generic import DetailView
+from .models import Tournament
+
+class TournamentDetailView(DetailView):
+    model = Tournament
+    template_name = 'tournament_detail.html'
+    context_object_name = 'tournoi'
