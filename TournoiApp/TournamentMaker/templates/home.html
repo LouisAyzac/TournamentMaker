@@ -3,4 +3,12 @@
 
 
 {% block content %}
+</a>
+<a href="{% url 'select_tournament' %}" class="nav-button">
+    <i class="fas fa-landmark"></i> Tournoi
+</a>
+
+ <a href="{% url 'create_tournament' %}" class="nav-button">
+    <i class="fas fa-landmark"></i> Créer mon tournoi
+</a>
 {% endblock %}

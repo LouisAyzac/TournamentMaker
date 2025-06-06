@@ -208,6 +208,8 @@ h1, h2, h3, h4, h5, h6 {
       font-size: 1rem;
   }
 }
+ 
+
 
 @keyframes pulse {
   0% { transform: scale(1); }
@@ -1142,7 +1144,7 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--primary-color);
   opacity: 0.7;
 }
-
+ 
 .player-detail {
   max-width: 650px;
   margin: 2rem auto;
@@ -1260,5 +1262,39 @@ button:hover {
   font-size: 0.9em;
   color: #555;
   margin-top: 0;
+}
+
+.success-container {
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 30px 20px;
+  background: #e6ffed;
+  border: 2px solid #4caf50;
+  border-radius: 10px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+.success-container h1 {
+  color: #0f110f;
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+}
+.success-container p {
+  font-size: 1.1rem;
+  color: #388e3c;
+  margin-bottom: 30px;
+}
+.success-container button {
+  background-color: #4caf50;
+  border: none;
+  color: white;
+  padding: 12px 30px;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.success-container button:hover {
+  background-color: #388e3c;
 }
 
