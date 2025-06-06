@@ -2,7 +2,6 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 
-
 urlpatterns = [
 
 
@@ -26,9 +25,6 @@ urlpatterns = [
     
     
 
-    path('classement/final/', views.classement_final_view, name='classement_final'),
-    path('classement/final/', views.classement_final_view, name='rankings'),
-
     path('accounts/reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
         template_name='registration/password_reset_confirm.html'
     ), name='password_reset_confirm'),
@@ -38,11 +34,20 @@ urlpatterns = [
     ), name='password_reset_complete'),
 
 
-    path('matchs/', views.matchs, name='matchs'),
-
     path('creer_tournoi/', views.create_tournament, name='create_tournament'),
 
 
     
-]
 
+    # 🆕 Vue d’aiguillage
+    path('matchs/', views.match_choice, name='matchs'),
+
+    # 🆕 Matchs de poules et détails
+    path('matchs/poules/', views.matchs_poules, name='matchs_poules'),
+    path('matchs/poule/<int:pool_id>/', views.detail_poule, name='detail_poule'),
+
+    # 🆕 Phase finale
+    path('matchs/finale/', views.matchs_finale, name='matchs_finale'),
+
+    path('match/<int:pk>/', views.match_detail, name='match_detail'),
+]

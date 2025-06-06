@@ -1,0 +1,138 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<h2 class="text-center mt-4">Arbre de la Phase Finale</h2>
+
+<style>
+.bracket {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 80px;
+    margin: 40px auto;
+    overflow-x: auto;
+}
+
+.phase-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 100px;
+    position: relative;
+}
+
+.phase-title {
+    font-weight: bold;
+    margin-bottom: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+}
+
+.quarter-label { background-color: #6c5ce7; }
+.demi-label { background-color: #00b894; }
+.finale-label { background-color: #fdcb6e; color: black; }
+.petite-label { background-color: #d63031; }
+
+.match-box {
+    width: 160px;
+    height: 80px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-decoration: none;
+    color: white;
+    position: relative;
+    padding: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.match-box:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.quarter { background-color: #6c5ce7; }
+.demi { background-color: #00b894; }
+.finale { background-color: #fdcb6e; color: black; }
+.petite { background-color: #d63031; }
+
+/* Liaisons horizontales */
+.match-box::after {
+    content: '';
+    position: absolute;
+    right: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 2px;
+    background: #444;
+}
+
+.phase-column:last-child .match-box::after {
+    display: none;
+}
+
+/* Liaisons verticales */
+.connect-line {
+    width: 2px;
+    height: 100px;
+    background: #444;
+    margin: -50px auto;
+}
+</style>
+
+<div class="bracket">
+
+    <!-- Quarts de finale -->
+    <div class="phase-column">
+        <div class="phase-title quarter-label">Quarts de finale</div>
+        {% for match in quarter %}
+            <a href="{% url 'match_detail' match.id %}" class="match-box quarter">
+                {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
+            </a>
+            {% if not forloop.last %}
+                <div class="connect-line"></div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Demi-finales -->
+    <div class="phase-column">
+        <div class="phase-title demi-label">Demi-finales</div>
+        {% for match in semi %}
+            <a href="{% url 'match_detail' match.id %}" class="match-box demi">
+                {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
+            </a>
+            {% if not forloop.last %}
+                <div class="connect-line"></div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Finale -->
+    <div class="phase-column">
+        <div class="phase-title finale-label">Finale</div>
+        {% with final.0 as match %}
+            <a href="{% url 'match_detail' match.id %}" class="match-box finale">
+                {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
+            </a>
+        {% endwith %}
+    </div>
+
+    <!-- Petite finale -->
+    <div class="phase-column">
+        <div class="phase-title petite-label">Petite Finale</div>
+        {% with third_place.0 as match %}
+            <a href="{% url 'match_detail' match.id %}" class="match-box petite">
+                {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
+            </a>
+        {% endwith %}
+    </div>
+
+</div>
+{% endblock %}
