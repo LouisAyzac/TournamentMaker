@@ -1,13 +1,14 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
+from .views import TournamentListView 
 
 urlpatterns = [
 
 
     path('', views.home, name='home'), 
-    #  Nouvelle page d'accueil
-    path('tournoi/', views.index, name='index'),  #  Page tournoi (anciennement à la racine)
+                  # 👉 Nouvelle page d'accueil
+    path('tournoi/', views.index, name='index'),  # 👉 Page tournoi (anciennement à la racine)
     path('players/', views.players, name='players'),  
     path('teams/', views.teams, name='teams'),  
     path('scores/', views.scores, name='scores'),  
@@ -23,8 +24,6 @@ urlpatterns = [
     path('signup/success/', views.signup_success, name='signup_success'),
     path('matchs-en-cours/', views.matchs_en_cours, name='matchs_en_cours'),
     
-    
-
     path('accounts/reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
         template_name='registration/password_reset_confirm.html'
     ), name='password_reset_confirm'),
@@ -34,20 +33,9 @@ urlpatterns = [
     ), name='password_reset_complete'),
 
 
-    path('creer_tournoi/', views.create_tournament, name='create_tournament'),
-
+    path('matchs/', views.matchs, name='matchs'),
+    path('tournaments/', TournamentListView.as_view(), name='tournament_list'),
 
     
-
-    # 🆕 Vue d’aiguillage
-    path('matchs/', views.match_choice, name='matchs'),
-
-    # 🆕 Matchs de poules et détails
-    path('matchs/poules/', views.matchs_poules, name='matchs_poules'),
-    path('matchs/poule/<int:pool_id>/', views.detail_poule, name='detail_poule'),
-
-    # 🆕 Phase finale
-    path('matchs/finale/', views.matchs_finale, name='matchs_finale'),
-
-    path('match/<int:pk>/', views.match_detail, name='match_detail'),
 ]
+

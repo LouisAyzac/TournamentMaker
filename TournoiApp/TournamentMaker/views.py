@@ -616,3 +616,33 @@ def create_team(request, tournament_id):
 
     return render(request, 'create_team.html', {'tournament': tournoi})
 
+from django.views.generic import ListView
+from .models import Tournament
+
+class TournamentListView(ListView):
+    model = Tournament
+    template_name = 'tournament_list.html'
+    context_object_name = 'tournois'
+    paginate_by = 6  # 6 tournois par page
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filtrage par sport
+        sport = self.request.GET.get('sport')
+        if sport:
+            queryset = queryset.filter(sport=sport)
+        
+        # Filtrage par département
+        department = self.request.GET.get('department')
+        if department:
+            queryset = queryset.filter(department__icontains=department)
+        
+        return queryset.order_by('start_date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sports'] = Tournament.SPORT_CHOICES
+        context['selected_sport'] = self.request.GET.get('sport', '')
+        context['selected_department'] = self.request.GET.get('department', '')
+        return context
