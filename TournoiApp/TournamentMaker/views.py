@@ -322,58 +322,18 @@ def scores(request):
         return redirect('scores')  # évite les resoumissions de formulaire
 
     return render(request, 'scores.html', {'matches': matches})
-from .models import Team, UserProfile
-from django.db import transaction
 
+from django.db import transaction
 from django.shortcuts import render, redirect
 from .models import Team, Tournament, Player, UserProfile
 from django.contrib.auth.models import User
-from django.utils.dateparse import parse_date
 from django.contrib import messages
-
-from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.shortcuts import render, redirect
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.db import IntegrityError
 from django.utils.dateparse import parse_date
-from .models import Team, Player, Tournament, UserProfile
-
-# Utilise exactement ton dictionnaire
-LEVEL_MAP = {
-    'débutant': 1,
-    'intermédiaire': 2,
-    'avancé': 3,
-    'expert': 4,
-    'maître': 5,
-}
-
-from django.shortcuts import render, redirect
-from django.contrib.auth.models import User
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
-from .models import Tournament, Team, Player, UserProfile
-from django.utils.dateparse import parse_date
-
-from django.utils.dateparse import parse_date
-from django.core.mail import send_mail
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
-
-from django.shortcuts import render, redirect
-from django.utils.dateparse import parse_date
-from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.core.mail import send_mail
-
-from .models import Tournament, Team, Player, UserProfile
 
 LEVEL_MAP = {
     'debutant': 1,
