@@ -23,15 +23,22 @@ class Tournament(models.Model):
     sport = models.CharField(max_length=50, default='Football')
     max_teams = models.PositiveIntegerField(default=8)  # 🔸 Nombre max d’équipes
     players_per_team = models.PositiveIntegerField(default=5)  # 🔸 Joueurs max par équipe
+    number_of_pools = models.IntegerField(default=0)  # champ sélectionné à la création
+
 
     def __str__(self):
         return self.name
+    
+    
 
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
     captain = models.OneToOneField('UserProfile', on_delete=models.CASCADE, related_name='captained_team', null=True, blank=True)
+    pool = models.ForeignKey('Pool', on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
+
+    
 
     def __str__(self):
         return self.name
@@ -91,15 +98,17 @@ class Player(models.Model):
 class Pool(models.Model):
     name = models.CharField(max_length=50)
     max_size = models.PositiveIntegerField(default=4)
-    teams = models.ManyToManyField('Team', blank=True, related_name='pools')
-
     tournament = models.ForeignKey(
         'Tournament',
         on_delete=models.CASCADE,
         related_name='pools',
-        null=True,
-        blank=True 
+        null=False,
+        blank=False
     )
+
+
+    def __str__(self):
+        return self.name
 
     def __str__(self):
         return f"{self.name} ({self.tournament.name})"
@@ -328,3 +337,13 @@ class City(models.Model):
     def __str__(self):
         return self.name
 
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Tournament)
+def create_pools_for_tournament(sender, instance, created, **kwargs):
+    if created:
+        for i in range(1, instance.number_of_pools + 1):
+            pool_name = f"Pool {i}"
+            Pool.objects.create(name=pool_name, tournament=instance)

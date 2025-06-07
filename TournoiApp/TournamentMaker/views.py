@@ -342,8 +342,15 @@ def signup(request):
 
         team = Team.objects.create(name=team_name, tournament=tournament)
 
+        # Répartir l'équipe dans les pools disponibles du tournoi
+        pools = Pool.objects.filter(tournament=tournament)
+        if pools.exists():
+            # On distribue les équipes de manière circulaire dans les pools
+            pool_to_assign = pools.order_by('id')[(team.id - 1) % len(pools)]  # Distribution circulaire
+            team.pool = pool_to_assign
+            team.save()
+
         capitaine_valide = False
-        
 
         for i in total_players:
             index = i + 1
@@ -355,7 +362,7 @@ def signup(request):
 
             if i == 0:
                 if not (first_name and last_name and email):
-                    team.delete()
+                    team.delete()  # Supprimer l'équipe si le capitaine n'a pas les informations requises
                     return render(request, 'signup.html', {
                         'error': 'Le capitaine doit avoir un prénom, nom et email.',
                         'players_per_team': players_per_team,
@@ -384,6 +391,7 @@ def signup(request):
                     team.captain = user_profile
                     team.save()
 
+                    # Générer le lien pour la réinitialisation du mot de passe
                     uid = urlsafe_base64_encode(force_bytes(user.pk))
                     token = default_token_generator.make_token(user)
                     domain = '127.0.0.1:8000'
@@ -404,7 +412,7 @@ L'équipe du tournoi
                     send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
 
         if not capitaine_valide:
-            team.delete()
+            team.delete()  # Supprimer l'équipe si aucun capitaine valide
             return render(request, 'signup.html', {
                 'error': 'Le capitaine est obligatoire.',
                 'players_per_team': players_per_team,
@@ -593,7 +601,12 @@ from django.contrib import messages
 from django.utils.dateparse import parse_date
 from .models import Tournament
 
-def create_tournament(request):
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import Tournament, Pool
+from django.utils.dateparse import parse_date
+
+def create_tournament(request): 
     if request.method == 'POST':
         name = request.POST.get('name')
         department = request.POST.get('department')
@@ -617,8 +630,9 @@ def create_tournament(request):
         try:
             nb_teams = int(nb_teams)
             players_per_team = int(players_per_team)
+            nb_pools = int(nb_pools)  # Assure-toi que nb_pools est un entier
         except ValueError:
-            messages.error(request, "Le nombre d'équipes et de joueurs par équipe doivent être des entiers.")
+            messages.error(request, "Le nombre d'équipes, de joueurs par équipe et de pools doivent être des entiers.")
             return redirect('create_tournament')
 
         # Création du tournoi avec max_teams et players_per_team
@@ -633,6 +647,11 @@ def create_tournament(request):
             max_teams=nb_teams,
             players_per_team=players_per_team,
         )
+
+        # Créer les pools pour ce tournoi
+        for i in range(1, nb_pools + 1):
+            pool_name = f"Pool {i}"
+            Pool.objects.create(name=pool_name, tournament=tournoi)
 
         # Sauvegarde optionnelle en session
         request.session['tournament_created_id'] = tournoi.id

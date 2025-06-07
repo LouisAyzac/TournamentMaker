@@ -28,9 +28,9 @@ class PoolTournamentFilter(SimpleListFilter):
 
 @admin.register(Pool)
 class PoolAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tournament', 'current_team_count', 'list_teams')  # ➕ tournament ici
+    list_display = ('name', 'tournament', 'current_team_count', 'list_teams')
     list_filter = ('tournament',)  # tu peux supprimer PoolTournamentFilter si plus utilisé
-    filter_horizontal = ('teams',)
+    # filter_horizontal = ('teams',)  # supprimé car teams n'est plus ManyToManyField
     readonly_fields = ('display_teams',)
     actions = ['generate_matches']
 
@@ -242,12 +242,12 @@ class PlayerAdmin(admin.ModelAdmin):
 @admin.register(Ranking)
 class RankingAdmin(admin.ModelAdmin):
     list_display = ('team', 'rank', 'pools_names')
-    list_filter = ['team__pools', 'team__tournament']
+    list_filter = ['team__pool', 'team__tournament']  # <== ici
 
     def pools_names(self, obj):
-        return ", ".join(pool.name for pool in obj.team.pools.all())
-    pools_names.short_description = "Pool(s)"
-
+        # Comme c'est un FK, c'est un seul objet pool, pas une queryset
+        return obj.team.pool.name if obj.team.pool else "-"
+    pools_names.short_description = "Pool"
 
 class TeamAdmin(admin.ModelAdmin):
     list_display = ('name', 'tournament', 'player_count')
@@ -407,7 +407,7 @@ class FinalRankingProxy(Ranking):
 @admin.register(FinalRankingProxy)
 class FinalRankingAdmin(admin.ModelAdmin):
     list_display = ('team', 'final_rank_display', 'wins_display', 'pool_wins_display')
-    list_filter = ['team__pools', 'team__tournament']
+    list_filter = ['team__pool', 'team__tournament']  # <== ici
 
     def get_queryset(self, request):
         return super().get_queryset(request)
