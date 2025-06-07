@@ -574,26 +574,30 @@ from .models import Tournament
 from django.contrib import messages
 from django.utils.dateparse import parse_date
  
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils.dateparse import parse_date
+from .models import Tournament, City
+
 def create_tournament(request):
+    # Récupérer toutes les villes pour le menu déroulant
+    cities = City.objects.all()
+
     if request.method == 'POST':
         name = request.POST.get('name')
+        city_id = request.POST.get('city')  # Récupérer l'ID de la ville sélectionnée
         department = request.POST.get('department')
         address = request.POST.get('address')
         is_indoor = request.POST.get('is_indoor') == 'on'
         start_date = parse_date(request.POST.get('start_date'))
         end_date = parse_date(request.POST.get('end_date'))
         sport = request.POST.get('sport')
-
-        
-        # Champs supplémentaires
-        
         nb_teams = request.POST.get('nb_teams')
         players_per_team = request.POST.get('players_per_team')
         nb_pools = request.POST.get('nb_pools')
 
         # Validation basique
-        
-        if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team]):
+        if not all([name, city_id, department, start_date, end_date, sport, nb_teams, players_per_team]):
             messages.error(request, "Tous les champs requis ne sont pas remplis.")
             return redirect('create_tournament')
 
@@ -605,8 +609,14 @@ def create_tournament(request):
             messages.error(request, "Le nombre d'équipes et de joueurs par équipe doivent être des entiers.")
             return redirect('create_tournament')
 
+        # Récupérer la ville sélectionnée
+        try:
+            city = City.objects.get(id=city_id)
+        except City.DoesNotExist:
+            messages.error(request, "La ville sélectionnée n'existe pas.")
+            return redirect('create_tournament')
+
         # Création du tournoi avec max_teams et players_per_team
- 
         tournoi = Tournament.objects.create(
             name=name,
             department=department,
@@ -614,23 +624,22 @@ def create_tournament(request):
             is_indoor=is_indoor,
             start_date=start_date,
             end_date=end_date,
- 
             sport=sport,
             max_teams=nb_teams,
             players_per_team=players_per_team,
         )
 
         # Sauvegarde optionnelle en session
- 
         request.session['tournament_created_id'] = tournoi.id
         request.session['nb_teams'] = nb_teams
         request.session['players_per_team'] = players_per_team
         request.session['nb_pools'] = nb_pools
- 
+
         messages.success(request, f"Tournoi '{name}' créé avec succès.")
         return redirect('select_tournament')
 
-    return render(request, 'create_tournament.html')
+    # Passer les villes au contexte pour le menu déroulant
+    return render(request, 'create_tournament.html', {'cities': cities})
 
 
 from django.shortcuts import get_object_or_404
