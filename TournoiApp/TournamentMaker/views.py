@@ -435,8 +435,23 @@ def signup_success(request):
 # === 🆕 Matchs ===
 
 # Choix entre les phases
+from django.shortcuts import render
+from .models import Tournament
+
 def match_choice(request):
-    return render(request, 'matchs_choice.html')
+    # Exemple : récupérer l'ID tournoi dans l'URL ou session
+    tournament_id = request.GET.get('tournament_id') or request.session.get('selected_tournament_id')
+
+    if not tournament_id:
+        # Pas d'ID tournoi, rediriger ou erreur
+        return render(request, 'matchs_choice.html', {'error': 'Aucun tournoi sélectionné'})
+
+    try:
+        tournament = Tournament.objects.get(id=tournament_id)
+    except Tournament.DoesNotExist:
+        return render(request, 'matchs_choice.html', {'error': 'Tournoi introuvable'})
+
+    return render(request, 'matchs_choice.html', {'tournament': tournament})
 
 
 # Matchs en cours
@@ -457,10 +472,22 @@ def matchs_en_cours(request):
 
 
 
-def matchs_poules(request):
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Q
+from .models import Pool, Match, Tournament
+
+def matchs_poules(request, tournament_id): 
+    tournament = get_object_or_404(Tournament, id=tournament_id)
     pools_data = []
 
-    for pool in Pool.objects.prefetch_related('teams'):
+    # 🔥 On filtre les pools du tournoi en question
+    pools = Pool.objects.filter(tournament=tournament)
+    print("Pools récupérées :", pools)  # Debugging, vérifier si on récupère bien des pools
+
+    if not pools:
+        print("Aucune pool trouvée pour ce tournoi.")  # Si aucune pool n'est trouvée
+
+    for pool in pools.prefetch_related('teams'):
         stats = []
 
         for team in pool.teams.all():
@@ -471,7 +498,7 @@ def matchs_poules(request):
             total_joues = matchs_joues.count()
             victoires = sum(1 for match in matchs_joues if match.winner_team == team)
             defaites = total_joues - victoires
-            points = victoires * 3  # 3 points par victoire, 0 pour défaite
+            points = victoires * 3  # 3 points par victoire
 
             stats.append({
                 'team': team,
@@ -488,13 +515,20 @@ def matchs_poules(request):
 
         pools_data.append({'pool': pool, 'stats': stats})
 
-    return render(request, 'matchs_poules.html', {'pools_data': pools_data})
+    print("Pools data envoyées :", pools_data)  # Vérifier si les données sont bien envoyées
+
+    return render(request, 'matchs_poules.html', {
+        'pools_data': pools_data,
+        'tournament': tournament
+    })
 
 
 
 # Détail d'une poule
 def detail_poule(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
+    tournament = pool.tournament  # assuming your Pool model has a ForeignKey to Tournament
+
     matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
 
     for match in matchs:
@@ -509,7 +543,11 @@ def detail_poule(request, pool_id):
                     'team_b_score': sb
                 })
 
-    return render(request, 'detail_poule.html', {'pool': pool, 'matchs': matchs})
+    return render(request, 'detail_poule.html', {
+        'pool': pool,
+        'matchs': matchs,
+        'tournament': tournament,  # <-- Ajoute ça !
+    })
 
 
 # Vue phase finale

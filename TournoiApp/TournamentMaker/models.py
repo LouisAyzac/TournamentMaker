@@ -99,7 +99,7 @@ class Pool(models.Model):
     name = models.CharField(max_length=50)
     max_size = models.PositiveIntegerField(default=4)
     tournament = models.ForeignKey(
-        'Tournament',
+        Tournament,
         on_delete=models.CASCADE,
         related_name='pools',
         null=False,
@@ -344,6 +344,8 @@ from django.dispatch import receiver
 @receiver(post_save, sender=Tournament)
 def create_pools_for_tournament(sender, instance, created, **kwargs):
     if created:
+        print(f"Création de {instance.number_of_pools} pools pour le tournoi {instance.name}")
         for i in range(1, instance.number_of_pools + 1):
             pool_name = f"Pool {i}"
-            Pool.objects.create(name=pool_name, tournament=instance)
+            pool = Pool.objects.create(name=pool_name, tournament=instance)
+            print(f"Pool créée : {pool.name} pour le tournoi {instance.name}")
