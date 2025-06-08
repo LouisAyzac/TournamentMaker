@@ -310,7 +310,14 @@ def auto_generate_quarters(sender, instance, **kwargs):
     if not pool:
         return
 
-    unfinished = Match.objects.filter(pool=pool, phase='pool', en_cours=True).exists()
+    # Remplacement de la ligne fautive
+    # unfinished = Match.objects.filter(pool=pool, phase='pool', en_cours=True).exists()
+
+    # On récupère tous les matchs 'pool' de cette pool et on teste s’il y en a au moins un non terminé
+    unfinished = any(
+        not is_match_finished(m)
+        for m in Match.objects.filter(pool=pool, phase='pool')
+    )
     if unfinished:
         return
 
@@ -321,7 +328,7 @@ def auto_generate_quarters(sender, instance, **kwargs):
 
     pool_teams = {}
     for p in pools:
-        rankings = Ranking.objects.filter(team__pools=p).order_by('rank')[:2]
+        rankings = Ranking.objects.filter(team__pool=p).order_by('rank')[:2]
         if rankings.count() < 2:
             return
         pool_teams[p.name] = [rankings[0].team, rankings[1].team]
