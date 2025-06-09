@@ -24,9 +24,11 @@
           <label for="sport" class="mr-2">Sport :</label>
           <select name="sport" id="sport" class="form-control">
             <option value="">Tous les sports</option>
-            {% for sport in sports %}
-            <option value="{{ sport.0 }}" {% if selected_sport == sport.0 %}selected{% endif %}>{{ sport.1 }}</option>
-            {% endfor %}
+          {% for sport in sports %}
+            <option value="{{ sport.0 }}" {% if selected_sport == sport.0 %}selected{% endif %}>
+              {{ sport.1 }}
+            </option>
+          {% endfor %}
           </select>
         </div>
         <div class="form-group mr-3">
@@ -47,8 +49,14 @@
     <div class="col-md-6 mb-4">
       <div class="card h-100">
         <div class="card-header bg-primary text-white">
-          <h5 class="card-title mb-0">{{ tournoi.name }}</h5>
-        </div>
+<h5 class="card-title mb-0 d-flex align-items-center">
+  {{ tournoi.name }}
+  {% if tournoi.teams.count >= tournoi.max_teams %}
+    <div class="badge bg-danger ms-2">
+      <i class="fas fa-exclamation-circle me-1"></i> Tournoi complet
+    </div>
+  {% endif %}
+</h5>        </div>
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
@@ -131,3 +139,4 @@
   {% endif %}
 </div>
 {% endblock %}
+
