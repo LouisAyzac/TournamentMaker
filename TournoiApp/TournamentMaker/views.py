@@ -112,6 +112,7 @@ def team_detail(request, pk):
         return redirect('select_tournament')
 
     team = get_object_or_404(Team, pk=pk, tournament_id=tournament_id)
+    tournament = get_object_or_404(Tournament, id=tournament_id)
     ranking = Ranking.objects.filter(team=team).first()
 
     teams = Team.objects.filter(tournament_id=tournament_id)
@@ -120,27 +121,33 @@ def team_detail(request, pk):
     points = {t.id: 0 for t in teams}
     pool_wins = {t.id: 0 for t in teams}
 
+    def get_winner(match, sets_to_win):
+        score_a, score_b = 0, 0
+        max_sets = sets_to_win * 2 - 1  # nombre max de sets possibles dans le match (ex: 3 sets gagnants => max 5 sets)
 
-    def get_winner(match):
-        score_a = 0
-        score_b = 0
-        for i in range(1, 6):
-            sa = getattr(match, f'set{i}_team_a')
-            sb = getattr(match, f'set{i}_team_b')
-            if sa is not None and sb is not None:
-                if sa > sb:
-                    score_a += 1
-                elif sb > sa:
-                    score_b += 1
-        if score_a > score_b:
-            return match.team_a
-        elif score_b > score_a:
-            return match.team_b
-        else:
-            return None
+        for i in range(1, max_sets + 1):
+            set_team_a = getattr(match, f'set{i}_team_a', None)
+            set_team_b = getattr(match, f'set{i}_team_b', None)
+            if set_team_a is None or set_team_b is None:
+                # Si un set n'a pas été joué (score manquant), on arrête la lecture
+                break
+            if set_team_a > set_team_b:
+                score_a += 1
+            elif set_team_b > set_team_a:
+                score_b += 1
+            
+            # Dès qu’une équipe atteint le nombre de sets gagnants nécessaires, on peut arrêter
+            if score_a == sets_to_win:
+                return match.team_a
+            if score_b == sets_to_win:
+                return match.team_b
 
+        # Si aucun n'a atteint le seuil, match nul ou non terminé
+        return None
+    
+    sets_to_win = tournament.sets_to_win
     for match in matches:
-        winner = get_winner(match)
+        winner = get_winner(match, sets_to_win)
         if winner:
             if match.phase == 'final':
                 points[winner.id] += 100
@@ -658,9 +665,11 @@ def create_tournament(request):
         nb_teams = request.POST.get('nb_teams')
         players_per_team = request.POST.get('players_per_team')
         nb_pools = request.POST.get('nb_pools')
+        nb_sets_to_win = request.POST.get('nb_sets_to_win')  # Nouveau champ
+        points_per_set = request.POST.get('points_per_set')  # Nouveau champ
 
         # Validation basique
-        if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team]):
+        if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team, nb_sets_to_win, points_per_set]):
             messages.error(request, "Tous les champs requis ne sont pas remplis.")
             return redirect('create_tournament')
 
@@ -668,12 +677,19 @@ def create_tournament(request):
         try:
             nb_teams = int(nb_teams)
             players_per_team = int(players_per_team)
+<<<<<<< HEAD
             nb_pools = int(nb_pools)  # Assure-toi que nb_pools est un entier
         except ValueError:
             messages.error(request, "Le nombre d'équipes, de joueurs par équipe et de pools doivent être des entiers.")
+=======
+            nb_sets_to_win = int(nb_sets_to_win)  # Conversion
+            points_per_set = int(points_per_set)  # Conversion
+        except ValueError:
+            messages.error(request, "Veuillez saisir des valeurs numériques valides.")
+>>>>>>> antoine
             return redirect('create_tournament')
 
-        # Création du tournoi avec max_teams et players_per_team
+        # Création du tournoi avec les nouveaux champs
         tournoi = Tournament.objects.create(
             name=name,
             department=department,
@@ -684,6 +700,8 @@ def create_tournament(request):
             sport=sport,
             max_teams=nb_teams,
             players_per_team=players_per_team,
+            nb_sets_to_win=nb_sets_to_win,  # Nouveau champ
+            points_per_set=points_per_set,  # Nouveau champ
         )
 
         # Créer les pools pour ce tournoi
@@ -698,10 +716,9 @@ def create_tournament(request):
         request.session['nb_pools'] = nb_pools
 
         messages.success(request, f"Tournoi '{name}' créé avec succès.")
-        return redirect('select_tournament')
+        return redirect('home')
 
     return render(request, 'create_tournament.html')
-
 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
