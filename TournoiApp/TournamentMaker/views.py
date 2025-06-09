@@ -677,16 +677,16 @@ def create_tournament(request):
         try:
             nb_teams = int(nb_teams)
             players_per_team = int(players_per_team)
-<<<<<<< HEAD
+            
             nb_pools = int(nb_pools)  # Assure-toi que nb_pools est un entier
         except ValueError:
             messages.error(request, "Le nombre d'équipes, de joueurs par équipe et de pools doivent être des entiers.")
-=======
+            
             nb_sets_to_win = int(nb_sets_to_win)  # Conversion
             points_per_set = int(points_per_set)  # Conversion
         except ValueError:
             messages.error(request, "Veuillez saisir des valeurs numériques valides.")
->>>>>>> antoine
+            
             return redirect('create_tournament')
 
         # Création du tournoi avec les nouveaux champs
@@ -745,7 +745,6 @@ class TournamentListView(ListView):
     model = Tournament
     template_name = 'tournament_list.html'
     context_object_name = 'tournois'
-    paginate_by = 2
 
     def get_queryset(self):
         queryset = super().get_queryset()
