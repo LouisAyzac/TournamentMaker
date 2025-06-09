@@ -23,7 +23,8 @@ class Tournament(models.Model):
     sport = models.CharField(max_length=50, default='Football')
     max_teams = models.PositiveIntegerField(default=8)  # 🔸 Nombre max d’équipes
     players_per_team = models.PositiveIntegerField(default=5)  # 🔸 Joueurs max par équipe
-
+    nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
+    points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
     def __str__(self):
         return self.name
 
