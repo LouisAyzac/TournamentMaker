@@ -47,13 +47,6 @@
         <a href="{% url 'home' %}" class="nav-button">
             <i class="fas fa-home"></i> Accueil
         </a>
-        <a href="{% url 'index' %}" class="nav-button">
-            <i class="fas fa-landmark"></i> Tournoi
-        </a>
-
-         <a href="{% url 'create_tournament' %}" class="nav-button">
-            <i class="fas fa-landmark"></i> Créer mon tournoi
-        </a>
 
         {% if request.session.selected_tournament_id %}
             <a href="{% url 'teams' %}" class="nav-button">
