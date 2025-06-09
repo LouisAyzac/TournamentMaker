@@ -145,7 +145,7 @@ def team_detail(request, pk):
         # Si aucun n'a atteint le seuil, match nul ou non terminé
         return None
     
-    sets_to_win = tournament.sets_to_win
+    sets_to_win = tournament.nb_sets_to_win
     for match in matches:
         winner = get_winner(match, sets_to_win)
         if winner:
