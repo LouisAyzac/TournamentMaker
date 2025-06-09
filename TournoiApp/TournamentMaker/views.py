@@ -315,6 +315,12 @@ LEVEL_MAP = {
     'expert': 4,
 }
 
+from django.shortcuts import render
+
+def tournament_full(request):
+    return render(request, 'tournament_full.html')
+
+
 def signup(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
@@ -329,11 +335,7 @@ def signup(request):
     current_teams_count = Team.objects.filter(tournament=tournament).count()
 
     if current_teams_count >= max_teams:
-        return render(request, 'signup.html', {
-            'error': 'Le nombre maximum d’équipes pour ce tournoi est atteint.',
-            'players_per_team': tournament.players_per_team,
-            'total_players': range(tournament.players_per_team + 2),
-        })
+        return redirect('tournament_full')
 
     players_per_team = tournament.players_per_team
     total_players = range(players_per_team + 2)
