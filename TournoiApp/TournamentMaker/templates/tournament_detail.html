@@ -1,41 +1,46 @@
-<!-- tournament_detail.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Détails du Tournoi : {{ tournoi.name }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <div class="card shadow-lg">
-            <div class="card-header text-white bg-primary">
-                <h2>{{ tournoi.name }}</h2>
-            </div>
-            <div class="card-body">
-                <p><strong>Sport :</strong> {{ tournoi.get_sport_display }}</p>
-                <p><strong>Département :</strong> {{ tournoi.department }}</p>
-                {% if tournoi.address %}
-                <p><strong>Adresse :</strong> {{ tournoi.address }}</p>
-                {% endif %}
-                <p><strong>En intérieur :</strong> {{ tournoi.is_indoor|yesno:"Oui,Non" }}</p>
-                <p><strong>Date de début :</strong> {{ tournoi.start_date }}</p>
-                <p><strong>Date de fin :</strong> {{ tournoi.end_date }}</p>
-                <p><strong>Nombre maximum d’équipes :</strong> {{ tournoi.max_teams }}</p>
-                <p><strong>Joueurs par équipe :</strong> {{ tournoi.players_per_team }}</p>
-                {% if tournoi.is_ongoing %}
-                <p class="text-success"><strong>Statut :</strong> En cours</p>
-                {% elif tournoi.is_upcoming %}
-                <p class="text-warning"><strong>Statut :</strong> À venir</p>
-                {% else %}
-                <p class="text-danger"><strong>Statut :</strong> Terminé</p>
-                {% endif %}
-            </div>
-            <div class="card-footer">
-                <a href="{% url 'tournament_list' %}" class="btn btn-secondary">Retour à la liste</a>
-            </div>
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<div class="container py-5">
+
+  <!-- Section héro -->
+  <div class="bg-primary text-white rounded-4 shadow-sm p-4 mb-4 text-center">
+    <h1 class="display-5 fw-bold"><i class="fas fa-trophy me-2"></i>{{ tournoi.name }}</h1>
+    <p class="lead mb-0">{{ tournoi.get_sport_display }} - {{ tournoi.department }}</p>
+  </div>
+
+  <!-- Détails du tournoi -->
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body p-4">
+      <div class="row g-4">
+        <div class="col-md-6">
+          {% if tournoi.address %}
+          <p class="mb-2"><i class="fas fa-map-marker-alt text-primary me-2"></i><strong>Adresse :</strong> {{ tournoi.address }}</p>
+          {% endif %}
+          <p class="mb-2"><i class="fas fa-building text-primary me-2"></i><strong>En intérieur :</strong> {{ tournoi.is_indoor|yesno:"Oui,Non" }}</p>
+          <p class="mb-2"><i class="fas fa-users text-primary me-2"></i><strong>Équipes max :</strong> {{ tournoi.max_teams }}</p>
+          <p class="mb-2"><i class="fas fa-user-friends text-primary me-2"></i><strong>Joueurs/équipe :</strong> {{ tournoi.players_per_team }}</p>
+          <p class="mb-2"><i class="fas fa-list-ol text-primary me-2"></i><strong>Équipes inscrites :</strong> {{ tournoi.teams.count }} / {{ tournoi.max_teams }}</p>
+
+          {% if tournoi.teams.count >= tournoi.max_teams %}
+            <div class="text-danger fw-bold"><i class="fas fa-exclamation-circle me-1"></i>Tournoi complet</div>
+          {% endif %}
         </div>
+
+        <div class="col-md-6">
+          <p class="mb-2"><i class="fas fa-calendar-alt text-primary me-2"></i><strong>Date de début :</strong> {{ tournoi.start_date|date:"d/m/Y" }}</p>
+          <p class="mb-2"><i class="fas fa-calendar-check text-primary me-2"></i><strong>Date de fin :</strong> {{ tournoi.end_date|date:"d/m/Y" }}</p>
+
+          
+        </div>
+      </div>
     </div>
-</body>
-</html>
+
+    <div class="card-footer bg-light text-end py-3 px-4">
+      <a href="{% url 'select_tournament' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-1"></i> Retour aux tournois
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
