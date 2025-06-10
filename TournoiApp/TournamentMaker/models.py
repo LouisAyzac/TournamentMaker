@@ -6,9 +6,6 @@ from django.contrib.auth.models import User
 from datetime import date
 
 
-from django.db import models
-from datetime import date
-
 class Tournament(models.Model):
     SPORT_CHOICES = [
         ('football', 'Football'),
@@ -17,29 +14,25 @@ class Tournament(models.Model):
         ('rugby', 'Rugby'),
     ]
 
-    TOURNAMENT_TYPE_CHOICES = [
-        ('RR', 'Round Robin'),
-        ('DE', 'Direct Elimination'),
-    ]
-
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     address = models.CharField(max_length=255, blank=True, null=True)
     is_indoor = models.BooleanField(default=True)
     start_date = models.DateField(default=date.today)
     end_date = models.DateField(default=date.today)
-    sport = models.CharField(max_length=50, choices=SPORT_CHOICES, default='football')
-    max_teams = models.PositiveIntegerField(default=8)
-    players_per_team = models.PositiveIntegerField(default=5)
-    number_of_pools = models.IntegerField(default=0)
-    type_tournament = models.CharField(max_length=2, choices=TOURNAMENT_TYPE_CHOICES, default='RR')
+    sport = models.CharField(max_length=50,choices=SPORT_CHOICES, default='Football')
+    max_teams = models.PositiveIntegerField(default=8)  # 🔸 Nombre max d’équipes
+    players_per_team = models.PositiveIntegerField(default=5)  # 🔸 Joueurs max par équipe
+
+    number_of_pools = models.IntegerField(default=0)  # champ sélectionné à la création
+
+
 
     nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
     points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
-
+    
     def __str__(self):
         return self.name
-
     
     
 

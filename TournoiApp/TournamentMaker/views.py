@@ -395,7 +395,6 @@ def signup(request):
                 'players_per_team': players_per_team,
                 'total_players': total_players
             })
-        
 
 
         # Répartir l'équipe dans les pools disponibles du tournoi → avec têtes de séries
@@ -755,27 +754,8 @@ from django.contrib import messages
 from .models import Tournament, Pool
 from django.utils.dateparse import parse_date
 
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from datetime import datetime
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from datetime import datetime
-
-def parse_date(date_str):
-    return datetime.strptime(date_str, '%Y-%m-%d').date()
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from datetime import datetime
-
-def parse_date(date_str):
-    return datetime.strptime(date_str, '%Y-%m-%d').date()
-
-def create_tournament(request):
+def create_tournament(request): 
     if request.method == 'POST':
-        # Retrieve form data
         name = request.POST.get('name')
         department = request.POST.get('department')
         address = request.POST.get('address')
@@ -783,38 +763,36 @@ def create_tournament(request):
         start_date = parse_date(request.POST.get('start_date'))
         end_date = parse_date(request.POST.get('end_date'))
         sport = request.POST.get('sport')
-        type_tournament = request.POST.get('type_tournament')
 
-        # Additional fields
+        # Champs supplémentaires
         nb_teams = request.POST.get('nb_teams')
         players_per_team = request.POST.get('players_per_team')
-        nb_pools = request.POST.get('nb_pools', 0)
-        nb_sets_to_win = request.POST.get('nb_sets_to_win')
-        points_per_set = request.POST.get('points_per_set')
+        nb_pools = request.POST.get('nb_pools')
+        nb_sets_to_win = request.POST.get('nb_sets_to_win')  # Nouveau champ
+        points_per_set = request.POST.get('points_per_set')  # Nouveau champ
 
-        # Basic validation
+        # Validation basique
         if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team, nb_sets_to_win, points_per_set]):
             messages.error(request, "Tous les champs requis ne sont pas remplis.")
             return redirect('create_tournament')
 
-        # Conversion and validation
+        # Vérification et conversion
         try:
             nb_teams = int(nb_teams)
             players_per_team = int(players_per_team)
-            nb_sets_to_win = int(nb_sets_to_win)
-            points_per_set = int(points_per_set)
-
-            if type_tournament == 'RR':
-                if not nb_pools:
-                    raise ValueError("Le nombre de pools est requis pour un tournoi à la ronde.")
-                nb_pools = int(nb_pools)
-            else:
-                nb_pools = 0  # No pools needed for direct elimination
-        except ValueError as e:
-            messages.error(request, str(e))
+            
+            nb_pools = int(nb_pools)  # Assure-toi que nb_pools est un entier
+        except ValueError:
+            messages.error(request, "Le nombre d'équipes, de joueurs par équipe et de pools doivent être des entiers.")
+            
+            nb_sets_to_win = int(nb_sets_to_win)  # Conversion
+            points_per_set = int(points_per_set)  # Conversion
+        except ValueError:
+            messages.error(request, "Veuillez saisir des valeurs numériques valides.")
+            
             return redirect('create_tournament')
 
-        # Create the tournament
+        # Création du tournoi avec les nouveaux champs
         tournoi = Tournament.objects.create(
             name=name,
             department=department,
@@ -825,23 +803,17 @@ def create_tournament(request):
             sport=sport,
             max_teams=nb_teams,
             players_per_team=players_per_team,
-            number_of_pools=nb_pools,
-            type_tournament=type_tournament,
-            nb_sets_to_win=nb_sets_to_win,
-            points_per_set=points_per_set,
+            nb_sets_to_win=nb_sets_to_win,  # Nouveau champ
+            points_per_set=points_per_set,  # Nouveau champ
         )
 
-        # Create pools for this tournament if it's a round-robin tournament
-        if type_tournament == 'RR':
-            # Check if pools already exist to avoid duplication
-            if not Pool.objects.filter(tournament=tournoi).exists():
-                for i in range(1, nb_pools + 1):
-                    pool_name = f"Pool {i}"
-                    Pool.objects.create(name=pool_name, tournament=tournoi)
+        # Créer les pools pour ce tournoi
+        for i in range(1, nb_pools + 1):
+            pool_name = f"Pool {i}"
+            Pool.objects.create(name=pool_name, tournament=tournoi)
 
-        # Save tournament details in session
+        # Sauvegarde optionnelle en session
         request.session['tournament_created_id'] = tournoi.id
-        request.session['type_tournament'] = type_tournament  # Store the tournament type in session
         request.session['nb_teams'] = nb_teams
         request.session['players_per_team'] = players_per_team
         request.session['nb_pools'] = nb_pools
@@ -850,8 +822,6 @@ def create_tournament(request):
         return redirect('home')
 
     return render(request, 'create_tournament.html')
-
-
 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
@@ -913,11 +883,3 @@ class TournamentDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context['hide_navbar'] = True  # ✅ cacher la navbar sur cette page
         return context
-    
-    from django.shortcuts import render
-
-from django.shortcuts import render
-
-def direct_elimination(request):
-    # Logique pour gérer la page d'élimination directe
-    return render(request, 'direct_elimination.html')
