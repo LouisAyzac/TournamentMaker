@@ -1,14 +1,93 @@
 {% extends "base_generic.html" %}
 
-
+{% block title %}
+  <title>Accueil - Tournois</title>
+{% endblock %}
 
 {% block content %}
-</a>
-<a href="{% url 'select_tournament' %}" class="nav-button">
-    <i class="fas fa-landmark"></i> Tournoi
-</a>
+<div class="container mt-5">
 
- <a href="{% url 'create_tournament' %}" class="nav-button">
-    <i class="fas fa-landmark"></i> Créer mon tournoi
-</a>
+    <h1 class="text-center mb-5">Bienvenue sur la plateforme des tournois</h1>
+
+    <!-- BOUTONS Créer un tournoi + Sélectionner un tournoi -->
+    <div class="text-center mb-4">
+        <a href="{% url 'create_tournament' %}" class="btn btn-lg btn-outline-primary me-3">
+            ➕ Créer mon tournoi
+        </a>
+        <a href="{% url 'select_tournament' %}" class="btn btn-lg btn-outline-success">
+            🎯 Sélectionner un tournoi
+        </a>
+    </div>
+    <!-- Tournois en cours -->
+     <h2 class="text-success mb-3">⚽ Tournois en cours</h2>
+    <ul class="list-group mb-5 shadow">
+        {% for tournoi in tournois_en_cours %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ tournoi.name }}</strong> 
+                    <small class="text-muted">(du {{ tournoi.start_date }} au {{ tournoi.end_date }})</small><br>
+                    <span class="text-secondary">
+                        Équipes inscrites : {{ tournoi.teams.count }} / {{ tournoi.max_teams }}
+                    </span>
+                    {% if tournoi.teams.count >= tournoi.max_teams %}
+                        <div class="text-danger"><strong>Tournoi complet</strong></div>
+                    {% endif %}
+                </div>
+                <a href="{% url 'select_tournament' %}?tournament_id={{ tournoi.id }}" class="btn btn-outline-success btn-sm">
+                    Voir ce tournoi
+                </a>
+            </li>
+        {% empty %}
+            <li class="list-group-item text-muted">Aucun tournoi en cours.</li>
+        {% endfor %}
+    </ul>
+
+    <!-- Tournois à venir -->
+    <h2 class="text-primary mb-3">📅 Tournois à venir</h2>
+    <ul class="list-group mb-5 shadow">
+        {% for tournoi in tournois_a_venir %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ tournoi.name }}</strong> 
+                    <small class="text-muted">(du {{ tournoi.start_date }} au {{ tournoi.end_date }})</small><br>
+                    <span class="text-secondary">
+                        Équipes inscrites : {{ tournoi.teams.count }} / {{ tournoi.max_teams }}
+                    </span>
+                    {% if tournoi.teams.count >= tournoi.max_teams %}
+                        <div class="text-danger"><strong>Tournoi complet</strong></div>
+                    {% endif %}
+                </div>
+                <a href="{% url 'select_tournament' %}?tournament_id={{ tournoi.id }}" class="btn btn-outline-primary btn-sm">
+                    Voir ce tournoi
+                </a>
+            </li>
+        {% empty %}
+            <li class="list-group-item text-muted">Aucun tournoi à venir.</li>
+        {% endfor %}
+    </ul>
+
+    <!-- Tournois passés -->
+     <h2 class="text-secondary mb-3">🏅 Tournois passés</h2>
+    <ul class="list-group mb-5 shadow">
+        {% for tournoi in tournois_passes %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ tournoi.name }}</strong> 
+                    <small class="text-muted">(du {{ tournoi.start_date }} au {{ tournoi.end_date }})</small><br>
+                    <span class="text-secondary">
+                        Équipes inscrites : {{ tournoi.teams.count }} / {{ tournoi.max_teams }}
+                    </span>
+                    {% if tournoi.teams.count >= tournoi.max_teams %}
+                        <div class="text-danger"><strong>Tournoi complet</strong></div>
+                    {% endif %}
+                </div>
+                <a href="{% url 'select_tournament' %}?tournament_id={{ tournoi.id }}" class="btn btn-outline-secondary btn-sm">
+                    Voir ce tournoi
+                </a>
+            </li>
+        {% empty %}
+            <li class="list-group-item text-muted">Aucun tournoi passé.</li>
+        {% endfor %}
+    </ul>
+</div>
 {% endblock %}
