@@ -5,6 +5,13 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  /* Masquer tous les boutons de navigation sauf le bouton Accueil */
+  .nav-buttons-container .nav-button:not(:first-child) {
+    display: none !important;
+  }
+</style>
+
 <div class="container mt-5" style="color: black;">
   <h2 class="text-center mb-4">Créer un nouveau tournoi</h2>
 
@@ -81,4 +88,3 @@
   </form>
 </div>
 {% endblock %}
-
