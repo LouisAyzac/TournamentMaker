@@ -653,64 +653,7 @@ from django.contrib import messages
 from .models import Tournament, Pool
 from django.utils.dateparse import parse_date
 
-from math import ceil
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import Tournament, Team, Match
-from django.utils.dateparse import parse_date
-
-# Fonction pour créer les matchs d'élimination directe
-def create_knockout_matches(tournament):
-    # Récupérer les équipes participantes au tournoi
-    teams = Team.objects.filter(tournament=tournament)
-    
-    # Si le nombre d'équipes est impair, on peut ajouter un "bye" ou laisser une équipe sans adversaire au premier tour
-    if len(teams) % 2 != 0:
-        teams.append(None)  # Ajoute une équipe virtuelle pour un "bye" (automatiquement qualifiée)
-
-    # Calculer le nombre de rounds (et les matchs nécessaires)
-    total_teams = len(teams)
-    rounds = ceil(total_teams / 2)
-    round_number = 1
-
-    # Créer les matchs
-    while rounds > 0:
-        for i in range(0, len(teams), 2):
-            team_1 = teams[i]
-            team_2 = teams[i+1] if i + 1 < len(teams) else None
-            if team_2:
-                # Créer un match entre team_1 et team_2
-                Match.objects.create(
-                    tournament=tournament,
-                    round_number=round_number,
-                    team_a=team_1,
-                    team_b=team_2,
-                    phase='quarter' if round_number == 1 else 'semi' if round_number == 2 else 'final',
-                    start_time=None  # Définir l'heure si nécessaire
-                )
-        round_number += 1
-        rounds = ceil(rounds / 2)  # Réduire le nombre de matchs à chaque tour
-
-# views.py
-
-from django.shortcuts import render, get_object_or_404
-from .models import Tournament
-
-def matchs_view(request, tournament_id):
-    tournament = get_object_or_404(Tournament, id=tournament_id)
-    
-    if tournament.tournament_type == 'round_robin':
-        return render(request, 'matchs_choice.html', {'tournament': tournament})
-    elif tournament.tournament_type == 'knockout':
-        return render(request, 'elimination_phase.html', {'tournament': tournament})
-    else:
-        return render(request, 'error.html', {'message': 'Type de tournoi inconnu.'})
-
-
-# Fonction pour créer le tournoi
-
-
-def create_tournament(request):
+def create_tournament(request): 
     if request.method == 'POST':
         name = request.POST.get('name')
         department = request.POST.get('department')
@@ -726,7 +669,6 @@ def create_tournament(request):
         nb_pools = request.POST.get('nb_pools')
         nb_sets_to_win = request.POST.get('nb_sets_to_win')  # Nouveau champ
         points_per_set = request.POST.get('points_per_set')  # Nouveau champ
-        tournament_type = request.POST.get('tournament_type')  # Ajoute cette ligne
 
         # Validation basique
         if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team, nb_sets_to_win, points_per_set]):
@@ -737,14 +679,14 @@ def create_tournament(request):
         try:
             nb_teams = int(nb_teams)
             players_per_team = int(players_per_team)
-            nb_pools = int(nb_pools) if tournament_type == 'round_robin' else 0  # Si élimination directe
-            nb_sets_to_win = int(nb_sets_to_win)
-            points_per_set = int(points_per_set)
+            nb_pools = int(nb_pools)  # Assure-toi que nb_pools est un entier
+            nb_sets_to_win = int(nb_sets_to_win)  # Conversion
+            points_per_set = int(points_per_set)  # Conversion
         except ValueError:
-            messages.error(request, "Le nombre d'équipes, de joueurs par équipe et de pools doivent être des entiers.")
+            messages.error(request, "Le nombre d'équipes, de joueurs par équipe, de pools, de sets et de points doivent être des entiers.")
             return redirect('create_tournament')
 
-        # Création du tournoi
+        # Création du tournoi avec les nouveaux champs
         tournoi = Tournament.objects.create(
             name=name,
             department=department,
@@ -755,13 +697,17 @@ def create_tournament(request):
             sport=sport,
             max_teams=nb_teams,
             players_per_team=players_per_team,
-            nb_sets_to_win=nb_sets_to_win,
-            points_per_set=points_per_set,
+            nb_sets_to_win=nb_sets_to_win,  # Nouveau champ
+            points_per_set=points_per_set,  # Nouveau champ
         )
 
-        # Si le tournoi est en élimination directe, on crée les matchs
-        if tournament_type == 'knockout':
-            create_knockout_matches(tournoi)
+        # Créer les pools pour ce tournoi seulement si aucun pool n'existe déjà pour ce tournoi
+        if nb_pools > 0:
+            existing_pools = Pool.objects.filter(tournament=tournoi)
+            if existing_pools.count() == 0:  # S'il n'y a pas de pools pour ce tournoi
+                for i in range(1, nb_pools + 1):
+                    pool_name = f"Pool {i}"
+                    Pool.objects.create(name=pool_name, tournament=tournoi)
 
         # Sauvegarde optionnelle en session
         request.session['tournament_created_id'] = tournoi.id
