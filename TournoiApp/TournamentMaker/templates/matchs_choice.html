@@ -1,0 +1,39 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<h2 class="text-center mt-4">Matchs - {{ tournament.name }}</h2>
+
+<style>
+    .choice-container {
+        max-width: 500px;
+        margin: 50px auto;
+        text-align: center;
+    }
+
+    .choice-button {
+        display: block;
+        width: 100%;
+        padding: 20px;
+        margin-bottom: 20px;
+        font-size: 1.3rem;
+        border-radius: 10px;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .choice-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+</style>
+
+<div class="choice-container">
+    <p class="lead mb-4">Tournoi sélectionné : <strong>{{ tournament.name }}</strong></p>
+
+    <a href="{% url 'matchs_poules' tournament.id %}" class="btn btn-primary choice-button">
+        Phase de Poule
+    </a>
+    <a href="{% url 'matchs_finale' %}" class="btn btn-success choice-button">
+        Phase Finale
+    </a>
+</div>
+{% endblock %}
