@@ -42,7 +42,8 @@
     </header>
 
     <!-- Navigation -->
-    <nav class="nav-buttons-container">
+{% if not hide_navbar %}
+<nav class="nav-buttons-container">
     <div class="nav-buttons">
         <a href="{% url 'home' %}" class="nav-button">
             <i class="fas fa-home"></i> Accueil
@@ -52,26 +53,22 @@
             <a href="{% url 'teams' %}" class="nav-button">
                 <i class="fas fa-tshirt"></i> Équipes
             </a>
-            <a href="{% url 'login' %}" class="nav-button">
-                <i class="fas fa-star"></i> Scores
-            </a>
-            <a href="{% url 'pool_list' %}" class="nav-button">
-                <i class="fas fa-trophy"></i> Poules
+            
             </a>
             <a href="{% url 'rankings_list' %}" class="nav-button">
                 <i class="fas fa-medal"></i> Classements
             </a>
             <a href="{% url 'signup' %}" class="nav-button">
                 <i class="fas fa-file-alt"></i> Inscription
-
             </a>
-
             <a href="{% url 'matchs' %}" class="nav-button">
-            <i class="fas fa-clock"></i> Matchs
-</a>
-
-
+                <i class="fas fa-clock"></i> Matchs
+            </a>
         {% endif %}
+    </div>
+</nav>
+{% endif %}
+
     </div>
 </nav>
 
