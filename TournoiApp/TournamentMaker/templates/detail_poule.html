@@ -70,5 +70,5 @@
     <p>Aucun match trouvé pour cette poule.</p>
 {% endif %}
 
-<p><a href="{% url 'matchs_poules' %}">← Retour à la phase de poule</a></p>
+<a href="{% url 'matchs_poules' pool.tournament.id %}">Retour aux poules</a>
 {% endblock %}

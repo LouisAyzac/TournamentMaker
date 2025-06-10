@@ -41,18 +41,22 @@ urlpatterns = [
 
     
 
-    # 🆕 Vue d’aiguillage
+       # 🆕 Vue d’aiguillage
     path('matchs/', views.match_choice, name='matchs'),
 
     # 🆕 Matchs de poules et détails
-    path('matchs/poules/', views.matchs_poules, name='matchs_poules'),
     path('matchs/poule/<int:pool_id>/', views.detail_poule, name='detail_poule'),
+    path('tournoi/<int:tournament_id>/poules/', views.matchs_poules, name='matchs_poules'),
 
     # 🆕 Phase finale
     path('matchs/finale/', views.matchs_finale, name='matchs_finale'),
 
+
     path('match/<int:pk>/', views.match_detail, name='match_detail'),
     path('tournaments/', TournamentListView.as_view(), name='tournament_list'),
     path('tournament/<int:pk>/', TournamentDetailView.as_view(), name='tournament_detail'),
+        path('tournament/full/', views.tournament_full, name='tournament_full'),
+
+
 
 ]

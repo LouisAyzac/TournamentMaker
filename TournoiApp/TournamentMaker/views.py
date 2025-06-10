@@ -112,6 +112,7 @@ def team_detail(request, pk):
         return redirect('select_tournament')
 
     team = get_object_or_404(Team, pk=pk, tournament_id=tournament_id)
+    tournament = get_object_or_404(Tournament, id=tournament_id)
     ranking = Ranking.objects.filter(team=team).first()
 
     teams = Team.objects.filter(tournament_id=tournament_id)
@@ -120,27 +121,33 @@ def team_detail(request, pk):
     points = {t.id: 0 for t in teams}
     pool_wins = {t.id: 0 for t in teams}
 
+    def get_winner(match, sets_to_win):
+        score_a, score_b = 0, 0
+        max_sets = sets_to_win * 2 - 1  # nombre max de sets possibles dans le match (ex: 3 sets gagnants => max 5 sets)
 
-    def get_winner(match):
-        score_a = 0
-        score_b = 0
-        for i in range(1, 6):
-            sa = getattr(match, f'set{i}_team_a')
-            sb = getattr(match, f'set{i}_team_b')
-            if sa is not None and sb is not None:
-                if sa > sb:
-                    score_a += 1
-                elif sb > sa:
-                    score_b += 1
-        if score_a > score_b:
-            return match.team_a
-        elif score_b > score_a:
-            return match.team_b
-        else:
-            return None
+        for i in range(1, max_sets + 1):
+            set_team_a = getattr(match, f'set{i}_team_a', None)
+            set_team_b = getattr(match, f'set{i}_team_b', None)
+            if set_team_a is None or set_team_b is None:
+                # Si un set n'a pas été joué (score manquant), on arrête la lecture
+                break
+            if set_team_a > set_team_b:
+                score_a += 1
+            elif set_team_b > set_team_a:
+                score_b += 1
+            
+            # Dès qu’une équipe atteint le nombre de sets gagnants nécessaires, on peut arrêter
+            if score_a == sets_to_win:
+                return match.team_a
+            if score_b == sets_to_win:
+                return match.team_b
 
+        # Si aucun n'a atteint le seuil, match nul ou non terminé
+        return None
+    
+    sets_to_win = tournament.nb_sets_to_win
     for match in matches:
-        winner = get_winner(match)
+        winner = get_winner(match, sets_to_win)
         if winner:
             if match.phase == 'final':
                 points[winner.id] += 100
@@ -308,6 +315,12 @@ LEVEL_MAP = {
     'expert': 4,
 }
 
+from django.shortcuts import render
+
+def tournament_full(request):
+    return render(request, 'tournament_full.html')
+
+
 def signup(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
@@ -322,11 +335,7 @@ def signup(request):
     current_teams_count = Team.objects.filter(tournament=tournament).count()
 
     if current_teams_count >= max_teams:
-        return render(request, 'signup.html', {
-            'error': 'Le nombre maximum d’équipes pour ce tournoi est atteint.',
-            'players_per_team': tournament.players_per_team,
-            'total_players': range(tournament.players_per_team + 2),
-        })
+        return redirect('tournament_full')
 
     players_per_team = tournament.players_per_team
     total_players = range(players_per_team + 2)
@@ -342,8 +351,15 @@ def signup(request):
 
         team = Team.objects.create(name=team_name, tournament=tournament)
 
+        # Répartir l'équipe dans les pools disponibles du tournoi
+        pools = Pool.objects.filter(tournament=tournament)
+        if pools.exists():
+            # On distribue les équipes de manière circulaire dans les pools
+            pool_to_assign = pools.order_by('id')[(team.id - 1) % len(pools)]  # Distribution circulaire
+            team.pool = pool_to_assign
+            team.save()
+
         capitaine_valide = False
-        
 
         for i in total_players:
             index = i + 1
@@ -355,7 +371,7 @@ def signup(request):
 
             if i == 0:
                 if not (first_name and last_name and email):
-                    team.delete()
+                    team.delete()  # Supprimer l'équipe si le capitaine n'a pas les informations requises
                     return render(request, 'signup.html', {
                         'error': 'Le capitaine doit avoir un prénom, nom et email.',
                         'players_per_team': players_per_team,
@@ -384,6 +400,7 @@ def signup(request):
                     team.captain = user_profile
                     team.save()
 
+                    # Générer le lien pour la réinitialisation du mot de passe
                     uid = urlsafe_base64_encode(force_bytes(user.pk))
                     token = default_token_generator.make_token(user)
                     domain = '127.0.0.1:8000'
@@ -404,7 +421,7 @@ L'équipe du tournoi
                     send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
 
         if not capitaine_valide:
-            team.delete()
+            team.delete()  # Supprimer l'équipe si aucun capitaine valide
             return render(request, 'signup.html', {
                 'error': 'Le capitaine est obligatoire.',
                 'players_per_team': players_per_team,
@@ -427,8 +444,23 @@ def signup_success(request):
 # === 🆕 Matchs ===
 
 # Choix entre les phases
+from django.shortcuts import render
+from .models import Tournament
+
 def match_choice(request):
-    return render(request, 'matchs_choice.html')
+    # Exemple : récupérer l'ID tournoi dans l'URL ou session
+    tournament_id = request.GET.get('tournament_id') or request.session.get('selected_tournament_id')
+
+    if not tournament_id:
+        # Pas d'ID tournoi, rediriger ou erreur
+        return render(request, 'matchs_choice.html', {'error': 'Aucun tournoi sélectionné'})
+
+    try:
+        tournament = Tournament.objects.get(id=tournament_id)
+    except Tournament.DoesNotExist:
+        return render(request, 'matchs_choice.html', {'error': 'Tournoi introuvable'})
+
+    return render(request, 'matchs_choice.html', {'tournament': tournament})
 
 
 # Matchs en cours
@@ -449,10 +481,22 @@ def matchs_en_cours(request):
 
 
 
-def matchs_poules(request):
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Q
+from .models import Pool, Match, Tournament
+
+def matchs_poules(request, tournament_id): 
+    tournament = get_object_or_404(Tournament, id=tournament_id)
     pools_data = []
 
-    for pool in Pool.objects.prefetch_related('teams'):
+    # 🔥 On filtre les pools du tournoi en question
+    pools = Pool.objects.filter(tournament=tournament)
+    print("Pools récupérées :", pools)  # Debugging, vérifier si on récupère bien des pools
+
+    if not pools:
+        print("Aucune pool trouvée pour ce tournoi.")  # Si aucune pool n'est trouvée
+
+    for pool in pools.prefetch_related('teams'):
         stats = []
 
         for team in pool.teams.all():
@@ -463,7 +507,7 @@ def matchs_poules(request):
             total_joues = matchs_joues.count()
             victoires = sum(1 for match in matchs_joues if match.winner_team == team)
             defaites = total_joues - victoires
-            points = victoires * 3  # 3 points par victoire, 0 pour défaite
+            points = victoires * 3  # 3 points par victoire
 
             stats.append({
                 'team': team,
@@ -480,13 +524,20 @@ def matchs_poules(request):
 
         pools_data.append({'pool': pool, 'stats': stats})
 
-    return render(request, 'matchs_poules.html', {'pools_data': pools_data})
+    print("Pools data envoyées :", pools_data)  # Vérifier si les données sont bien envoyées
+
+    return render(request, 'matchs_poules.html', {
+        'pools_data': pools_data,
+        'tournament': tournament
+    })
 
 
 
 # Détail d'une poule
 def detail_poule(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
+    tournament = pool.tournament  # assuming your Pool model has a ForeignKey to Tournament
+
     matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
 
     for match in matchs:
@@ -501,7 +552,11 @@ def detail_poule(request, pool_id):
                     'team_b_score': sb
                 })
 
-    return render(request, 'detail_poule.html', {'pool': pool, 'matchs': matchs})
+    return render(request, 'detail_poule.html', {
+        'pool': pool,
+        'matchs': matchs,
+        'tournament': tournament,  # <-- Ajoute ça !
+    })
 
 
 # Vue phase finale
@@ -593,7 +648,12 @@ from django.contrib import messages
 from django.utils.dateparse import parse_date
 from .models import Tournament
 
-def create_tournament(request):
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import Tournament, Pool
+from django.utils.dateparse import parse_date
+
+def create_tournament(request): 
     if request.method == 'POST':
         name = request.POST.get('name')
         department = request.POST.get('department')
@@ -607,9 +667,11 @@ def create_tournament(request):
         nb_teams = request.POST.get('nb_teams')
         players_per_team = request.POST.get('players_per_team')
         nb_pools = request.POST.get('nb_pools')
+        nb_sets_to_win = request.POST.get('nb_sets_to_win')  # Nouveau champ
+        points_per_set = request.POST.get('points_per_set')  # Nouveau champ
 
         # Validation basique
-        if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team]):
+        if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team, nb_sets_to_win, points_per_set]):
             messages.error(request, "Tous les champs requis ne sont pas remplis.")
             return redirect('create_tournament')
 
@@ -617,11 +679,19 @@ def create_tournament(request):
         try:
             nb_teams = int(nb_teams)
             players_per_team = int(players_per_team)
+            
+            nb_pools = int(nb_pools)  # Assure-toi que nb_pools est un entier
         except ValueError:
-            messages.error(request, "Le nombre d'équipes et de joueurs par équipe doivent être des entiers.")
+            messages.error(request, "Le nombre d'équipes, de joueurs par équipe et de pools doivent être des entiers.")
+            
+            nb_sets_to_win = int(nb_sets_to_win)  # Conversion
+            points_per_set = int(points_per_set)  # Conversion
+        except ValueError:
+            messages.error(request, "Veuillez saisir des valeurs numériques valides.")
+            
             return redirect('create_tournament')
 
-        # Création du tournoi avec max_teams et players_per_team
+        # Création du tournoi avec les nouveaux champs
         tournoi = Tournament.objects.create(
             name=name,
             department=department,
@@ -632,7 +702,14 @@ def create_tournament(request):
             sport=sport,
             max_teams=nb_teams,
             players_per_team=players_per_team,
+            nb_sets_to_win=nb_sets_to_win,  # Nouveau champ
+            points_per_set=points_per_set,  # Nouveau champ
         )
+
+        # Créer les pools pour ce tournoi
+        for i in range(1, nb_pools + 1):
+            pool_name = f"Pool {i}"
+            Pool.objects.create(name=pool_name, tournament=tournoi)
 
         # Sauvegarde optionnelle en session
         request.session['tournament_created_id'] = tournoi.id
@@ -641,10 +718,9 @@ def create_tournament(request):
         request.session['nb_pools'] = nb_pools
 
         messages.success(request, f"Tournoi '{name}' créé avec succès.")
-        return redirect('select_tournament')
+        return redirect('home')
 
     return render(request, 'create_tournament.html')
-
 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
@@ -671,7 +747,6 @@ class TournamentListView(ListView):
     model = Tournament
     template_name = 'tournament_list.html'
     context_object_name = 'tournois'
-    paginate_by = 2
 
     def get_queryset(self):
         queryset = super().get_queryset()
