@@ -679,11 +679,16 @@ def create_tournament(request):
         try:
             nb_teams = int(nb_teams)
             players_per_team = int(players_per_team)
+            
             nb_pools = int(nb_pools)  # Assure-toi que nb_pools est un entier
+        except ValueError:
+            messages.error(request, "Le nombre d'équipes, de joueurs par équipe et de pools doivent être des entiers.")
+            
             nb_sets_to_win = int(nb_sets_to_win)  # Conversion
             points_per_set = int(points_per_set)  # Conversion
         except ValueError:
-            messages.error(request, "Le nombre d'équipes, de joueurs par équipe, de pools, de sets et de points doivent être des entiers.")
+            messages.error(request, "Veuillez saisir des valeurs numériques valides.")
+            
             return redirect('create_tournament')
 
         # Création du tournoi avec les nouveaux champs
@@ -701,13 +706,10 @@ def create_tournament(request):
             points_per_set=points_per_set,  # Nouveau champ
         )
 
-        # Créer les pools pour ce tournoi seulement si aucun pool n'existe déjà pour ce tournoi
-        if nb_pools > 0:
-            existing_pools = Pool.objects.filter(tournament=tournoi)
-            if existing_pools.count() == 0:  # S'il n'y a pas de pools pour ce tournoi
-                for i in range(1, nb_pools + 1):
-                    pool_name = f"Pool {i}"
-                    Pool.objects.create(name=pool_name, tournament=tournoi)
+        # Créer les pools pour ce tournoi
+        for i in range(1, nb_pools + 1):
+            pool_name = f"Pool {i}"
+            Pool.objects.create(name=pool_name, tournament=tournoi)
 
         # Sauvegarde optionnelle en session
         request.session['tournament_created_id'] = tournoi.id
@@ -719,7 +721,6 @@ def create_tournament(request):
         return redirect('home')
 
     return render(request, 'create_tournament.html')
-
 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
