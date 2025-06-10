@@ -24,12 +24,12 @@
         0%, 100% { transform: translateY(0) rotate(0deg); }
         50% { transform: translateY(-20px) rotate(180deg); }
     }
-  
-  .ball-animation {
-    display: inline-block;
-    animation: bounce 2s infinite ease-in-out;
-  }
-</style>
+
+    .ball-animation {
+        display: inline-block;
+        animation: bounce 2s infinite ease-in-out;
+    }
+    </style>
 </head>
 
 <body>
@@ -72,7 +72,25 @@
     </div>
 </nav>
 
+                <a href="{% url 'rankings_list' %}" class="nav-button">
+                    <i class="fas fa-medal"></i> Classements
+                </a>
+                <a href="{% url 'signup' %}" class="nav-button">
+                    <i class="fas fa-file-alt"></i> Inscription
+                </a>
+                {% if request.session.type_tournament == 'RR' %}
+                    <a href="{% url 'matchs_choice' %}" class="nav-button">
+                        <i class="fas fa-clock"></i> Matchs
+                    </a>
+                {% else %}
+                    <a href="{% url 'direct_elimination' %}" class="nav-button">
+                        <i class="fas fa-clock"></i> Matchs
+                    </a>
+                {% endif %}
+            {% endif %}
+        </div>
     </nav>
+    {% endif %}
 
     <!-- Main Content -->
     <main class="container main-content">
@@ -84,17 +102,17 @@
     <script src="{% static 'js/main.js' %}"></script>
     <div class="volley-ball">
         <i class="fas fa-volleyball-ball fa-3x" style="color: rgba(255,255,255,0.7);"></i>
-      </div>
+    </div>
 
-      <footer class="footer animate__animated animate__fadeInUp">
+    <footer class="footer animate__animated animate__fadeInUp">
         <div class="container">
-          <div class="social-icons">
-            <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-twitter"></i></a>
-            <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-instagram"></i></a>
-          </div>
-          <p class="copyright">©2025 VolleyTournoi. Tous droits réservés.</p>
+            <div class="social-icons">
+                <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-instagram"></i></a>
+            </div>
+            <p class="copyright">©2025 VolleyTournoi. Tous droits réservés.</p>
         </div>
-      </footer>
+    </footer>
 </body>
 </html>
