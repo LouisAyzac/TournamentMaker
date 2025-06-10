@@ -15,25 +15,72 @@ LEVEL_MAP = {
 }
 
 # === Page d'accueil et généralités ===
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
+from django.core.paginator import Paginator
 from .models import Tournament
 
 def home(request):
-    request.session.flush()
+    # Gestion sélection tournoi → stocker en session
+    if 'tournament_id' in request.GET:
+        selected_id = request.GET.get('tournament_id')
+        tournoi = get_object_or_404(Tournament, id=selected_id)
+        request.session['selected_tournament_id'] = tournoi.id
+        request.session['selected_tournament_name'] = tournoi.name
+        return redirect('dashboard')
 
+    if request.method == 'POST':
+        selected_id = request.POST.get('tournament_id')
+        if selected_id:
+            tournoi = get_object_or_404(Tournament, id=selected_id)
+            request.session['selected_tournament_id'] = tournoi.id
+            request.session['selected_tournament_name'] = tournoi.name
+            return redirect('dashboard')
+
+    # Gestion affichage
     today = now().date()
+    category = request.GET.get('category', 'all')
 
-    tournois_passes = Tournament.objects.filter(end_date__lt=today)
-    tournois_en_cours = Tournament.objects.filter(start_date__lte=today, end_date__gte=today)
-    tournois_a_venir = Tournament.objects.filter(start_date__gt=today)
+    if category == 'ongoing':
+        tournois = Tournament.objects.filter(start_date__lte=today, end_date__gte=today)
+    elif category == 'upcoming':
+        tournois = Tournament.objects.filter(start_date__gt=today)
+    elif category == 'past':
+        tournois = Tournament.objects.filter(end_date__lt=today)
+    elif category == 'all':  # 🆕 ici → pour afficher tous les tournois
+        tournois = Tournament.objects.all()
+    else:
+        tournois = Tournament.objects.all()
 
+    # Filtres sport + département
+    sports = Tournament.SPORT_CHOICES
+    selected_sport = request.GET.get('sport')
+    selected_department = request.GET.get('department')
+
+    if selected_sport:
+        tournois = tournois.filter(sport=selected_sport)
+    if selected_department:
+        tournois = tournois.filter(department__icontains=selected_department)
+
+    # Pagination
+    paginator = Paginator(tournois, 6)  # 6 tournois par page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Context
     context = {
-        'tournois_passes': tournois_passes,
-        'tournois_en_cours': tournois_en_cours,
-        'tournois_a_venir': tournois_a_venir,
+        'tournois': page_obj,  # paginé
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'category': category,
+        'sports': sports,
+        'selected_sport': selected_sport,
+        'selected_department': selected_department,
+        'hide_navbar': True,
     }
 
     return render(request, 'home.html', context)
+
 
 def index(request):
     num_Player = Player.objects.count()
@@ -49,7 +96,7 @@ from django.shortcuts import get_object_or_404
 def dashboard(request):
     selected_id = request.session.get('selected_tournament_id')
     if not selected_id:
-        return redirect('select_tournament')
+        return redirect('home')
 
     tournoi = get_object_or_404(Tournament, id=selected_id)
 
@@ -72,7 +119,7 @@ def dashboard(request):
 def players(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
-        return redirect('select_tournament')
+        return redirect('home')
 
     all_players = Player.objects.filter(team__tournament_id=tournament_id)
     return render(request, 'players.html', {'players': all_players})
@@ -80,7 +127,7 @@ def players(request):
 def teams(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
-        return redirect('select_tournament')
+        return redirect('home')
 
     all_teams = Team.objects.filter(tournament_id=tournament_id)
     return render(request, 'teams.html', {'teams': all_teams})
@@ -92,7 +139,7 @@ from TournamentMaker.models import Player, Team
 def player_detail(request, pk):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
-        return redirect('select_tournament')
+        return redirect('home')
 
     player = get_object_or_404(Player, pk=pk, team__tournament_id=tournament_id)
     return render(request, 'players_detail.html', {'player': player})
@@ -106,7 +153,18 @@ from django.shortcuts import get_object_or_404, render
 from django.shortcuts import get_object_or_404, render
 from TournamentMaker.models import Team, Ranking, Match
 
-def calculate_team_points_and_ranking(teams, matches, sets_to_win):
+def team_detail(request, pk):
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('home')
+
+    team = get_object_or_404(Team, pk=pk, tournament_id=tournament_id)
+    tournament = get_object_or_404(Tournament, id=tournament_id)
+    ranking = Ranking.objects.filter(team=team).first()
+
+    teams = Team.objects.filter(tournament_id=tournament_id)
+    matches = Match.objects.filter(team_a__tournament_id=tournament_id)
+
     points = {t.id: 0 for t in teams}
     pool_wins = {t.id: 0 for t in teams}
 
@@ -192,7 +250,7 @@ def pool_detail(request, pk):
 def rankings_list(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
-        return redirect('select_tournament')
+        return redirect('home')
 
     pool_rankings = []
     for pool in Pool.objects.all():
@@ -238,7 +296,7 @@ def scores(request):
 # === Sélection du tournoi ===
 from django.shortcuts import render, redirect, get_object_or_404
 
-def select_tournament(request):
+'''def select_tournament(request):
     # Si on a cliqué sur un lien avec ?tournament_id=XX
     if 'tournament_id' in request.GET:
         selected_id = request.GET.get('tournament_id')
@@ -259,7 +317,7 @@ def select_tournament(request):
     # Sinon afficher le formulaire
     tournois = Tournament.objects.all()
     return render(request, 'select_tournament.html', {'tournois': tournois})
-
+'''
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect
@@ -316,12 +374,12 @@ def tournament_full(request):
 def signup(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
-        return redirect('select_tournament')
+        return redirect('home')
 
     try:
         tournament = Tournament.objects.get(pk=tournament_id)
     except Tournament.DoesNotExist:
-        return redirect('select_tournament')
+        return redirect('home')
 
     max_teams = tournament.max_teams
     current_teams_count = Team.objects.filter(tournament=tournament).count()
@@ -341,18 +399,20 @@ def signup(request):
                 'total_players': total_players
             })
 
+
+        # Répartir l'équipe dans les pools disponibles du tournoi → avec têtes de séries
+        pools = Pool.objects.filter(tournament=tournament)
+
+        # 1️⃣ Calcul du "score" de l'équipe en cours d'inscription (somme des niveaux des joueurs)
+        team_score = 0
+
+        # On initialise l'équipe (vide) pour pouvoir lui affecter des joueurs ensuite
         team = Team.objects.create(name=team_name, tournament=tournament)
 
-        # Répartir l'équipe dans les pools disponibles du tournoi
-        pools = Pool.objects.filter(tournament=tournament)
-        if pools.exists():
-            # On distribue les équipes de manière circulaire dans les pools
-            pool_to_assign = pools.order_by('id')[(team.id - 1) % len(pools)]  # Distribution circulaire
-            team.pool = pool_to_assign
-            team.save()
+        # Pour savoir combien de joueurs vont être inscrits (on le passe à la boucle après)
+        players_data = []
 
-        capitaine_valide = False
-
+        # On lit les données du POST et on prépare les joueurs + score
         for i in total_players:
             index = i + 1
             first_name = request.POST.get(f'first_name_{index}')
@@ -361,73 +421,125 @@ def signup(request):
             email = request.POST.get(f'email_{index}')
             level_str = request.POST.get(f'level_{index}')
 
-            if i == 0:
-                if not (first_name and last_name and email):
-                    team.delete()  # Supprimer l'équipe si le capitaine n'a pas les informations requises
-                    return render(request, 'signup.html', {
-                        'error': 'Le capitaine doit avoir un prénom, nom et email.',
-                        'players_per_team': players_per_team,
-                        'total_players': total_players
-                    })
-                capitaine_valide = True
-
             if first_name and last_name:
                 birthdate = parse_date(birthdate_str) if birthdate_str else None
-                level = LEVEL_MAP.get(level_str.lower(), 1) if level_str else 1
+                level = int(LEVEL_MAP.get(level_str.lower(), 1)) if level_str else 1
 
-                player = Player.objects.create(
-                    first_name=first_name,
-                    last_name=last_name,
-                    birth_date=birthdate,
-                    level=level,
-                    email=email if email else '',
-                    team=team,
-                )
+                # On stocke les infos pour créer les joueurs plus tard
+                players_data.append({
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'birth_date': birthdate,
+                    'email': email,
+                    'level': level
+                })
 
-                if i == 0:
-                    username = email
-                    user = User.objects.create_user(username=username, email=email)
-                    user_profile = UserProfile.objects.create(user=user, level=level, team=team)
+                # On incrémente le score de l'équipe
+                team_score += level
 
-                    team.captain = user_profile
-                    team.save()
+        # 2️⃣ On calcule les forces actuelles des Pools
+        pool_strength = []
 
-                    # Générer le lien pour la réinitialisation du mot de passe
-                    uid = urlsafe_base64_encode(force_bytes(user.pk))
-                    token = default_token_generator.make_token(user)
-                    domain = '127.0.0.1:8000'
-                    link = f"http://{domain}/accounts/reset/{uid}/{token}/"
+        for pool in pools:
+            teams_in_pool = pool.teams.all()
+            total_score = 0
+            team_count = teams_in_pool.count()
 
-                    subject = f"Bienvenue capitaine de l'équipe {team.name} !"
-                    message = f"""
-Bonjour {first_name},
+            # On calcule le score total des équipes de la Pool
+            for t in teams_in_pool:
+                team_players = t.players.all()
+                score = sum(int(player.level) for player in team_players)
+                total_score += score
 
-Vous avez été inscrit comme capitaine de l'équipe {team.name}.
-Veuillez cliquer sur le lien suivant pour définir ou modifier votre mot de passe :
+            # On stocke le score moyen actuel de la Pool
+            avg_score = total_score / team_count if team_count > 0 else 0
+            pool_strength.append((pool, avg_score, team_count))
 
-{link}
+        # 3️⃣ On trie les Pools :
+        # - on privilégie les Pools ayant le moins d'équipes
+        # - en cas d'égalité, on choisit celle avec la force moyenne la plus adaptée
 
-Merci,
-L'équipe du tournoi
-"""
-                    send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
+        # On trie par : (nb d'équipes, écart entre force moyenne et score de l'équipe)
+        pool_strength.sort(key=lambda x: (x[2], abs(x[1] - team_score)))
 
+        # 4️⃣ On choisit la Pool optimale
+        if not pool_strength:
+            return render(request, 'signup.html', {
+                'error': 'Aucune poule disponible pour ce tournoi. Veuillez contacter l\'organisateur.',
+                'players_per_team': players_per_team,
+                'total_players': total_players
+            })
+        pool_to_assign = pool_strength[0][0]
+
+        # 5️⃣ On assigne l'équipe à la Pool
+        team.pool = pool_to_assign
+        team.save()
+
+        # 6️⃣ On crée les joueurs
+        capitaine_valide = False
+
+        for i, player_data in enumerate(players_data):
+            player = Player.objects.create(
+                first_name=player_data['first_name'],
+                last_name=player_data['last_name'],
+                birth_date=player_data['birth_date'],
+                level=player_data['level'],
+                email=player_data['email'] if player_data['email'] else '',
+                team=team,
+            )
+
+            if i == 0:
+                # Création du User pour le capitaine
+                email = player_data['email']
+                username = f"{email}_{team.id}"
+                user = User.objects.create_user(username=username, email=email)
+                user_profile = UserProfile.objects.create(user=user, level=player_data['level'], team=team)
+
+                team.captain = user_profile
+                team.save()
+
+                # Générer le lien pour la réinitialisation du mot de passe
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                domain = '127.0.0.1:8000'
+                link = f"http://{domain}/accounts/reset/{uid}/{token}/"
+
+                subject = f"Bienvenue capitaine de l'équipe {team.name} !"
+                message = f"""
+        Bonjour {player_data['first_name']},
+
+        Vous avez été inscrit comme capitaine de l'équipe {team.name}.
+        Veuillez cliquer sur le lien suivant pour définir ou modifier votre mot de passe :
+
+        {link}
+
+        Merci,
+        L'équipe du tournoi
+        """
+                send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
+
+                capitaine_valide = True
+
+        # 7️⃣ En cas de problème → rollback de l'équipe
         if not capitaine_valide:
-            team.delete()  # Supprimer l'équipe si aucun capitaine valide
+            team.delete()  # Supprimer l'équipe si pas de capitaine valide
             return render(request, 'signup.html', {
                 'error': 'Le capitaine est obligatoire.',
                 'players_per_team': players_per_team,
                 'total_players': total_players
             })
-
+        
+        # ✅ Si tout s'est bien passé, rediriger vers la page de succès
         return redirect('signup_success')
-
+    
+        # Si on arrive ici (GET), afficher le formulaire
     return render(request, 'signup.html', {
         'players_per_team': players_per_team,
         'total_players': total_players
     })
 
 
+ 
 def signup_success(request):
     print("Page de succès atteinte.")
     return render(request, 'signup_success.html')
@@ -769,3 +881,8 @@ class TournamentDetailView(DetailView):
     model = Tournament
     template_name = 'tournament_detail.html'
     context_object_name = 'tournoi'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['hide_navbar'] = True  # ✅ cacher la navbar sur cette page
+        return context
