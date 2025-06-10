@@ -20,14 +20,11 @@ from django.utils.timezone import now
 from django.core.paginator import Paginator
 from .models import Tournament
 
-<<<<<<< HEAD
-=======
 from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 from .models import Tournament
 
->>>>>>> louis
 def home(request):
     # Gestion sélection tournoi → stocker en session
     if 'tournament_id' in request.GET:
@@ -35,10 +32,7 @@ def home(request):
         tournoi = get_object_or_404(Tournament, id=selected_id)
         request.session['selected_tournament_id'] = tournoi.id
         request.session['selected_tournament_name'] = tournoi.name
-<<<<<<< HEAD
-=======
         request.session['type_tournament'] = tournoi.type_tournament  # Ajoutez cette ligne
->>>>>>> louis
         return redirect('dashboard')
 
     if request.method == 'POST':
@@ -47,10 +41,7 @@ def home(request):
             tournoi = get_object_or_404(Tournament, id=selected_id)
             request.session['selected_tournament_id'] = tournoi.id
             request.session['selected_tournament_name'] = tournoi.name
-<<<<<<< HEAD
-=======
             request.session['type_tournament'] = tournoi.type_tournament  # Ajoutez cette ligne
->>>>>>> louis
             return redirect('dashboard')
 
     # Gestion affichage
@@ -63,11 +54,7 @@ def home(request):
         tournois = Tournament.objects.filter(start_date__gt=today)
     elif category == 'past':
         tournois = Tournament.objects.filter(end_date__lt=today)
-<<<<<<< HEAD
-    elif category == 'all':  # 🆕 ici → pour afficher tous les tournois
-=======
     elif category == 'all':
->>>>>>> louis
         tournois = Tournament.objects.all()
     else:
         tournois = Tournament.objects.all()
@@ -101,10 +88,7 @@ def home(request):
 
     return render(request, 'home.html', context)
 
-<<<<<<< HEAD
-=======
 
->>>>>>> louis
 
 def index(request):
     num_Player = Player.objects.count()
@@ -572,22 +556,6 @@ def signup_success(request):
 from django.shortcuts import render
 from .models import Tournament
 
-<<<<<<< HEAD
-def match_choice(request):
-    # Exemple : récupérer l'ID tournoi dans l'URL ou session
-    tournament_id = request.GET.get('tournament_id') or request.session.get('selected_tournament_id')
-
-    if not tournament_id:
-        # Pas d'ID tournoi, rediriger ou erreur
-        return render(request, 'matchs_choice.html', {'error': 'Aucun tournoi sélectionné'})
-
-    try:
-        tournament = Tournament.objects.get(id=tournament_id)
-    except Tournament.DoesNotExist:
-        return render(request, 'matchs_choice.html', {'error': 'Tournoi introuvable'})
-
-    return render(request, 'matchs_choice.html', {'tournament': tournament})
-=======
 from django.shortcuts import render, get_object_or_404
 from .models import Tournament
 
@@ -610,7 +578,6 @@ def match_choice(request):
         # En cas d'erreur, afficher un message d'erreur
         return render(request, 'matchs_choice.html', {'error': f'Erreur: {str(e)}'})
 
->>>>>>> louis
 
 
 # Matchs en cours
@@ -803,9 +770,6 @@ from django.contrib import messages
 from .models import Tournament, Pool
 from django.utils.dateparse import parse_date
 
-<<<<<<< HEAD
-def create_tournament(request): 
-=======
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from datetime import datetime
@@ -814,7 +778,6 @@ def parse_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d').date()
 
 def create_tournament(request):
->>>>>>> louis
     if request.method == 'POST':
         # Retrieve form data
         name = request.POST.get('name')
@@ -829,19 +792,11 @@ def create_tournament(request):
         # Additional fields
         nb_teams = request.POST.get('nb_teams')
         players_per_team = request.POST.get('players_per_team')
-<<<<<<< HEAD
-        nb_pools = request.POST.get('nb_pools')
-        nb_sets_to_win = request.POST.get('nb_sets_to_win')  # Nouveau champ
-        points_per_set = request.POST.get('points_per_set')  # Nouveau champ
-
-        # Validation basique
-=======
         nb_pools = request.POST.get('nb_pools', 0)
         nb_sets_to_win = request.POST.get('nb_sets_to_win')
         points_per_set = request.POST.get('points_per_set')
 
         # Basic validation
->>>>>>> louis
         if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team, nb_sets_to_win, points_per_set]):
             messages.error(request, "Tous les champs requis ne sont pas remplis.")
             return redirect('create_tournament')
@@ -850,21 +805,6 @@ def create_tournament(request):
         try:
             nb_teams = int(nb_teams)
             players_per_team = int(players_per_team)
-<<<<<<< HEAD
-            
-            nb_pools = int(nb_pools)  # Assure-toi que nb_pools est un entier
-        except ValueError:
-            messages.error(request, "Le nombre d'équipes, de joueurs par équipe et de pools doivent être des entiers.")
-            
-            nb_sets_to_win = int(nb_sets_to_win)  # Conversion
-            points_per_set = int(points_per_set)  # Conversion
-        except ValueError:
-            messages.error(request, "Veuillez saisir des valeurs numériques valides.")
-            
-            return redirect('create_tournament')
-
-        # Création du tournoi avec les nouveaux champs
-=======
             nb_sets_to_win = int(nb_sets_to_win)
             points_per_set = int(points_per_set)
 
@@ -879,7 +819,6 @@ def create_tournament(request):
             return redirect('create_tournament')
 
         # Create the tournament
->>>>>>> louis
         tournoi = Tournament.objects.create(
             name=name,
             department=department,
@@ -890,18 +829,6 @@ def create_tournament(request):
             sport=sport,
             max_teams=nb_teams,
             players_per_team=players_per_team,
-<<<<<<< HEAD
-            nb_sets_to_win=nb_sets_to_win,  # Nouveau champ
-            points_per_set=points_per_set,  # Nouveau champ
-        )
-
-        # Créer les pools pour ce tournoi
-        for i in range(1, nb_pools + 1):
-            pool_name = f"Pool {i}"
-            Pool.objects.create(name=pool_name, tournament=tournoi)
-
-        # Sauvegarde optionnelle en session
-=======
             number_of_pools=nb_pools,
             type_tournament=type_tournament,
             nb_sets_to_win=nb_sets_to_win,
@@ -917,7 +844,6 @@ def create_tournament(request):
                     Pool.objects.create(name=pool_name, tournament=tournoi)
 
         # Save tournament details in session
->>>>>>> louis
         request.session['tournament_created_id'] = tournoi.id
         request.session['type_tournament'] = type_tournament  # Store the tournament type in session
         request.session['nb_teams'] = nb_teams
@@ -928,6 +854,7 @@ def create_tournament(request):
         return redirect('home')
 
     return render(request, 'create_tournament.html')
+
 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
@@ -988,9 +915,6 @@ class TournamentDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['hide_navbar'] = True  # ✅ cacher la navbar sur cette page
-<<<<<<< HEAD
-        return context
-=======
         return context
     
 
@@ -999,4 +923,3 @@ class TournamentDetailView(DetailView):
 def direct_elimination(request):
     # Logique pour gérer la page d'élimination directe
     return render(request, 'direct_elimination.html')
->>>>>>> louis

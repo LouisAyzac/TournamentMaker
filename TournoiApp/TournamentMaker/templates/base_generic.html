@@ -42,35 +42,17 @@
     </header>
 
     <!-- Navigation -->
-{% if not hide_navbar %}
-<nav class="nav-buttons-container">
-    <div class="nav-buttons">
-        <a href="{% url 'home' %}" class="nav-button">
-            <i class="fas fa-home"></i> Accueil
-        </a>
+    {% if not hide_navbar %}
+    <nav class="nav-buttons-container">
+        <div class="nav-buttons">
+            <a href="{% url 'home' %}" class="nav-button">
+                <i class="fas fa-home"></i> Accueil
+            </a>
 
-        {% if request.session.selected_tournament_id %}
-            <a href="{% url 'teams' %}" class="nav-button">
-                <i class="fas fa-tshirt"></i> Équipes
-            </a>
-            
-            </a>
-            <a href="{% url 'rankings_list' %}" class="nav-button">
-                <i class="fas fa-medal"></i> Classements
-            </a>
-            <a href="{% url 'signup' %}" class="nav-button">
-                <i class="fas fa-file-alt"></i> Inscription
-            </a>
-            <a href="{% url 'matchs' %}" class="nav-button">
-                <i class="fas fa-clock"></i> Matchs
-            </a>
-        {% endif %}
-    </div>
-</nav>
-{% endif %}
-
-    </div>
-</nav>
+            {% if request.session.selected_tournament_id %}
+                <a href="{% url 'teams' %}" class="nav-button">
+                    <i class="fas fa-tshirt"></i> Équipes
+                </a>
 
                 <a href="{% url 'rankings_list' %}" class="nav-button">
                     <i class="fas fa-medal"></i> Classements

@@ -30,11 +30,6 @@ class Tournament(models.Model):
     is_indoor = models.BooleanField(default=True)
     start_date = models.DateField(default=date.today)
     end_date = models.DateField(default=date.today)
-<<<<<<< HEAD
-    sport = models.CharField(max_length=50,choices=SPORT_CHOICES, default='Football')
-    max_teams = models.PositiveIntegerField(default=8)  # 🔸 Nombre max d’équipes
-    players_per_team = models.PositiveIntegerField(default=5)  # 🔸 Joueurs max par équipe
-=======
     sport = models.CharField(max_length=50, choices=SPORT_CHOICES, default='football')
     max_teams = models.PositiveIntegerField(default=8)
     players_per_team = models.PositiveIntegerField(default=5)
@@ -43,19 +38,9 @@ class Tournament(models.Model):
 
     nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
     points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
->>>>>>> louis
 
-    number_of_pools = models.IntegerField(default=0)  # champ sélectionné à la création
-
-
-
-    nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
-    points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
-    
     def __str__(self):
         return self.name
-    
-    
 
 
 class Team(models.Model):
