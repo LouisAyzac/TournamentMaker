@@ -1,0 +1,28 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}
+  <title>Phase éliminatoire du tournoi</title>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Phase éliminatoire</h2>
+
+  <h3 class="text-center">Matchs à venir :</h3>
+
+  <div class="matches-list">
+    {% for match in knockout_matches %}
+      <div class="match-item">
+        <p>{{ match.team_a }} vs {{ match.team_b }}</p>
+        <form action="{% url 'match_result' match.id %}" method="POST">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">Commencer le match</button>
+        </form>
+      </div>
+    {% empty %}
+      <p>Aucun match prévu pour cette phase.</p>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

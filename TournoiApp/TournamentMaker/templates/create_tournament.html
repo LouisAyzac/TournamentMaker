@@ -8,7 +8,7 @@
 <div class="container mt-5" style="color: black;">
   <h2 class="text-center mb-4">Créer un nouveau tournoi</h2>
 
-  <form method="POST" class="w-75 mx-auto p-4 border rounded bg-light shadow" style="color: black;">
+  <form method="POST" class="w-75 mx-auto p-4 border rounded bg-light shadow" style="color: black;" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = 'Création en cours...';">
     {% csrf_token %}
 
     <div class="form-group">
@@ -55,6 +55,24 @@
     <hr class="my-4">
 
     <div class="form-group">
+      <label><strong>Type de tournoi :</strong></label>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="tournament_type" id="roundRobin" value="round_robin" checked>
+        <label class="form-check-label" for="roundRobin">À la ronde</label>
+      </div>
+
+      <div id="nb_pools_div" class="form-group mt-3">
+        <label for="nb_pools"><strong>Nombre de poules :</strong></label>
+        <input type="number" class="form-control" name="nb_pools" id="nb_pools" min="1" value="1">
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="tournament_type" id="knockout" value="knockout">
+        <label class="form-check-label" for="knockout">Élimination directe</label>
+      </div>
+    </div>
+
+    <div class="form-group mt-3">
       <label for="nb_teams"><strong>Nombre d’équipes :</strong></label>
       <input type="number" class="form-control" name="nb_teams" min="1" required>
     </div>
@@ -65,10 +83,6 @@
     </div>
 
     <div class="form-group mt-3">
-      <label for="nb_pools"><strong>Nombre de poules :</strong></label>
-      <input type="number" class="form-control" name="nb_pools" min="1" required>
-    </div>
-    <div class="form-group mt-3">
       <label for="nb_sets_to_win"><strong>Nombre de sets pour gagner un match :</strong></label>
       <input type="number" class="form-control" name="nb_sets_to_win" min="1" required>
     </div>
@@ -77,8 +91,27 @@
       <label for="points_per_set"><strong>Points par set :</strong></label>
       <input type="number" class="form-control" name="points_per_set" min="1" required>
     </div>
+
     <button type="submit" class="btn btn-success mt-4 w-100">Créer le tournoi</button>
   </form>
 </div>
-{% endblock %}
 
+<!-- Script pour afficher/masquer "nombre de poules" selon le type de tournoi -->
+<script>
+  const roundRobinRadio = document.getElementById('roundRobin');
+  const knockoutRadio = document.getElementById('knockout');
+  const nbPoolsDiv = document.getElementById('nb_pools_div');
+
+  function toggleNbPools() {
+    if (roundRobinRadio.checked) {
+      nbPoolsDiv.style.display = 'block';
+    } else {
+      nbPoolsDiv.style.display = 'none';
+    }
+  }
+
+  roundRobinRadio.addEventListener('change', toggleNbPools);
+  knockoutRadio.addEventListener('change', toggleNbPools);
+  window.addEventListener('load', toggleNbPools);
+</script>
+{% endblock %}
