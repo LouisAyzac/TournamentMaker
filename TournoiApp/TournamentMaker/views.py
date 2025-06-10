@@ -106,46 +106,31 @@ from django.shortcuts import get_object_or_404, render
 from django.shortcuts import get_object_or_404, render
 from TournamentMaker.models import Team, Ranking, Match
 
-def team_detail(request, pk):
-    tournament_id = request.session.get('selected_tournament_id')
-    if not tournament_id:
-        return redirect('select_tournament')
-
-    team = get_object_or_404(Team, pk=pk, tournament_id=tournament_id)
-    tournament = get_object_or_404(Tournament, id=tournament_id)
-    ranking = Ranking.objects.filter(team=team).first()
-
-    teams = Team.objects.filter(tournament_id=tournament_id)
-    matches = Match.objects.filter(team_a__tournament_id=tournament_id)
-
+def calculate_team_points_and_ranking(teams, matches, sets_to_win):
     points = {t.id: 0 for t in teams}
     pool_wins = {t.id: 0 for t in teams}
 
     def get_winner(match, sets_to_win):
         score_a, score_b = 0, 0
-        max_sets = sets_to_win * 2 - 1  # nombre max de sets possibles dans le match (ex: 3 sets gagnants => max 5 sets)
+        max_sets = sets_to_win * 2 - 1
 
         for i in range(1, max_sets + 1):
             set_team_a = getattr(match, f'set{i}_team_a', None)
             set_team_b = getattr(match, f'set{i}_team_b', None)
             if set_team_a is None or set_team_b is None:
-                # Si un set n'a pas été joué (score manquant), on arrête la lecture
                 break
             if set_team_a > set_team_b:
                 score_a += 1
             elif set_team_b > set_team_a:
                 score_b += 1
-            
-            # Dès qu’une équipe atteint le nombre de sets gagnants nécessaires, on peut arrêter
+
             if score_a == sets_to_win:
                 return match.team_a
             if score_b == sets_to_win:
                 return match.team_b
 
-        # Si aucun n'a atteint le seuil, match nul ou non terminé
         return None
-    
-    sets_to_win = tournament.nb_sets_to_win
+
     for match in matches:
         winner = get_winner(match, sets_to_win)
         if winner:
@@ -162,22 +147,29 @@ def team_detail(request, pk):
                 pool_wins[winner.id] += 1
 
     sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
+    final_ranking = {t.id: rank + 1 for rank, t in enumerate(sorted_teams)}
 
-    final_ranking = {}
-    rank = 1
-    for t in sorted_teams:
-        final_ranking[t.id] = rank
-        rank += 1
+    return points, final_ranking
 
+def team_detail(request, pk):
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('select_tournament')
+
+    team = get_object_or_404(Team, pk=pk, tournament_id=tournament_id)
+    tournament = get_object_or_404(Tournament, id=tournament_id)
+
+    teams = Team.objects.filter(tournament_id=tournament_id)
+    matches = Match.objects.filter(team_a__tournament_id=tournament_id).select_related('team_a', 'team_b')
+
+    points, final_ranking = calculate_team_points_and_ranking(teams, matches, tournament.nb_sets_to_win)
     final_rank = final_ranking.get(team.id)
 
     return render(request, 'teams_detail.html', {
         'team': team,
-        'ranking': ranking,
-        'final_rank': final_rank,
+        'ranking': points.get(team.id, 0),  # Points de l'équipe
+        'final_rank': final_rank,           # Classement final
     })
-
-
 
 
 from django.shortcuts import render
