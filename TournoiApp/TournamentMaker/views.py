@@ -15,25 +15,72 @@ LEVEL_MAP = {
 }
 
 # === Page d'accueil et généralités ===
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
+from django.core.paginator import Paginator
 from .models import Tournament
 
 def home(request):
-    request.session.flush()
+    # Gestion sélection tournoi → stocker en session
+    if 'tournament_id' in request.GET:
+        selected_id = request.GET.get('tournament_id')
+        tournoi = get_object_or_404(Tournament, id=selected_id)
+        request.session['selected_tournament_id'] = tournoi.id
+        request.session['selected_tournament_name'] = tournoi.name
+        return redirect('dashboard')
 
+    if request.method == 'POST':
+        selected_id = request.POST.get('tournament_id')
+        if selected_id:
+            tournoi = get_object_or_404(Tournament, id=selected_id)
+            request.session['selected_tournament_id'] = tournoi.id
+            request.session['selected_tournament_name'] = tournoi.name
+            return redirect('dashboard')
+
+    # Gestion affichage
     today = now().date()
+    category = request.GET.get('category', 'all')
 
-    tournois_passes = Tournament.objects.filter(end_date__lt=today)
-    tournois_en_cours = Tournament.objects.filter(start_date__lte=today, end_date__gte=today)
-    tournois_a_venir = Tournament.objects.filter(start_date__gt=today)
+    if category == 'ongoing':
+        tournois = Tournament.objects.filter(start_date__lte=today, end_date__gte=today)
+    elif category == 'upcoming':
+        tournois = Tournament.objects.filter(start_date__gt=today)
+    elif category == 'past':
+        tournois = Tournament.objects.filter(end_date__lt=today)
+    elif category == 'all':  # 🆕 ici → pour afficher tous les tournois
+        tournois = Tournament.objects.all()
+    else:
+        tournois = Tournament.objects.all()
 
+    # Filtres sport + département
+    sports = Tournament.SPORT_CHOICES
+    selected_sport = request.GET.get('sport')
+    selected_department = request.GET.get('department')
+
+    if selected_sport:
+        tournois = tournois.filter(sport=selected_sport)
+    if selected_department:
+        tournois = tournois.filter(department__icontains=selected_department)
+
+    # Pagination
+    paginator = Paginator(tournois, 6)  # 6 tournois par page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Context
     context = {
-        'tournois_passes': tournois_passes,
-        'tournois_en_cours': tournois_en_cours,
-        'tournois_a_venir': tournois_a_venir,
+        'tournois': page_obj,  # paginé
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'category': category,
+        'sports': sports,
+        'selected_sport': selected_sport,
+        'selected_department': selected_department,
+        'hide_navbar': True,
     }
 
     return render(request, 'home.html', context)
+
 
 def index(request):
     num_Player = Player.objects.count()
@@ -246,7 +293,7 @@ def scores(request):
 # === Sélection du tournoi ===
 from django.shortcuts import render, redirect, get_object_or_404
 
-def select_tournament(request):
+'''def select_tournament(request):
     # Si on a cliqué sur un lien avec ?tournament_id=XX
     if 'tournament_id' in request.GET:
         selected_id = request.GET.get('tournament_id')
@@ -267,7 +314,7 @@ def select_tournament(request):
     # Sinon afficher le formulaire
     tournois = Tournament.objects.all()
     return render(request, 'select_tournament.html', {'tournois': tournois})
-
+'''
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect
@@ -777,3 +824,8 @@ class TournamentDetailView(DetailView):
     model = Tournament
     template_name = 'tournament_detail.html'
     context_object_name = 'tournoi'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['hide_navbar'] = True  # ✅ cacher la navbar sur cette page
+        return context
