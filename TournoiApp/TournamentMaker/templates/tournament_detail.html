@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container py-5">
 
-  <!-- Section héro -->
+  <!-- Section héros -->
   <div class="bg-primary text-white rounded-4 shadow-sm p-4 mb-4 text-center">
     <h1 class="display-5 fw-bold"><i class="fas fa-trophy me-2"></i>{{ tournoi.name }}</h1>
     <p class="lead mb-0">{{ tournoi.get_sport_display }} - {{ tournoi.department }}</p>
@@ -21,17 +21,21 @@
           <p class="mb-2"><i class="fas fa-users text-primary me-2"></i><strong>Équipes max :</strong> {{ tournoi.max_teams }}</p>
           <p class="mb-2"><i class="fas fa-user-friends text-primary me-2"></i><strong>Joueurs/équipe :</strong> {{ tournoi.players_per_team }}</p>
           <p class="mb-2"><i class="fas fa-list-ol text-primary me-2"></i><strong>Équipes inscrites :</strong> {{ tournoi.teams.count }} / {{ tournoi.max_teams }}</p>
-
           {% if tournoi.teams.count >= tournoi.max_teams %}
-            <div class="text-danger fw-bold"><i class="fas fa-exclamation-circle me-1"></i>Tournoi complet</div>
+          <div class="text-danger fw-bold"><i class="fas fa-exclamation-circle me-1"></i>Tournoi complet</div>
           {% endif %}
         </div>
 
         <div class="col-md-6">
           <p class="mb-2"><i class="fas fa-calendar-alt text-primary me-2"></i><strong>Date de début :</strong> {{ tournoi.start_date|date:"d/m/Y" }}</p>
           <p class="mb-2"><i class="fas fa-calendar-check text-primary me-2"></i><strong>Date de fin :</strong> {{ tournoi.end_date|date:"d/m/Y" }}</p>
-
-          
+          <p class="mb-2"><i class="fas fa-football-ball text-primary me-2"></i><strong>Sport :</strong> {{ tournoi.get_sport_display }}</p>
+          <p class="mb-2"><i class="fas fa-clipboard-list text-primary me-2"></i><strong>Type de tournoi :</strong> {{ tournoi.get_type_tournament_display }}</p>
+          {% if tournoi.type_tournament == 'RR' %}
+          <p class="mb-2"><i class="fas fa-th-large text-primary me-2"></i><strong>Nombre de poules :</strong> {{ tournoi.number_of_pools }}</p>
+          {% endif %}
+          <p class="mb-2"><i class="fas fa-trophy text-primary me-2"></i><strong>Sets nécessaires pour gagner :</strong> {{ tournoi.nb_sets_to_win }}</p>
+          <p class="mb-2"><i class="fas fa-star text-primary me-2"></i><strong>Points nécessaires par set :</strong> {{ tournoi.points_per_set }}</p>
         </div>
       </div>
     </div>
