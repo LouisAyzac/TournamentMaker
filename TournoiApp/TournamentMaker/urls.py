@@ -50,4 +50,6 @@ urlpatterns = [
     path('tournaments/', TournamentListView.as_view(), name='tournament_list'),
     path('tournament/<int:pk>/', TournamentDetailView.as_view(), name='tournament_detail'),
     path('tournament/full/', views.tournament_full, name='tournament_full'),
+    path('matchs/<int:match_id>/modifier-score/', views.modifier_score_match, name='modifier_score_match'),
+
 ]

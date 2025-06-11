@@ -950,3 +950,36 @@ class TournamentDetailView(DetailView):
 def direct_elimination(request):
     # Logique pour gérer la page d'élimination directe
     return render(request, 'direct_elimination.html')
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Match
+
+@login_required
+def modifier_score_match(request, match_id):
+    match = get_object_or_404(Match, id=match_id)
+
+    if request.method == 'POST':
+        for i in range(1, 6):  # jusqu'à 5 sets
+            score_a = request.POST.get(f'set{i}_team_a')
+            score_b = request.POST.get(f'set{i}_team_b')
+            if score_a and score_b:
+                setattr(match, f'set{i}_team_a', int(score_a))
+                setattr(match, f'set{i}_team_b', int(score_b))
+        match.save()
+        return redirect('detail_poule', pool_id=match.pool.id)
+
+    score_sets = []
+    for i in range(1, 6):
+        score_sets.append({
+            'set_number': i,
+            'team_a_score': getattr(match, f'set{i}_team_a', 0),
+            'team_b_score': getattr(match, f'set{i}_team_b', 0),
+        })
+
+    return render(request, 'modifier_score.html', {
+        'match': match,
+        'score_sets': score_sets,
+    })
+

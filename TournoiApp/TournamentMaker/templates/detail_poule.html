@@ -50,10 +50,11 @@
                                             <span style="color:blue">{{ set.team_b_score }}</span>
                                         </div>
                                     {% endfor %}
-                                    <a class="btn btn-sm btn-outline-primary mt-2"
-                                       href="{% url 'scores' %}?match_id={{ match.id }}">
-                                       Modifier le score
+                                    <a class="btn btn-sm btn-outline-primary mt-1"
+                                    href="{% url 'modifier_score_match' match.id %}">
+                                    Modifier le score
                                     </a>
+
                                 </td>
                                 <td>
                                     {% if match.winner_team %}
