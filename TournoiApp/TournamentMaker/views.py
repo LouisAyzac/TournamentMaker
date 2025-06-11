@@ -83,7 +83,6 @@ def home(request):
         'sports': sports,
         'selected_sport': selected_sport,
         'selected_department': selected_department,
-        'hide_navbar': True,
     }
 
     return render(request, 'home.html', context)
@@ -1041,3 +1040,7 @@ def score_match(request, match_id):
         return redirect('score_match', match_id=match.id)
 
     return render(request, 'score_match.html', {'match': match})
+
+
+def home_landing(request):
+    return render(request, 'home_landing.html', {'hide_navbar': True})
