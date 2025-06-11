@@ -1,13 +1,84 @@
 {% extends 'base_generic.html' %}
-
-{% block title %}
-  <title>Tournoi à Élimination Directe</title>
-{% endblock %}
-
 {% block content %}
-<div class="container mt-5">
-  <h2 class="text-center mb-4">Tournoi à Élimination Directe</h2>
-  <p>Bienvenue dans le tournoi à élimination directe. Ici, vous pouvez gérer vos matchs et voir les résultats.</p>
-  <!-- Ajoutez ici le contenu spécifique pour les tournois à élimination directe -->
-</div>
+<h2>Phase Éliminatoire - {{ tournament.name }}</h2>
+
+<style>
+  .match-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 15px;
+    background-color: #f9f9f9;
+    width: 400px;
+    color: #000;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .team {
+    width: 45%;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .vs {
+    width: 10%;
+    text-align: center;
+    font-style: italic;
+  }
+
+  .form-wrapper {
+    margin-bottom: 20px;
+  }
+
+  form {
+    all: unset;
+  }
+
+  .empty-message {
+    color: #000;
+    font-size: 1.1em;
+    margin-top: 20px;
+  }
+</style>
+
+{% if matchups %}
+  {% for team1, team2, match in matchups %}
+    {% if team2 %}
+      {% if match %}
+        <a href="{% url 'login' %}?next={% url 'score_match' match.id %}" class="match-block">
+          <div class="team">{{ team1.name }}</div>
+          <div class="vs">VS</div>
+          <div class="team">{{ team2.name }}</div>
+        </a>
+      {% else %}
+        <div class="form-wrapper">
+          <form method="post" action="{% url 'create_elimination_match' %}">
+            {% csrf_token %}
+            <input type="hidden" name="team_a_id" value="{{ team1.id }}">
+            <input type="hidden" name="team_b_id" value="{{ team2.id }}">
+            <button type="submit" class="match-block">
+              <div class="team">{{ team1.name }}</div>
+              <div class="vs">VS</div>
+              <div class="team">{{ team2.name }}</div>
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="match-block">
+        <div class="team">{{ team1.name }}</div>
+        <div class="vs">VS</div>
+        <div class="team">En attente...</div>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% else %}
+  <p class="empty-message">Aucune équipe encore inscrite.</p>
+{% endif %}
+
 {% endblock %}
