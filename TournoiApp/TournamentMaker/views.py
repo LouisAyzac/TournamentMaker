@@ -904,6 +904,8 @@ from .models import Tournament, Team
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Tournament, Team
 
+from math import ceil
+
 def direct_elimination(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
@@ -915,25 +917,38 @@ def direct_elimination(request):
         return redirect('home')
 
     teams = list(Team.objects.filter(tournament=tournament).order_by('id'))
+    total_teams = len(teams)
 
-    # Récupérer tous les matchs existants
-    matches = Match.objects.filter(team_a__tournament=tournament, phase='quarter')
-    match_lookup = {
-        (m.team_a.id, m.team_b.id): m for m in matches
-    }
+    # Récupérer tous les matchs existants du tournoi, toutes phases confondues
+    matches = Match.objects.filter(team_a__tournament=tournament)
+    match_lookup = {(m.team_a.id, m.team_b.id): m for m in matches}
 
-    # Construire les paires avec match existant ou non
-    matchups = []
-    for i in range(0, len(teams), 2):
+    # Génération des tours
+    matchups_by_round = []
+    current_round = []
+
+    # Tour initial : équipes directement
+    for i in range(0, total_teams, 2):
         team1 = teams[i]
-        team2 = teams[i + 1] if i + 1 < len(teams) else None
+        team2 = teams[i + 1] if i + 1 < total_teams else None
         match = match_lookup.get((team1.id, team2.id)) if team2 else None
-        matchups.append((team1, team2, match))
+        current_round.append((team1, team2, match))
+    matchups_by_round.append(current_round)
+
+    # Générer les tours suivants à vide (placeholders)
+    round_size = ceil(total_teams / 2)
+    while round_size > 1:
+        next_round = []
+        for _ in range(0, round_size, 2):
+            next_round.append((None, None, None))  # Placeholders pour future logique de gagnants
+        matchups_by_round.append(next_round)
+        round_size = ceil(round_size / 2)
 
     return render(request, 'direct_elimination.html', {
         'tournament': tournament,
-        'matchups': matchups,
+        'matchups_by_round': matchups_by_round,
     })
+
 
 
 

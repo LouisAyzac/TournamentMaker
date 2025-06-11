@@ -3,6 +3,26 @@
 <h2>Phase Éliminatoire - {{ tournament.name }}</h2>
 
 <style>
+  .bracket {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 80px;
+    margin-top: 40px;
+  }
+
+  .round {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .match-wrapper {
+    margin: 20px 0;
+    position: relative;
+  }
+
   .match-block {
     display: flex;
     justify-content: space-between;
@@ -10,12 +30,10 @@
     border: 1px solid #ccc;
     border-radius: 6px;
     padding: 12px;
-    margin-bottom: 15px;
-    background-color: #f9f9f9;
-    width: 400px;
+    width: 300px;
     color: #000;
+    background-color: #f9f9f9;
     box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
     text-decoration: none;
   }
 
@@ -31,54 +49,60 @@
     font-style: italic;
   }
 
-  .form-wrapper {
-    margin-bottom: 20px;
+  .spacer {
+    height: 40px;
   }
 
-  form {
-    all: unset;
+  .dynamic-spacer {
+    height: 80px;
   }
 
-  .empty-message {
-    color: #000;
-    font-size: 1.1em;
-    margin-top: 20px;
-  }
 </style>
 
-{% if matchups %}
-  {% for team1, team2, match in matchups %}
-    {% if team2 %}
-      {% if match %}
-        <a href="{% url 'login' %}?next={% url 'score_match' match.id %}" class="match-block">
-          <div class="team">{{ team1.name }}</div>
-          <div class="vs">VS</div>
-          <div class="team">{{ team2.name }}</div>
-        </a>
-      {% else %}
-        <div class="form-wrapper">
-          <form method="post" action="{% url 'create_elimination_match' %}">
-            {% csrf_token %}
-            <input type="hidden" name="team_a_id" value="{{ team1.id }}">
-            <input type="hidden" name="team_b_id" value="{{ team2.id }}">
-            <button type="submit" class="match-block">
+{% if matchups_by_round %}
+<div class="bracket">
+  {% for round in matchups_by_round %}
+    <div class="round">
+      {% for team1, team2, match in round %}
+        {% if not forloop.first %}
+          <div class="dynamic-spacer"></div>
+        {% endif %}
+        <div class="match-wrapper">
+          {% if team2 %}
+            {% if match %}
+              <a href="{% url 'login' %}?next={% url 'score_match' match.id %}" class="match-block">
+                <div class="team">{{ team1.name }}</div>
+                <div class="vs">VS</div>
+                <div class="team">{{ team2.name }}</div>
+              </a>
+            {% else %}
+              <form method="post" action="{% url 'create_elimination_match' %}">
+                {% csrf_token %}
+                <input type="hidden" name="team_a_id" value="{{ team1.id }}">
+                <input type="hidden" name="team_b_id" value="{{ team2.id }}">
+                <button type="submit" class="match-block">
+                  <div class="team">{{ team1.name }}</div>
+                  <div class="vs">VS</div>
+                  <div class="team">{{ team2.name }}</div>
+                </button>
+              </form>
+            {% endif %}
+          {% else %}
+            <div class="match-block">
               <div class="team">{{ team1.name }}</div>
               <div class="vs">VS</div>
-              <div class="team">{{ team2.name }}</div>
-            </button>
-          </form>
+              <div class="team">En attente...</div>
+            </div>
+          {% endif %}
         </div>
-      {% endif %}
-    {% else %}
-      <div class="match-block">
-        <div class="team">{{ team1.name }}</div>
-        <div class="vs">VS</div>
-        <div class="team">En attente...</div>
-      </div>
-    {% endif %}
+        {% if not forloop.last %}
+          <div class="spacer"></div>
+        {% endif %}
+      {% endfor %}
+    </div>
   {% endfor %}
+</div>
 {% else %}
   <p class="empty-message">Aucune équipe encore inscrite.</p>
 {% endif %}
-
 {% endblock %}
