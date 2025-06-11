@@ -1,0 +1,18 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h2>Détails de la Pool : {{ pool.name }}</h2>
+
+ <ul>
+  {% for team in pool.teams.all %}
+    <li>
+      <a href="{% url 'team_detail' team.id %}">{{ team.name }}</a>
+    </li>
+  {% empty %}
+    <li>Aucune équipe dans cette pool.</li>
+  {% endfor %}
+</ul>
+
+
+  <p><a href="{% url 'pool_list' %}">← Retour à la liste des pools</a></p>
+{% endblock %}

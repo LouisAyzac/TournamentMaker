@@ -3,7 +3,7 @@
 {% block content %}
 <h2>Matchs</h2>
 
-<!-- Style local -->
+
 <style>
     thead th {
         background-color: #f2f2f2 !important;
@@ -97,15 +97,17 @@
         {% endif %}
 
         {% if selected_statut == "T" %}
-            <td>
-                {% if match.winner_team %}
-                    <span style="color: {% if match.winner_team == match.team_a %}red{% else %}blue{% endif %}; font-weight: bold;">
-                        {{ match.winner_team }}
-                    </span>
+        <td>
+            {% if match.winner_team %}
+                {% if match.winner_team == match.team_a %}
+                    <span style="color: red; font-weight: bold;">{{ match.winner_team }}</span>
                 {% else %}
-                    -
+                    <span style="color: blue; font-weight: bold;">{{ match.winner_team }}</span>
                 {% endif %}
-            </td>
+            {% else %}
+                -
+            {% endif %}
+        </td>
         {% endif %}
 
         <td>{{ match.get_phase_display }}</td>

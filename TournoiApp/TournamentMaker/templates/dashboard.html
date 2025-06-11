@@ -1,7 +1,24 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-  <div class="text-center mt-5">
-    <h2>Voici le tournoi sélectionné : {{ request.session.selected_tournament_name }}</h2>
+  <div class="container mt-5 text-center">
+
+    <!-- Nom du tournoi en gros -->
+    <h1 class="display-3 fw-bold mb-3" style="color: black;">{{ tournoi.name }}</h1>
+
+    <!-- Statut -->
+    <p>
+      {% if statut == "En cours" %}
+        <span class="badge bg-success fs-5">Tournoi en cours</span>
+      {% elif statut == "À venir" %}
+        <span class="badge bg-primary fs-5">Tournoi à venir</span>
+      {% else %}
+        <span class="badge bg-secondary fs-5">Tournoi terminé</span>
+      {% endif %}
+    </p>
+
+    <hr class="my-4">
+
+    <h4 class="text-muted">Vous pouvez naviguer avec les boutons ci-dessus.</h4>
   </div>
 {% endblock %}

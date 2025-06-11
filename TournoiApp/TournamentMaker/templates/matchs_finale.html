@@ -61,7 +61,6 @@
 .finale { background-color: #fdcb6e; color: black; }
 .petite { background-color: #d63031; }
 
-/* Liaisons horizontales */
 .match-box::after {
     content: '';
     position: absolute;
@@ -77,7 +76,6 @@
     display: none;
 }
 
-/* Liaisons verticales */
 .connect-line {
     width: 2px;
     height: 100px;
@@ -92,9 +90,13 @@
     <div class="phase-column">
         <div class="phase-title quarter-label">Quarts de finale</div>
         {% for match in quarter %}
-            <a href="{% url 'match_detail' match.id %}" class="match-box quarter">
-                {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
-            </a>
+            {% if match.id %}
+                <a href="{% url 'match_detail' match.id %}" class="match-box quarter">
+                    {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
+                </a>
+            {% else %}
+                <div class="match-box quarter">Match non défini</div>
+            {% endif %}
             {% if not forloop.last %}
                 <div class="connect-line"></div>
             {% endif %}
@@ -105,9 +107,13 @@
     <div class="phase-column">
         <div class="phase-title demi-label">Demi-finales</div>
         {% for match in semi %}
-            <a href="{% url 'match_detail' match.id %}" class="match-box demi">
-                {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
-            </a>
+            {% if match.id %}
+                <a href="{% url 'match_detail' match.id %}" class="match-box demi">
+                    {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
+                </a>
+            {% else %}
+                <div class="match-box demi">Match non défini</div>
+            {% endif %}
             {% if not forloop.last %}
                 <div class="connect-line"></div>
             {% endif %}
@@ -117,21 +123,29 @@
     <!-- Finale -->
     <div class="phase-column">
         <div class="phase-title finale-label">Finale</div>
-        {% with final.0 as match %}
-            <a href="{% url 'match_detail' match.id %}" class="match-box finale">
-                {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
-            </a>
-        {% endwith %}
+        {% if final and final.0.id %}
+            {% with final.0 as match %}
+                <a href="{% url 'match_detail' match.id %}" class="match-box finale">
+                    {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
+                </a>
+            {% endwith %}
+        {% else %}
+            <div class="match-box finale">Match non défini</div>
+        {% endif %}
     </div>
 
     <!-- Petite finale -->
     <div class="phase-column">
         <div class="phase-title petite-label">Petite Finale</div>
-        {% with third_place.0 as match %}
-            <a href="{% url 'match_detail' match.id %}" class="match-box petite">
-                {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
-            </a>
-        {% endwith %}
+        {% if third_place and third_place.0.id %}
+            {% with third_place.0 as match %}
+                <a href="{% url 'match_detail' match.id %}" class="match-box petite">
+                    {{ match.team_a|default:"?" }}<br>vs<br>{{ match.team_b|default:"?" }}
+                </a>
+            {% endwith %}
+        {% else %}
+            <div class="match-box petite">Match non défini</div>
+        {% endif %}
     </div>
 
 </div>
