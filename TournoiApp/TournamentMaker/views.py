@@ -62,12 +62,12 @@ def home(request):
     # Filtres sport + département
     sports = Tournament.SPORT_CHOICES
     selected_sport = request.GET.get('sport')
-    selected_department = request.GET.get('department')
+    selected_city = request.GET.get('city')
 
     if selected_sport:
         tournois = tournois.filter(sport=selected_sport)
-    if selected_department:
-        tournois = tournois.filter(department__icontains=selected_department)
+    if selected_city:
+        tournois = tournois.filter(city__icontains=selected_city)
 
     # Pagination
     paginator = Paginator(tournois, 6)  # 6 tournois par page
@@ -82,7 +82,7 @@ def home(request):
         'category': category,
         'sports': sports,
         'selected_sport': selected_sport,
-        'selected_department': selected_department,
+        'selected_city': selected_city,
         'hide_navbar': True,
     }
 
@@ -447,7 +447,7 @@ def signup(request):
             for pool in pools:
                 teams_in_pool = pool.teams.all()
                 total_score = sum(
-                    sum(player.level for player in team.players.all())
+                    sum(int(player.level)for player in team.players.all())
                     for team in teams_in_pool
                 )
                 team_count = teams_in_pool.count()
@@ -781,7 +781,7 @@ def create_tournament(request):
     if request.method == 'POST':
         # Retrieve form data
         name = request.POST.get('name')
-        department = request.POST.get('department')
+        city = request.POST.get('city')
         address = request.POST.get('address')
         is_indoor = request.POST.get('is_indoor') == 'on'
         start_date = parse_date(request.POST.get('start_date'))
@@ -797,7 +797,7 @@ def create_tournament(request):
         points_per_set = request.POST.get('points_per_set')
 
         # Basic validation
-        if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team, nb_sets_to_win, points_per_set]):
+        if not all([name, city, start_date, end_date, sport, nb_teams, players_per_team, nb_sets_to_win, points_per_set]):
             messages.error(request, "Tous les champs requis ne sont pas remplis.")
             return redirect('create_tournament')
 
@@ -821,7 +821,7 @@ def create_tournament(request):
         # Create the tournament
         tournoi = Tournament.objects.create(
             name=name,
-            department=department,
+            city=city,
             address=address,
             is_indoor=is_indoor,
             start_date=start_date,
@@ -891,9 +891,9 @@ class TournamentListView(ListView):
             queryset = queryset.filter(sport=sport)
         
         # Filtrage par département
-        department = self.request.GET.get('department')
-        if department:
-            queryset = queryset.filter(department__icontains=department)
+        city = self.request.GET.get('city')
+        if city:
+            queryset = queryset.filter(city__icontains=city)
         
         return queryset.order_by('start_date')
 
@@ -901,7 +901,7 @@ class TournamentListView(ListView):
         context = super().get_context_data(**kwargs)
         context['sports'] = Tournament.SPORT_CHOICES
         context['selected_sport'] = self.request.GET.get('sport', '')
-        context['selected_department'] = self.request.GET.get('department', '')
+        context['selected_city'] = self.request.GET.get('city', '')
         return context
     
 from django.views.generic import DetailView
