@@ -404,20 +404,9 @@ def signup(request):
                 'total_players': total_players
             })
 
-
-        # Répartir l'équipe dans les pools disponibles du tournoi → avec têtes de séries
-        pools = Pool.objects.filter(tournament=tournament)
-
-        # 1️⃣ Calcul du "score" de l'équipe en cours d'inscription (somme des niveaux des joueurs)
         team_score = 0
-
-        # On initialise l'équipe (vide) pour pouvoir lui affecter des joueurs ensuite
-        team = Team.objects.create(name=team_name, tournament=tournament)
-
-        # Pour savoir combien de joueurs vont être inscrits (on le passe à la boucle après)
         players_data = []
 
-        # On lit les données du POST et on prépare les joueurs + score
         for i in total_players:
             index = i + 1
             first_name = request.POST.get(f'first_name_{index}')
@@ -430,7 +419,6 @@ def signup(request):
                 birthdate = parse_date(birthdate_str) if birthdate_str else None
                 level = int(LEVEL_MAP.get(level_str.lower(), 1)) if level_str else 1
 
-                # On stocke les infos pour créer les joueurs plus tard
                 players_data.append({
                     'first_name': first_name,
                     'last_name': last_name,
@@ -439,71 +427,61 @@ def signup(request):
                     'level': level
                 })
 
-                # On incrémente le score de l'équipe
                 team_score += level
 
-        # 2️⃣ On calcule les forces actuelles des Pools
-        pool_strength = []
+        # Création de l’équipe
+        team = Team.objects.create(name=team_name, tournament=tournament)
 
-        for pool in pools:
-            teams_in_pool = pool.teams.all()
-            total_score = 0
-            team_count = teams_in_pool.count()
+        # Si le tournoi est en round robin (RR), on attribue une pool
+        if tournament.type_tournament == 'RR':
+            pools = Pool.objects.filter(tournament=tournament)
+            if not pools.exists():
+                team.delete()
+                return render(request, 'signup.html', {
+                    'error': 'Aucune poule disponible pour ce tournoi.',
+                    'players_per_team': players_per_team,
+                    'total_players': total_players
+                })
 
-            # On calcule le score total des équipes de la Pool
-            for t in teams_in_pool:
-                team_players = t.players.all()
-                score = sum(int(player.level) for player in team_players)
-                total_score += score
+            pool_strength = []
+            for pool in pools:
+                teams_in_pool = pool.teams.all()
+                total_score = sum(
+                    sum(int(player.level) for player in team.players.all() if player.level)
+                    for team in teams_in_pool
+                )
+                team_count = teams_in_pool.count()
+                avg_score = total_score / team_count if team_count > 0 else 0
+                pool_strength.append((pool, avg_score, team_count))
 
-            # On stocke le score moyen actuel de la Pool
-            avg_score = total_score / team_count if team_count > 0 else 0
-            pool_strength.append((pool, avg_score, team_count))
+            pool_strength.sort(key=lambda x: (x[2], abs(x[1] - team_score)))
+            pool_to_assign = pool_strength[0][0]
+            team.pool = pool_to_assign
+            team.save()
 
-        # 3️⃣ On trie les Pools :
-        # - on privilégie les Pools ayant le moins d'équipes
-        # - en cas d'égalité, on choisit celle avec la force moyenne la plus adaptée                                                    
-
-        # On trie par : (nb d'équipes, écart entre force moyenne et score de l'équipe)
-        pool_strength.sort(key=lambda x: (x[2], abs(x[1] - team_score)))
-
-        # 4️⃣ On choisit la Pool optimale
-        if not pool_strength:
-            return render(request, 'signup.html', {
-                'error': 'Aucune poule disponible pour ce tournoi. Veuillez contacter l\'organisateur.',
-                'players_per_team': players_per_team,
-                'total_players': total_players
-            })
-        pool_to_assign = pool_strength[0][0]
-
-        # 5️⃣ On assigne l'équipe à la Pool
-        team.pool = pool_to_assign
-        team.save()
-
-        # 6️⃣ On crée les joueurs
         capitaine_valide = False
-
         for i, player_data in enumerate(players_data):
             player = Player.objects.create(
                 first_name=player_data['first_name'],
                 last_name=player_data['last_name'],
                 birth_date=player_data['birth_date'],
                 level=player_data['level'],
-                email=player_data['email'] if player_data['email'] else '',
-                team=team,
+                email=player_data['email'] or '',
+                team=team
             )
 
-            if i == 0:
-                # Création du User pour le capitaine
+            if i == 0 and player_data['email']:
                 email = player_data['email']
                 username = f"{email}_{team.id}"
                 user = User.objects.create_user(username=username, email=email)
-                user_profile = UserProfile.objects.create(user=user, level=player_data['level'], team=team)
-
+                user_profile = UserProfile.objects.create(
+                    user=user,
+                    level=player_data['level'],
+                    team=team
+                )
                 team.captain = user_profile
                 team.save()
 
-                # Générer le lien pour la réinitialisation du mot de passe
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
                 token = default_token_generator.make_token(user)
                 domain = '127.0.0.1:8000'
@@ -511,38 +489,33 @@ def signup(request):
 
                 subject = f"Bienvenue capitaine de l'équipe {team.name} !"
                 message = f"""
-        Bonjour {player_data['first_name']},
+Bonjour {player_data['first_name']},
 
-        Vous avez été inscrit comme capitaine de l'équipe {team.name}.
-        Veuillez cliquer sur le lien suivant pour définir ou modifier votre mot de passe :
+Vous avez été inscrit comme capitaine de l'équipe {team.name}.
+Veuillez cliquer sur le lien suivant pour définir ou modifier votre mot de passe :
 
-        {link}
+{link}
 
-        Merci,
-        L'équipe du tournoi
-        """
+Merci,
+L'équipe du tournoi
+"""
                 send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
-
                 capitaine_valide = True
 
-        # 7️⃣ En cas de problème → rollback de l'équipe
         if not capitaine_valide:
-            team.delete()  # Supprimer l'équipe si pas de capitaine valide
+            team.delete()
             return render(request, 'signup.html', {
-                'error': 'Le capitaine est obligatoire.',
+                'error': 'Le capitaine est obligatoire (joueur 1 avec une adresse email).',
                 'players_per_team': players_per_team,
                 'total_players': total_players
             })
-        
-        # ✅ Si tout s'est bien passé, rediriger vers la page de succès
+
         return redirect('signup_success')
-    
-        # Si on arrive ici (GET), afficher le formulaire
+
     return render(request, 'signup.html', {
         'players_per_team': players_per_team,
         'total_players': total_players
     })
-
 
  
 def signup_success(request):
@@ -651,10 +624,14 @@ def matchs_poules(request, tournament_id):
 
 
 # Détail d'une poule
+from django.shortcuts import render, get_object_or_404
+from .models import Pool, Match
+
 def detail_poule(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
-    tournament = pool.tournament  # assuming your Pool model has a ForeignKey to Tournament
+    tournament = pool.tournament
 
+    # Matchs joués dans la poule
     matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
 
     for match in matchs:
@@ -662,19 +639,42 @@ def detail_poule(request, pool_id):
         for i in range(1, 6):
             sa = getattr(match, f"set{i}_team_a", None)
             sb = getattr(match, f"set{i}_team_b", None)
-            if sa is not None and sb is not None:
+            if sa is not None and sb is not None and (sa != 0 or sb != 0):
                 match.score_sets.append({
                     'set_number': i,
                     'team_a_score': sa,
                     'team_b_score': sb
                 })
 
+    # Toutes les équipes de la poule
+    teams = list(pool.teams.all())
+
+    # Trouver toutes les paires possibles d'équipes
+    from itertools import combinations
+    all_pairs = list(combinations(teams, 2))
+
+    # Trouver les paires qui n'ont pas encore joué (matchs déjà existants)
+    played_pairs = set()
+    for m in matchs:
+        pair = tuple(sorted([m.team_a.id, m.team_b.id]))
+        played_pairs.add(pair)
+
+    # Matchs possibles = paires non jouées
+    matchs_possibles = []
+    for team_a, team_b in all_pairs:
+        pair = tuple(sorted([team_a.id, team_b.id]))
+        if pair not in played_pairs:
+            # Créer un objet Match fictif pour affichage (pas en base)
+            from types import SimpleNamespace
+            m = SimpleNamespace(team_a=team_a, team_b=team_b)
+            matchs_possibles.append(m)
+
     return render(request, 'detail_poule.html', {
         'pool': pool,
         'matchs': matchs,
-        'tournament': tournament,  # <-- Ajoute ça !
+        'matchs_possibles': matchs_possibles,
+        'tournament': tournament,
     })
-
 
 # Vue phase finale
 def matchs_finale(request):
@@ -920,6 +920,124 @@ class TournamentDetailView(DetailView):
 
     from django.shortcuts import render
 
+from django.shortcuts import render, get_object_or_404
+from .models import Tournament, Team
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Tournament, Team
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Tournament, Team
+
 def direct_elimination(request):
-    # Logique pour gérer la page d'élimination directe
-    return render(request, 'direct_elimination.html')
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        return redirect('home')
+
+    tournament = get_object_or_404(Tournament, id=tournament_id)
+
+    if tournament.type_tournament != 'DE':
+        return redirect('home')
+
+    teams = list(Team.objects.filter(tournament=tournament).order_by('id'))
+
+    # Récupérer tous les matchs existants
+    matches = Match.objects.filter(team_a__tournament=tournament, phase='quarter')
+    match_lookup = {
+        (m.team_a.id, m.team_b.id): m for m in matches
+    }
+
+    # Construire les paires avec match existant ou non
+    matchups = []
+    for i in range(0, len(teams), 2):
+        team1 = teams[i]
+        team2 = teams[i + 1] if i + 1 < len(teams) else None
+        match = match_lookup.get((team1.id, team2.id)) if team2 else None
+        matchups.append((team1, team2, match))
+
+    return render(request, 'direct_elimination.html', {
+        'tournament': tournament,
+        'matchups': matchups,
+    })
+
+
+
+
+from .models import Match, Team, Tournament
+def create_elimination_match(request):
+    if request.method == 'POST':
+        team_a_id = request.POST.get('team_a_id')
+        team_b_id = request.POST.get('team_b_id')
+        tournament_id = request.session.get('selected_tournament_id')
+
+        if not (team_a_id and team_b_id and tournament_id):
+            return redirect('direct_elimination')
+
+        try:
+            team_a = Team.objects.get(id=team_a_id)
+            team_b = Team.objects.get(id=team_b_id)
+            tournament = Tournament.objects.get(id=tournament_id)
+        except (Team.DoesNotExist, Tournament.DoesNotExist):
+            return redirect('direct_elimination')
+
+        # Vérifie si un match identique existe déjà
+        match = Match.objects.filter(
+            team_a=team_a,
+            team_b=team_b,
+            phase='quarter'  # adapte si tu veux gérer les phases dynamiquement
+        ).first()
+
+        if not match:
+            match = Match.objects.create(
+                team_a=team_a,
+                team_b=team_b,
+                phase='quarter',
+            )
+
+        return redirect('score_match', match_id=match.id)
+
+    return redirect('direct_elimination')
+
+    
+
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Match
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Match
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render, redirect
+from .models import Match, UserProfile
+
+@login_required
+def score_match(request, match_id):
+    match = get_object_or_404(Match, id=match_id)
+
+    try:
+        user_profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        return render(request, 'no_team.html')
+
+    user_team = user_profile.team
+
+    # ❌ Si l’utilisateur n’est pas capitaine d’une équipe concernée
+    if user_team != match.team_a and user_team != match.team_b:
+        return render(request, 'no_team.html', {
+            'error': "Vous n’avez pas le droit de modifier ce match."
+        })
+
+    # ✅ Il est autorisé à modifier le score
+    if request.method == 'POST':
+        match.set1_team_a = int(request.POST.get('set1_team_a', 0))
+        match.set1_team_b = int(request.POST.get('set1_team_b', 0))
+        match.set2_team_a = int(request.POST.get('set2_team_a', 0))
+        match.set2_team_b = int(request.POST.get('set2_team_b', 0))
+        match.set3_team_a = int(request.POST.get('set3_team_a', 0))
+        match.set3_team_b = int(request.POST.get('set3_team_b', 0))
+        match.save()
+        return redirect('score_match', match_id=match.id)
+
+    return render(request, 'score_match.html', {'match': match})
