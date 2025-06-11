@@ -174,7 +174,6 @@ class Match(models.Model):
     team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')
     start_time = models.TimeField(null=True, blank=True, verbose_name="Heure de début")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Heure de fin")
-    
 
     STATUT_CHOICES = [
         ('ND', 'Non débuté'),
@@ -182,16 +181,12 @@ class Match(models.Model):
         ('T', 'Terminé'),
     ]
     statut = models.CharField(max_length=2, choices=STATUT_CHOICES, default='ND')
-    
+
     TERRAIN_CHOICES = [(str(i), f'Terrain {i}') for i in range(1, 7)]
     terrain_number = models.CharField(max_length=1, choices=TERRAIN_CHOICES, blank=True, null=True, verbose_name="Terrain")
 
     WINNER_CHOICES = [('A', 'Team A'), ('B', 'Team B')]
     winner_side = models.CharField(max_length=1, choices=WINNER_CHOICES, blank=True, null=True, verbose_name='Vainqueur')
-
-    @property
-    def winner_team(self):
-        return self.team_a if self.winner_side == 'A' else self.team_b if self.winner_side == 'B' else None
 
     set1_team_a = models.PositiveIntegerField(default=0)
     set1_team_b = models.PositiveIntegerField(default=0)
@@ -213,10 +208,14 @@ class Match(models.Model):
     ]
     phase = models.CharField(max_length=20, choices=PHASE_CHOICES, default='pool')
 
+    @property
+    def winner_team(self):
+        return self.team_a if self.winner_side == 'A' else self.team_b if self.winner_side == 'B' else None
+
     def __str__(self):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"
 
-    def get_auto_winner(self):
+    def get_auto_winner(self, nb_sets_to_win):
         sets = [
             (self.set1_team_a, self.set1_team_b),
             (self.set2_team_a, self.set2_team_b),
@@ -227,11 +226,18 @@ class Match(models.Model):
         if self.set5_team_a is not None and self.set5_team_b is not None:
             sets.append((self.set5_team_a, self.set5_team_b))
 
-        score_a = sum(1 for a, b in sets if a > b)
-        score_b = sum(1 for a, b in sets if b > a)
+        # Filtrer les sets non joués (où les deux scores sont à 0)
+        sets_played = [(a, b) for a, b in sets if a != 0 or b != 0]
 
-        return self.team_a if score_a > score_b else self.team_b if score_b > score_a else None
+        score_a = sum(1 for a, b in sets_played if a > b)
+        score_b = sum(1 for a, b in sets_played if b > a)
 
+        if score_a >= nb_sets_to_win:
+            return self.team_a
+        elif score_b >= nb_sets_to_win:
+            return self.team_b
+        else:
+            return None
 
 class Ranking(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)

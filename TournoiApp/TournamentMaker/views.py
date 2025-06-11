@@ -886,3 +886,30 @@ class TournamentDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context['hide_navbar'] = True  # ✅ cacher la navbar sur cette page
         return context
+    
+from django.shortcuts import render, get_object_or_404
+from itertools import combinations
+from .models import Pool, Team
+
+from django.shortcuts import render, get_object_or_404
+from itertools import combinations
+from .models import Pool, Team
+
+from django.shortcuts import render, get_object_or_404
+from itertools import combinations
+from .models import Pool, Team, Match
+
+def detail_poule(request, pool_id):
+    pool = get_object_or_404(Pool, pk=pool_id)
+    teams = pool.teams.all()
+    matchs = Match.objects.filter(pool=pool).select_related('team_a', 'team_b')
+
+    # Générer les matchs possibles
+    possible_matches = list(combinations(teams, 2))
+
+    return render(request, 'detail_poule.html', {
+        'pool': pool,
+        'teams': teams,
+        'matchs': matchs,
+        'possible_matches': possible_matches
+    })
