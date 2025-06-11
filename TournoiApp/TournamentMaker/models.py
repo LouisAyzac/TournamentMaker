@@ -268,10 +268,10 @@ class UserProfile(models.Model):
         (4, 'Expert'),
         (5, 'Maître'),
     ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
-    
     level = models.IntegerField(choices=LEVEL_CHOICES)
-    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='members')
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='members', null=True, blank=True)
     def __str__(self):  
         return f"{self.user.username} - {self.get_level_display()} (Équipe: {self.team.name})"
 

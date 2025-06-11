@@ -1,12 +1,14 @@
-<!-- templates/matches/no_team.html -->
 {% extends "base_generic.html" %}
 
 {% block content %}
-  <div class="alert alert-warning" role="alert" style="margin-top: 20px;">
-    <h4 class="alert-heading">Aucune équipe associée</h4>
-    <p>Vous n'êtes actuellement affilié à aucune équipe.</p>
+  <div class="alert alert-warning" role="alert" style="margin-top: 20px; max-width: 700px; margin-left: auto; margin-right: auto;">
+    <h4 class="alert-heading">Accès refusé</h4>
+    <p>Vous ne pouvez pas changer les scores car vous ne faites pas partie de l'équipe concernée.</p>
     <hr>
-    <p class="mb-0">Veuillez contacter un administrateur pour rejoindre une équipe.</p>
+    <p class="mb-0">Veuillez vous connecter avec le compte du capitaine de l’équipe concernée.</p>
   </div>
-  <a href="{% url 'index' %}" class="btn btn-primary mt-3">Retour au menu</a>
+
+  <div style="text-align: center; margin-top: 20px;">
+    <a href="{% url 'direct_elimination' %}" class="btn btn-primary">Retour au menu</a>
+  </div>
 {% endblock %}

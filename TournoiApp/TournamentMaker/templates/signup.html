@@ -61,33 +61,7 @@
 <div class="form-container">
   <form method="post">
     {% csrf_token %}
-
-    {% if error %}
-  <div class="error-message" style="
-
-    color: #b00020;
-    background-color: #fddede;
-    border: 1.5px solid #b00020;
-    border-radius: 8px;
-    padding: 15px 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-weight: 600;
-      font-size: 1.2rem; /* 👈 Ajouté ici */
-
-    box-shadow: 0 2px 8px rgba(176, 0, 32, 0.25);
-    width: 100%;
-    margin: 10px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  ">
-    <div>
-      Le nombre maximal d’équipes a été atteint pour ce tournoi.<br>
-      Tu ne peux plus inscrire de nouvelle équipe.<br>
-      {{ error }}
-    </div>
-  </div>
-{% endif %}
+    
 
 
     <label for="team_name">Nom de l’équipe :</label>
