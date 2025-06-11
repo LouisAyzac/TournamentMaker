@@ -396,6 +396,15 @@ def tournament_full(request):
     return render(request, 'tournament_full.html')
 
 
+from django.contrib.auth.models import User
+from django.db import transaction
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.shortcuts import render, redirect
+from django.utils.dateparse import parse_date
+
 def signup(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
@@ -424,145 +433,133 @@ def signup(request):
                 'total_players': total_players
             })
 
-
-        # Répartir l'équipe dans les pools disponibles du tournoi → avec têtes de séries
         pools = Pool.objects.filter(tournament=tournament)
 
-        # 1️⃣ Calcul du "score" de l'équipe en cours d'inscription (somme des niveaux des joueurs)
+        # Calcul du score de l'équipe
         team_score = 0
 
-        # On initialise l'équipe (vide) pour pouvoir lui affecter des joueurs ensuite
-        team = Team.objects.create(name=team_name, tournament=tournament)
+        with transaction.atomic():
+            team = Team.objects.create(name=team_name, tournament=tournament)
 
-        # Pour savoir combien de joueurs vont être inscrits (on le passe à la boucle après)
-        players_data = []
+            players_data = []
+            for i in total_players:
+                index = i + 1
+                first_name = request.POST.get(f'first_name_{index}')
+                last_name = request.POST.get(f'last_name_{index}')
+                birthdate_str = request.POST.get(f'birthdate_{index}')
+                email = request.POST.get(f'email_{index}')
+                level_str = request.POST.get(f'level_{index}')
 
-        # On lit les données du POST et on prépare les joueurs + score
-        for i in total_players:
-            index = i + 1
-            first_name = request.POST.get(f'first_name_{index}')
-            last_name = request.POST.get(f'last_name_{index}')
-            birthdate_str = request.POST.get(f'birthdate_{index}')
-            email = request.POST.get(f'email_{index}')
-            level_str = request.POST.get(f'level_{index}')
+                if first_name and last_name:
+                    birthdate = parse_date(birthdate_str) if birthdate_str else None
+                    level = int(LEVEL_MAP.get(level_str.lower(), 1)) if level_str else 1
 
-            if first_name and last_name:
-                birthdate = parse_date(birthdate_str) if birthdate_str else None
-                level = int(LEVEL_MAP.get(level_str.lower(), 1)) if level_str else 1
+                    players_data.append({
+                        'first_name': first_name,
+                        'last_name': last_name,
+                        'birth_date': birthdate,
+                        'email': email,
+                        'level': level
+                    })
 
-                # On stocke les infos pour créer les joueurs plus tard
-                players_data.append({
-                    'first_name': first_name,
-                    'last_name': last_name,
-                    'birth_date': birthdate,
-                    'email': email,
-                    'level': level
+                    team_score += level
+
+            # Calcul de la force des pools
+            pool_strength = []
+            for pool in pools:
+                teams_in_pool = pool.teams.all()
+                total_score = 0
+                team_count = teams_in_pool.count()
+                for t in teams_in_pool:
+                    score = sum(int(player.level) for player in t.players.all())
+                    total_score += score
+                avg_score = total_score / team_count if team_count > 0 else 0
+                pool_strength.append((pool, avg_score, team_count))
+
+            pool_strength.sort(key=lambda x: (x[2], abs(x[1] - team_score)))
+
+            if not pool_strength:
+                return render(request, 'signup.html', {
+                    'error': 'Aucune poule disponible pour ce tournoi. Veuillez contacter l\'organisateur.',
+                    'players_per_team': players_per_team,
+                    'total_players': total_players
                 })
 
-                # On incrémente le score de l'équipe
-                team_score += level
+            pool_to_assign = pool_strength[0][0]
+            team.pool = pool_to_assign
+            team.save()
 
-        # 2️⃣ On calcule les forces actuelles des Pools
-        pool_strength = []
+            capitaine_valide = False
 
-        for pool in pools:
-            teams_in_pool = pool.teams.all()
-            total_score = 0
-            team_count = teams_in_pool.count()
+            for i, player_data in enumerate(players_data):
+                player = Player.objects.create(
+                    first_name=player_data['first_name'],
+                    last_name=player_data['last_name'],
+                    birth_date=player_data['birth_date'],
+                    level=player_data['level'],
+                    email=player_data['email'] if player_data['email'] else '',
+                    team=team,
+                )
 
-            # On calcule le score total des équipes de la Pool
-            for t in teams_in_pool:
-                team_players = t.players.all()
-                score = sum(int(player.level) for player in team_players)
-                total_score += score
+                if i == 0:
+                    email = player_data['email']
+                    username = f"{email}_{team.id}"
 
-            # On stocke le score moyen actuel de la Pool
-            avg_score = total_score / team_count if team_count > 0 else 0
-            pool_strength.append((pool, avg_score, team_count))
+                    user, created = User.objects.get_or_create(username=username, defaults={'email': email})
 
-        # 3️⃣ On trie les Pools :
-        # - on privilégie les Pools ayant le moins d'équipes
-        # - en cas d'égalité, on choisit celle avec la force moyenne la plus adaptée
+                    user_profile, profile_created = UserProfile.objects.get_or_create(
+                        user=user,
+                        defaults={'level': player_data['level'], 'team': team}
+                    )
 
-        # On trie par : (nb d'équipes, écart entre force moyenne et score de l'équipe)
-        pool_strength.sort(key=lambda x: (x[2], abs(x[1] - team_score)))
+                    if not profile_created:
+                        user_profile.level = player_data['level']
+                        user_profile.team = team
+                        user_profile.save()
 
-        # 4️⃣ On choisit la Pool optimale
-        if not pool_strength:
-            return render(request, 'signup.html', {
-                'error': 'Aucune poule disponible pour ce tournoi. Veuillez contacter l\'organisateur.',
-                'players_per_team': players_per_team,
-                'total_players': total_players
-            })
-        pool_to_assign = pool_strength[0][0]
+                    team.captain = user_profile
+                    team.save()
 
-        # 5️⃣ On assigne l'équipe à la Pool
-        team.pool = pool_to_assign
-        team.save()
+                    uid = urlsafe_base64_encode(force_bytes(user.pk))
+                    token = default_token_generator.make_token(user)
+                    domain = '127.0.0.1:8000'
+                    link = f"http://{domain}/accounts/reset/{uid}/{token}/"
 
-        # 6️⃣ On crée les joueurs
-        capitaine_valide = False
+                    subject = f"Bienvenue capitaine de l'équipe {team.name} !"
+                    message = f"""
+Bonjour {player_data['first_name']},
 
-        for i, player_data in enumerate(players_data):
-            player = Player.objects.create(
-                first_name=player_data['first_name'],
-                last_name=player_data['last_name'],
-                birth_date=player_data['birth_date'],
-                level=player_data['level'],
-                email=player_data['email'] if player_data['email'] else '',
-                team=team,
-            )
+Vous avez été inscrit comme capitaine de l'équipe {team.name}.
+Veuillez cliquer sur le lien suivant pour définir ou modifier votre mot de passe :
 
-            if i == 0:
-                # Création du User pour le capitaine
-                email = player_data['email']
-                username = f"{email}_{team.id}"
-                user = User.objects.create_user(username=username, email=email)
-                user_profile = UserProfile.objects.create(user=user, level=player_data['level'], team=team)
+{link}
 
-                team.captain = user_profile
-                team.save()
+Merci,
+L'équipe du tournoi
+"""
+                    send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
 
-                # Générer le lien pour la réinitialisation du mot de passe
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                token = default_token_generator.make_token(user)
-                domain = '127.0.0.1:8000'
-                link = f"http://{domain}/accounts/reset/{uid}/{token}/"
+                    capitaine_valide = True
 
-                subject = f"Bienvenue capitaine de l'équipe {team.name} !"
-                message = f"""
-        Bonjour {player_data['first_name']},
+            if not capitaine_valide:
+                # rollback
+                raise ValueError("Capitaine non valide")
 
-        Vous avez été inscrit comme capitaine de l'équipe {team.name}.
-        Veuillez cliquer sur le lien suivant pour définir ou modifier votre mot de passe :
-
-        {link}
-
-        Merci,
-        L'équipe du tournoi
-        """
-                send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
-
-                capitaine_valide = True
-
-        # 7️⃣ En cas de problème → rollback de l'équipe
         if not capitaine_valide:
-            team.delete()  # Supprimer l'équipe si pas de capitaine valide
+            team.delete()
             return render(request, 'signup.html', {
                 'error': 'Le capitaine est obligatoire.',
                 'players_per_team': players_per_team,
                 'total_players': total_players
             })
-        
-        # ✅ Si tout s'est bien passé, rediriger vers la page de succès
+
         return redirect('signup_success')
-    
-        # Si on arrive ici (GET), afficher le formulaire
+
+    # GET
     return render(request, 'signup.html', {
         'players_per_team': players_per_team,
         'total_players': total_players
     })
-
 
  
 def signup_success(request):
