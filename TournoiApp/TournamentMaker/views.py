@@ -447,7 +447,7 @@ def signup(request):
             for pool in pools:
                 teams_in_pool = pool.teams.all()
                 total_score = sum(
-                    sum(player.level for player in team.players.all())
+                    sum(int(player.level) for player in team.players.all() if player.level)
                     for team in teams_in_pool
                 )
                 team_count = teams_in_pool.count()
