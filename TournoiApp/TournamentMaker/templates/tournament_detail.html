@@ -15,7 +15,7 @@
       <div class="row g-4">
         <div class="col-md-6">
           {% if tournoi.address %}
-          <p class="mb-2"><i class="fas fa-map-marker-alt text-primary me-2"></i><strong>Adresse :</strong> {{ tournoi.address }}</p>
+          <p class="mb-2"><i class="fas fa-map-marker-alt text-primary me-2"></i><strong>Adresse :</strong> {{ tournoi.address }} ({{ tournoi.city }})</p>
           {% endif %}
           <p class="mb-2"><i class="fas fa-building text-primary me-2"></i><strong>En intérieur :</strong> {{ tournoi.is_indoor|yesno:"Oui,Non" }}</p>
           <p class="mb-2"><i class="fas fa-users text-primary me-2"></i><strong>Équipes max :</strong> {{ tournoi.max_teams }}</p>
