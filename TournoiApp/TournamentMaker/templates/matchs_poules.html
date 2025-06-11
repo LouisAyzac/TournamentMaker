@@ -1,41 +1,50 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
-<h2 class="text-center mt-4"> Phase de Poule</h2>
+<h2 class="text-center mt-4">Phase de Poule - {{ tournament.name }}</h2>
 
-{% for pool_data in pools_data %}
-    <h4 class="mt-4 text-primary fw-bold">
-         Poule {{ pool_data.pool.name }}
-        <a href="{% url 'detail_poule' pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">Voir les matchs</a>
-    </h4>
+{% if pools_data %}
+    {% for pool_data in pools_data %}
+        <h4 class="mt-4 text-primary fw-bold">
+            Poule {{ pool_data.pool.name }}
+            <a href="{% url 'detail_poule' pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">Voir les matchs</a>
+        </h4>
 
-    <table class="table table-bordered table-sm text-center align-middle">
-        <thead>
-            <tr>
-                <th style="background-color: yellow; color: black;">ÉQUIPE</th>
-                <th style="background-color: #4caf50; color: white;">V</th>
-                <th style="background-color: #2196f3; color: white;">N</th>
-                <th style="background-color: #f44336; color: white;">D</th>
-                <th style="background-color: #ffeb99; color: black;">MJ</th>
-                <th style="background-color: #f59e0b; color: white;">PTS</th>
-                <th style="background-color: #9c27b0; color: white;">Classement</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for team_data in pool_data.stats %}
-            <tr>
-                <td><a href="{% url 'team_detail' team_data.team.id %}">{{ team_data.team.name }}</a></td>
-                <td>{{ team_data.victoires }}</td>
-                <td>0</td>
-                <td>{{ team_data.defaites }}</td>
-                <td>{{ team_data.matchs_joues }}</td>
-                <td>{{ team_data.points }}</td>
-                <td><strong>{{ team_data.rank }}</strong></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% empty %}
-    <p>Aucune poule trouvée.</p>
-{% endfor %}
+        <table class="table table-bordered table-sm text-center align-middle">
+            <thead>
+                <tr>
+                    <th style="background-color: yellow; color: black;">ÉQUIPE</th>
+                    <th style="background-color: #4caf50; color: white;">V</th>
+                    <th style="background-color: #2196f3; color: white;">N</th>
+                    <th style="background-color: #f44336; color: white;">D</th>
+                    <th style="background-color: #ffeb99; color: black;">MJ</th>
+                    <th style="background-color: #f59e0b; color: white;">PTS</th>
+                    <th style="background-color: #9c27b0; color: white;">Classement</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if pool_data.stats %}
+                    {% for team_data in pool_data.stats %}
+                    <tr>
+                        <td><a href="{% url 'team_detail' team_data.team.id %}">{{ team_data.team.name }}</a></td>
+                        <td>{{ team_data.victoires }}</td>
+                        <td>0</td>
+                        <td>{{ team_data.defaites }}</td>
+                        <td>{{ team_data.matchs_joues }}</td>
+                        <td>{{ team_data.points }}</td>
+                        <td><strong>{{ team_data.rank }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-muted">Aucune équipe dans cette poule.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    {% endfor %}
+{% else %}
+    <p class="text-center mt-4">Aucune poule trouvée.</p>
+{% endif %}
+
 {% endblock %}

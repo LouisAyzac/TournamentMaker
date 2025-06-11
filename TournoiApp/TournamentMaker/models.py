@@ -6,6 +6,11 @@ from django.contrib.auth.models import User
 from datetime import date
 
 
+from django.db import models
+from datetime import date
+from django.db import models
+from datetime import date
+
 class Tournament(models.Model):
     SPORT_CHOICES = [
         ('football', 'Football'),
@@ -14,13 +19,25 @@ class Tournament(models.Model):
         ('rugby', 'Rugby'),
     ]
 
+    TOURNAMENT_TYPE_CHOICES = [
+        ('RR', 'Round Robin'),
+        ('DE', 'Direct Elimination'),
+    ]
+
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     address = models.CharField(max_length=255, blank=True, null=True)
     is_indoor = models.BooleanField(default=True)
     start_date = models.DateField(default=date.today)
     end_date = models.DateField(default=date.today)
-    sport = models.CharField(max_length=50, default='Football')
+    sport = models.CharField(max_length=50, choices=SPORT_CHOICES, default='football')
+    max_teams = models.PositiveIntegerField(default=8)
+    players_per_team = models.PositiveIntegerField(default=5)
+    number_of_pools = models.IntegerField(default=0)
+    type_tournament = models.CharField(max_length=2, choices=TOURNAMENT_TYPE_CHOICES, default='RR')
+
+    nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
+    points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
 
     def __str__(self):
         return self.name
@@ -30,6 +47,9 @@ class Team(models.Model):
     name = models.CharField(max_length=100)
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
     captain = models.OneToOneField('UserProfile', on_delete=models.CASCADE, related_name='captained_team', null=True, blank=True)
+    pool = models.ForeignKey('Pool', on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
+
+    
 
     def __str__(self):
         return self.name
@@ -37,17 +57,46 @@ class Team(models.Model):
     def player_count(self):
         return self.players.count()
 
+    def win_percentage(self):
+        total_matches = self.matches_as_team_a.count() + self.matches_as_team_b.count()
+        if total_matches == 0:
+            return 0
+        wins = 0
+        for match in self.matches_as_team_a.all():
+            if match.winner_team() == self:
+                wins += 1
+        for match in self.matches_as_team_b.all():
+            if match.winner_team() == self:
+                wins += 1
+        return (wins / total_matches) * 100
+
+    def get_last_results(self, n=5):
+        matches = list(self.matches_as_team_a.all()) + list(self.matches_as_team_b.all())
+        matches.sort(key=lambda x: x.id, reverse=True)
+        results = []
+        for match in matches[:n]:
+            winner = match.winner()
+            if winner == self:
+                results.append('W')
+            elif winner is None:
+                results.append('D')
+            else:
+                results.append('L')
+        return results
+
 
 class Player(models.Model):
     LEVEL_CHOICES = [
-        ('D', 'Débutant'),
-        ('I', 'Intermédiaire'),
-        ('A', 'Avancé'),
+        (1, 'Débutant'),
+        (2, 'Intermédiaire'),
+        (3, 'Avancé'),
+        (4, 'Expert'),
+        (5, 'Maître'),
     ]
 
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    birth_date = models.DateField()
+    birth_date = models.DateField(null=True, blank=True)
     level = models.CharField(max_length=1, choices=LEVEL_CHOICES)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     email = models.EmailField(blank=True, null=True)
@@ -56,13 +105,25 @@ class Player(models.Model):
         return f"{self.first_name} {self.last_name}"
 
 
+
 class Pool(models.Model):
     name = models.CharField(max_length=50)
     max_size = models.PositiveIntegerField(default=4)
-    teams = models.ManyToManyField('Team', blank=True, related_name='pools')
+    tournament = models.ForeignKey(
+        Tournament,
+        on_delete=models.CASCADE,
+        related_name='pools',
+        null=False,
+        blank=False
+    )
+
 
     def __str__(self):
         return self.name
+
+    def __str__(self):
+        return f"{self.name} ({self.tournament.name})"
+
 
     def add_teams_randomly(self, teams_to_add):
         assigned_team_ids = set(
@@ -193,16 +254,43 @@ def update_rankings_on_match_save(sender, instance, **kwargs):
 
 
 class UserProfile(models.Model):
-    LEVEL_CHOICES = [(i, label) for i, label in enumerate(['Débutant', 'Intermédiaire', 'Avancé', 'Expert', 'Maître'], 1)]
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+
+    LEVEL_CHOICES = [
+        (1, 'Débutant'),
+        (2, 'Intermédiaire'),
+        (3, 'Avancé'),
+        (4, 'Expert'),
+        (5, 'Maître'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
+    
     level = models.IntegerField(choices=LEVEL_CHOICES)
     team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='members')
+    def __str__(self):  
+        return f"{self.user.username} - {self.get_level_display()} (Équipe: {self.team.name})"
+
 
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance)
+
+
+
+        pass
+
+ 
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.sites.models import Site
+
+from .models import Team, UserProfile, Player
+
 
 
 def generate_quarter_finals():
@@ -234,3 +322,41 @@ def assign_teams_to_pools(tournament):
         if i // 4 < len(pools):
             pools[i // 4].teams.add(team)
     for p in pools: p.save()
+ 
+from django.shortcuts import render, get_object_or_404
+from .models import Team, Player
+
+
+def team_detail(request, team_id):
+    team = get_object_or_404(Team, id=team_id)
+    players = Player.objects.filter(team=team)  # récupère les joueurs de cette équipe
+
+    context = {
+        'team': team,
+        'players': players,
+    }
+    return render(request, 'team_detail.html', context)
+
+from django.db import models
+
+class City(models.Model):
+    name = models.CharField(max_length=100)
+    department = models.CharField(max_length=100, default='')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Tournament)
+def create_pools_for_tournament(sender, instance, created, **kwargs):
+    if created:
+        print(f"Création de {instance.number_of_pools} pools pour le tournoi {instance.name}")
+        for i in range(1, instance.number_of_pools + 1):
+            pool_name = f"Pool {i}"
+            pool = Pool.objects.create(name=pool_name, tournament=instance)
+            print(f"Pool créée : {pool.name} pour le tournoi {instance.name}")

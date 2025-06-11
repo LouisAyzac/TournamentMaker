@@ -1,33 +1,51 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-  <h2>Classement par Pool</h2>
-
-  {% if pool_rankings %}
-    {% for item in pool_rankings %}
-      <h3>{{ item.pool.name }}</h3>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Rang</th>
-            <th>Équipe</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for ranking in item.rankings %}
-            <tr>
-              <td>{{ ranking.rank }}</td>
-              <td>
-                <a href="{% url 'team_detail' ranking.team.id %}">
-                  {{ ranking.team.name }}
-                </a>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% endfor %}
-  {% else %}
-    <p>Aucun classement disponible.</p>
-  {% endif %}
+<div class="ranking-container animate__animated animate__fadeIn">
+  <h2 class="section-title"><i class="fas fa-trophy"></i> Classement des Équipes</h2>
+  
+  <div class="table-responsive">
+    <table class="ranking-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Équipe</th>
+          <th><i class="fas fa-check-circle"></i> Matchs Gagnés</th>
+          <th><i class="fas fa-times-circle"></i> Matchs Perdus</th>
+          <th><i class="fas fa-volleyball-ball"></i> Sets +/-</th>
+          <th><i class="fas fa-star"></i> Points</th>
+          <th>Forme</th> <!-- Derniers résultats -->
+        </tr>
+      </thead>
+      <tbody>
+        {% for team in teams %}
+        <tr class="{% if forloop.first %}gold-row{% elif forloop.counter == 2 %}silver-row{% elif forloop.counter == 3 %}bronze-row{% endif %}">
+          <td>{{ forloop.counter }}</td>
+          <td class="team-cell">
+            <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="team-logo">
+            <span>{{ team.name }}</span>
+          </td>
+          <td>{{ team.wins }}</td>
+          <td>{{ team.losses }}</td>
+          <td class="{% if team.set_difference > 0 %}positive{% else %}negative{% endif %}">
+            {{ team.set_difference|stringformat:"+d" }}
+          </td>
+          <td class="points">{{ team.points }}</td>
+          <td class="team-form">
+            {% for result in team.last_results %}
+              <span class="form-badge {{ result }}">{{ result|slice:1 }}</span>
+            {% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="ranking-legend">
+    <div><span class="legend-color gold"></span> 1ère Place</div>
+    <div><span class="legend-color silver"></span> 2ème Place</div>
+    <div><span class="legend-color bronze"></span> 3ème Place</div>
+  </div>
+</div>
 {% endblock %}

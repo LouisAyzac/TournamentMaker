@@ -1,0 +1,26 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="tournament-full-page animate__animated animate__fadeIn" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px;">
+  <div class="full-message" style="
+      background: linear-gradient(135deg, #ffe0e0, #ffd6d6);
+      border: 2px solid #ff4d4d;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(255, 77, 77, 0.3);
+  ">
+    <div style="font-size: 3rem; color: #ff4d4d; margin-bottom: 20px;">
+      <i class="fas fa-exclamation-triangle animate__animated animate__flash animate__slower animate__infinite"></i>
+    </div>
+    <h2 style="font-size: 2rem; margin-bottom: 10px; color: #b00020;">Tournoi Complet</h2>
+    <p style="font-size: 1.2rem; color: #333;">
+      Toutes les équipes ont déjà été inscrites pour ce tournoi.<br>
+      Il n'y a plus de place disponible.
+    </p>
+
+  </div>
+</div>
+{% endblock %}

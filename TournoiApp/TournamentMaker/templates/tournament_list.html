@@ -1,0 +1,135 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}
+  <title>Liste des Tournois</title>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Liste des Tournois Disponibles</h2>
+
+  <!-- Filtres -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Filtrer les tournois</h5>
+      <form method="get" class="form-inline">
+        <div class="form-group mr-3">
+          <label for="sport" class="mr-2">Sport :</label>
+          <select name="sport" id="sport" class="form-control">
+            <option value="">Tous les sports</option>
+            {% for sport in sports %}
+            <option value="{{ sport.0 }}" {% if selected_sport == sport.0 %}selected{% endif %}>{{ sport.1 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group mr-3">
+          <label for="department" class="mr-2">Département :</label>
+          <input type="text" name="department" id="department" class="form-control" 
+                 placeholder="Numéro de département" value="{{ selected_department }}">
+        </div>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-filter"></i> Filtrer
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Liste des tournois -->
+  <div class="row">
+    {% for tournoi in tournois %}
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0 d-flex align-items-center">
+  {{ tournoi.name }}
+  {% if tournoi.teams.count >= tournoi.max_teams %}
+    <div class="badge bg-danger ms-2">
+      <i class="fas fa-exclamation-circle me-1"></i> Tournoi complet
+    </div>
+  {% endif %}
+</h5>
+
+
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p class="card-text">
+                <strong><i class="fas fa-map-marker-alt"></i> Lieu :</strong><br>
+                {{ tournoi.address }} ({{ tournoi.department }})
+              </p>
+              <p class="card-text">
+                <strong><i class="fas fa-calendar-alt"></i> Dates :</strong><br>
+                Du {{ tournoi.start_date|date:"d/m/Y" }} au {{ tournoi.end_date|date:"d/m/Y" }}
+              </p>
+            </div>
+            <div class="col-md-6">
+              <p class="card-text">
+                <strong><i class="fas fa-running"></i> Sport :</strong><br>
+                {{ tournoi.get_sport_display }}
+              </p>
+              <p class="card-text">
+                <strong><i class="fas fa-users"></i> Équipes :</strong><br>
+                {{ tournoi.teams.count }}/{{ tournoi.max_teams }} équipes inscrites
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-light">
+          <form method="POST" action="{% url 'select_tournament' %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="tournament_id" value="{{ tournoi.id }}">
+            <button type="submit" class="btn btn-primary btn-sm mr-2">
+              <i class="fas fa-check"></i> Sélectionner
+            </button>
+          </form>
+          <a href="{% url 'tournament_detail' tournoi.id %}" class="btn btn-info btn-sm mr-2">
+            <i class="fas fa-info-circle"></i> Détails
+          </a>
+          {% if request.user.is_staff %}
+          <a href="{% url 'edit_tournament' tournoi.id %}" class="btn btn-warning btn-sm mr-2">
+            <i class="fas fa-edit"></i> Modifier
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="alert alert-info">
+        Aucun tournoi disponible pour le moment.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+  <nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      {% endif %}
+      
+      {% for num in page_obj.paginator.page_range %}
+      <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+        <a class="page-link" href="?page={{ num }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}">{{ num }}</a>
+      </li>
+      {% endfor %}
+      
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}
