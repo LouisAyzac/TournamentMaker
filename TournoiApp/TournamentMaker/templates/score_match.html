@@ -1,0 +1,112 @@
+{% extends 'base_generic.html' %}
+{% block content %}
+<h2 style="text-align: center;">Modifier le score</h2>
+
+<style>
+  .score-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .teams-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    font-size: 1.4em;
+    font-weight: 600;
+    color: #222;
+  }
+
+  .set-table {
+    width: 100%;
+    border-spacing: 20px;
+  }
+
+  .set-table td {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .set-label {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #444;
+  }
+
+  input[type="number"] {
+    width: 60px;
+    padding: 8px;
+    font-size: 1.1em;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  .submit-btn {
+    margin-top: 30px;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(to right, #007bff, #00c6ff);
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .submit-btn:hover {
+    background: linear-gradient(to right, #0062cc, #009acb);
+  }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+    text-decoration: none;
+  }
+
+  .back-link:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="score-container">
+  <div class="teams-header">
+    <div>{{ match.team_a.name }}</div>
+    <div>{{ match.team_b.name }}</div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <table class="set-table">
+      <tr>
+        <td class="set-label">Set 1</td>
+        <td><input type="number" name="set1_team_a" value="{{ match.set1_team_a }}"></td>
+        <td><input type="number" name="set1_team_b" value="{{ match.set1_team_b }}"></td>
+      </tr>
+      <tr>
+        <td class="set-label">Set 2</td>
+        <td><input type="number" name="set2_team_a" value="{{ match.set2_team_a }}"></td>
+        <td><input type="number" name="set2_team_b" value="{{ match.set2_team_b }}"></td>
+      </tr>
+      <tr>
+        <td class="set-label">Set 3</td>
+        <td><input type="number" name="set3_team_a" value="{{ match.set3_team_a }}"></td>
+        <td><input type="number" name="set3_team_b" value="{{ match.set3_team_b }}"></td>
+      </tr>
+    </table>
+
+    <button type="submit" class="submit-btn">Enregistrer le score</button>
+  </form>
+
+  <a href="{% url 'direct_elimination' %}" class="back-link">← Retour à la phase éliminatoire</a>
+</div>
+{% endblock %}

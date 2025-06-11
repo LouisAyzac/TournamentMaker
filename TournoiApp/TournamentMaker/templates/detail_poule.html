@@ -3,82 +3,96 @@
 {% block content %}
 <div class="container mt-5">
 
-    <!-- Titre centré -->
     <h2 class="text-center mb-5">Détails de la poule : {{ pool.name }}</h2>
 
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-
-            <!-- Liste des équipes (alignée à gauche) -->
-            <div class="mb-4">
-                <h5 class="text-dark fw-bold">Liste des équipes</h5>
-                <ul class="list-unstyled">
-                    {% for team in pool.teams.all %}
-                        <li><a href="{% url 'team_detail' team.id %}">{{ team.name }}</a></li>
-                    {% empty %}
-                        <li>Aucune équipe dans cette poule.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-
-            <!-- Liste des matchs (aligné à gauche également) -->
-            <div class="mb-4">
-                <h5 class="text-dark fw-bold">Liste des matchs</h5>
-
-                {% if matchs %}
-                    <table class="table table-bordered table-sm text-center align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Match</th>
-                                <th>Score</th>
-                                <th>Vainqueur</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for match in matchs %}
-                            <tr>
-                                <td>
-                                    <a href="{% url 'team_detail' match.team_a.id %}" style="color: red;">{{ match.team_a }}</a>
-                                    <b>vs</b>
-                                    <a href="{% url 'team_detail' match.team_b.id %}" style="color: blue;">{{ match.team_b }}</a>
-                                </td>
-                                <td>
-                                    {% for set in match.score_sets %}
-                                        <div>
-                                            Set {{ set.set_number }} :
-                                            <span style="color:red">{{ set.team_a_score }}</span> -
-                                            <span style="color:blue">{{ set.team_b_score }}</span>
-                                        </div>
-                                    {% endfor %}
-                                    <a class="btn btn-sm btn-outline-primary mt-1"
-                                    href="{% url 'modifier_score_match' match.id %}">
-                                    Modifier le score
-                                    </a>
-
-                                </td>
-                                <td>
-                                    {% if match.winner_team %}
-                                        <span style="color: {% if match.winner_team == match.team_a %}red{% else %}blue{% endif %}; font-weight: bold;">
-                                            {{ match.winner_team }}
-                                        </span>
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>Aucun match trouvé pour cette poule.</p>
-                {% endif %}
-            </div>
-
-            <!-- Lien de retour -->
-            <a href="{% url 'matchs_poules' pool.tournament.id %}">Retour aux poules</a>
-        </div>
+    <!-- Liste des équipes -->
+    <div class="mb-4">
+        <h4>Équipes dans cette poule :</h4>
+        <ul>
+            {% for team in pool.teams.all %}
+                <li><a href="{% url 'team_detail' team.id %}">{{ team.name }}</a></li>
+            {% empty %}
+                <li>Aucune équipe dans cette poule.</li>
+            {% endfor %}
+        </ul>
     </div>
+
+    <!-- Matchs joués -->
+    <div class="mb-4">
+        <h4>Matchs joués :</h4>
+        {% if matchs %}
+            <table class="table table-bordered table-sm text-center align-middle">
+                <thead>
+                    <tr>
+                        <th>Match</th>
+                        <th>Score par sets</th>
+                        <th>Vainqueur</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in matchs %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'team_detail' match.team_a.id %}" style="color: red;">{{ match.team_a.name }}</a>
+                            vs
+                            <a href="{% url 'team_detail' match.team_b.id %}" style="color: blue;">{{ match.team_b.name }}</a>
+                        </td>
+                        <td>
+                            {% if match.score_sets %}
+                                {% for set in match.score_sets %}
+                                    <div>
+                                        Set {{ set.set_number }}: 
+                                        <span style="color:red">{{ set.team_a_score }}</span> - 
+                                        <span style="color:blue">{{ set.team_b_score }}</span>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                Non joué
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if match.winner_team %}
+                                <strong style="color: {% if match.winner_team == match.team_a %}red{% else %}blue{% endif %};">
+                                    {{ match.winner_team.name }}
+                                </strong>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'modifier_score_match' match.id %}" class="btn btn-sm btn-primary">
+                                Modifier score
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Aucun match joué pour cette poule.</p>
+        {% endif %}
+    </div>
+
+    <!-- Matchs possibles -->
+    <div class="mb-4">
+        <h4>Matchs possibles :</h4>
+        {% if matchs_possibles %}
+            <ul>
+                {% for m in matchs_possibles %}
+                    <li>
+                        <a href="{% url 'team_detail' m.team_a.id %}" style="color: red;">{{ m.team_a.name }}</a>
+                        vs
+                        <a href="{% url 'team_detail' m.team_b.id %}" style="color: blue;">{{ m.team_b.name }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucun match possible identifié.</p>
+        {% endif %}
+    </div>
+
+    <a href="{% url 'matchs_poules' pool.tournament.id %}" class="btn btn-secondary mt-3">Retour aux poules</a>
 
 </div>
 {% endblock %}
-
