@@ -1,0 +1,61 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="pools-container animate__animated animate__fadeIn">
+  <div class="pools-header">
+    <h2 class="section-title"><i class="fas fa-swimmer"></i> Liste des Pools</h2>
+
+    <!-- Barre de recherche -->
+    <div class="search-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="searchInput" onkeyup="searchPool()"
+             placeholder="Rechercher une pool..." class="search-input">
+    </div>
+  </div>
+
+  <!-- Liste des pools -->
+  <div class="pools-list" id="poolsList">
+    {% for pool in pools %}
+    <div class="pool-card">
+      <div class="pool-info">
+        <h3 class="pool-name"><a href="{% url 'pool_detail' pool.id %}">{{ pool.name }}</a></h3>
+        <div class="pool-teams-count">
+          <i class="fas fa-users"></i> {{ pool.teams.count }} équipes
+        </div>
+        <ul class="teams-list">
+          {% for team in pool.teams.all %}
+            <li class="team-item">
+              <a href="{% url 'team_detail' team.id %}">{{ team.name }}</a>
+            </li>
+          {% empty %}
+            <li class="team-item">Aucune équipe dans cette pool.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% empty %}
+    <div class="no-pools">
+      <i class="fas fa-exclamation-circle"></i>
+      <p>Aucune pool disponible.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  function searchPool() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const pools = document.querySelectorAll('.pool-card');
+
+    pools.forEach(pool => {
+      const poolName = pool.querySelector('.pool-name a').textContent.toLowerCase();
+      if (poolName.includes(filter)) {
+        pool.style.display = "block";
+      } else {
+        pool.style.display = "none";
+      }
+    });
+  }
+</script>
+{% endblock %}

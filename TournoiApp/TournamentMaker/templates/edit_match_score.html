@@ -1,0 +1,40 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">Modifier les Scores du Match</h2>
+    <p class="text-center text-muted">
+        Match entre <strong>{{ match.team_a }}</strong> et <strong>{{ match.team_b }}</strong>
+    </p>
+
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        <div class="form-group mb-3">
+            <label for="score_team_a" class="form-label">Score de {{ match.team_a }}</label>
+            <input 
+                type="number" 
+                id="score_team_a" 
+                name="score_team_a" 
+                value="{{ match.score_team_a }}" 
+                class="form-control" 
+                required>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="score_team_b" class="form-label">Score de {{ match.team_b }}</label>
+            <input 
+                type="number" 
+                id="score_team_b" 
+                name="score_team_b" 
+                value="{{ match.score_team_b }}" 
+                class="form-control" 
+                required>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'detail_poule' match.pool.id %}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
