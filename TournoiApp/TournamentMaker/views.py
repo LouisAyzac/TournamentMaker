@@ -447,7 +447,7 @@ def signup(request):
             for pool in pools:
                 teams_in_pool = pool.teams.all()
                 total_score = sum(
-                    sum(player.level for player in team.players.all())
+                    sum(int(player.level) for player in team.players.all() if player.level)
                     for team in teams_in_pool
                 )
                 team_count = teams_in_pool.count()
@@ -516,8 +516,6 @@ L'équipe du tournoi
         'players_per_team': players_per_team,
         'total_players': total_players
     })
-
-
 
  
 def signup_success(request):
@@ -626,10 +624,14 @@ def matchs_poules(request, tournament_id):
 
 
 # Détail d'une poule
+from django.shortcuts import render, get_object_or_404
+from .models import Pool, Match
+
 def detail_poule(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
-    tournament = pool.tournament  # assuming your Pool model has a ForeignKey to Tournament
+    tournament = pool.tournament
 
+    # Matchs joués dans la poule
     matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
 
     for match in matchs:
@@ -637,19 +639,42 @@ def detail_poule(request, pool_id):
         for i in range(1, 6):
             sa = getattr(match, f"set{i}_team_a", None)
             sb = getattr(match, f"set{i}_team_b", None)
-            if sa is not None and sb is not None:
+            if sa is not None and sb is not None and (sa != 0 or sb != 0):
                 match.score_sets.append({
                     'set_number': i,
                     'team_a_score': sa,
                     'team_b_score': sb
                 })
 
+    # Toutes les équipes de la poule
+    teams = list(pool.teams.all())
+
+    # Trouver toutes les paires possibles d'équipes
+    from itertools import combinations
+    all_pairs = list(combinations(teams, 2))
+
+    # Trouver les paires qui n'ont pas encore joué (matchs déjà existants)
+    played_pairs = set()
+    for m in matchs:
+        pair = tuple(sorted([m.team_a.id, m.team_b.id]))
+        played_pairs.add(pair)
+
+    # Matchs possibles = paires non jouées
+    matchs_possibles = []
+    for team_a, team_b in all_pairs:
+        pair = tuple(sorted([team_a.id, team_b.id]))
+        if pair not in played_pairs:
+            # Créer un objet Match fictif pour affichage (pas en base)
+            from types import SimpleNamespace
+            m = SimpleNamespace(team_a=team_a, team_b=team_b)
+            matchs_possibles.append(m)
+
     return render(request, 'detail_poule.html', {
         'pool': pool,
         'matchs': matchs,
-        'tournament': tournament,  # <-- Ajoute ça !
+        'matchs_possibles': matchs_possibles,
+        'tournament': tournament,
     })
-
 
 # Vue phase finale
 def matchs_finale(request):
