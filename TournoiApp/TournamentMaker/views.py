@@ -6,13 +6,6 @@ from .models import Player, Team, Match, Pool, Ranking, Tournament, UserProfile
 from django.contrib.auth.models import User
 from django.utils.dateparse import parse_date
 
-LEVEL_MAP = {
-    'débutant': 1,
-    'intermédiaire': 2,
-    'avancé': 3,
-    'expert': 4,
-    'maître': 5,
-}
 
 # === Page d'accueil et généralités ===
 from django.shortcuts import render, redirect, get_object_or_404
