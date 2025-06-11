@@ -1,32 +1,6 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<<<<<<< HEAD
-<h2 class="mt-4" style="color: black;">Détails de la Poule : {{ pool.name }}</h2>
-
-<style>
-    thead th {
-        background-color: #f2f2f2 !important;
-        border: 1px solid #ddd;
-        color: black;
-    }
-    tbody td {
-        border: 1px solid #ddd;
-        color: black;
-    }
-</style>
-
-<h5 style="color: black;">Équipes de cette poule :</h5>
-<ul>
-    {% for team in pool.teams.all %}
-        <li>
-            <a href="{% url 'team_detail' team.id %}" style="color: black;">{{ team.name }}</a>
-        </li>
-    {% empty %}
-        <li style="color: black;">Aucune équipe dans cette poule.</li>
-    {% endfor %}
-</ul>
-=======
 <div class="container mt-5">
 
     <!-- Titre centré -->
@@ -34,7 +8,6 @@
 
     <div class="row">
         <div class="col-lg-10 mx-auto">
->>>>>>> Remy
 
             <!-- Liste des équipes (alignée à gauche) -->
             <div class="mb-4">
@@ -48,57 +21,6 @@
                 </ul>
             </div>
 
-<<<<<<< HEAD
-<h5 style="color: black;">Matchs de la poule :</h5>
-{% if matchs %}
-<table class="table">
-    <thead>
-        <tr>
-            <th>Équipe A</th>
-            <th>Équipe B</th>
-            <th>Score</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for match in matchs %}
-        <tr>
-            <td>{{ match.team_a.name }}</td>
-            <td>{{ match.team_b.name }}</td>
-            <td>
-                {% if match.score_a is not None and match.score_b is not None %}
-                    {{ match.score_a }} - {{ match.score_b }}
-                {% else %}
-                    Non joué
-                {% endif %}
-            </td>
-            <td>
-                <a href="{% url 'score' match.id %}" class="btn btn-sm btn-primary">
-                    Modifier score
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p style="color: black;">Aucun match programmé pour cette poule.</p>
-{% endif %}
-
-{% if possible_matches %}
-<h5 style="color: black; margin-top: 20px;">Matchs :</h5>
-<ul>
-    {% for match in possible_matches %}
-        <li style="color: black;">
-            {{ match.0.name }} vs {{ match.1.name }}
-        </li>
-    {% endfor %}
-</ul>
-{% endif %}
-
-<a href="{% url 'matchs_poules' pool.tournament.id %}" class="btn btn-secondary mt-3">Retour aux poules</a>
-{% endblock %}
-=======
             <!-- Liste des matchs (aligné à gauche également) -->
             <div class="mb-4">
                 <h5 class="text-dark fw-bold">Liste des matchs</h5>
@@ -159,4 +81,4 @@
 
 </div>
 {% endblock %}
->>>>>>> Remy
+
