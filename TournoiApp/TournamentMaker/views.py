@@ -319,9 +319,22 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect
 from .models import Match, UserProfile
-
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from .models import Tournament
 @login_required
 def scores(request):
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        messages.error(request, "Aucun tournoi sélectionné.")
+        return redirect('tournament_list')
+
+    tournoi = get_object_or_404(Tournament, pk=tournament_id)
+    return render(request, 'scores.html', {'tournoi': tournoi})
+
+    model = Tournament
+    template_name = 'scores.html'
+
     try:
         team = request.user.userprofile.team
     except UserProfile.DoesNotExist:
@@ -340,6 +353,13 @@ def scores(request):
                 setattr(match, f'set{i}_team_b', int(request.POST.get(f'match_{match.id}_set{i}_team_b', 0)))
             match.save()
         return redirect('scores')  # évite les resoumissions de formulaire
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sports'] = Tournament.SPORT_CHOICES
+        context['selected_sport'] = self.request.GET.get('sport', '')
+        context['selected_department'] = self.request.GET.get('department', '')
+        return context
 
     return render(request, 'scores.html', {'matches': matches})
 
@@ -817,6 +837,7 @@ def create_tournament(request):
         request.session['nb_teams'] = nb_teams
         request.session['players_per_team'] = players_per_team
         request.session['nb_pools'] = nb_pools
+        request.session['sport'] = sport
 
         messages.success(request, f"Tournoi '{name}' créé avec succès.")
         return redirect('home')
