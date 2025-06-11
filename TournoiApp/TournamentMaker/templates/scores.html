@@ -42,10 +42,6 @@
     </style>
 </head>
 <body>
-    <p class="card-text">
-        <strong><i class="fas fa-running"></i> Sport :</strong><br>
-        {{ tournoi.get_sport_display }}
-      </p>
   {% if tournoi.get_sport_display == "Football" %}
     <h1>Saisie des Résultats de Football</h1>
     <form action="/submit_scores/" method="post">

@@ -38,7 +38,7 @@
         </div>
         <div class="col-md-4">
           <label for="department">Département :</label>
-          <input type="text" name="department" id="department" class="form-control" placeholder="Numéro de département" value="{{ selected_department }}">
+          <input type="text" name="department" id="department" class="form-control" placeholder="Numéro de département" value="{% if selected_department and selected_department != 'None' and selected_department != 'none' %}{{ selected_department }}{% endif %}">
         </div>
         <div class="col-md-4 align-self-end">
           <button type="submit" class="btn btn-primary">Filtrer</button>
@@ -103,19 +103,19 @@
     <ul class="pagination justify-content-center">
       {% if page_obj.has_previous %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}">&laquo;</a>
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department and selected_department != 'None' and selected_department != 'none' %}&department={{ selected_department }}{% endif %}">&laquo;</a>
       </li>
       {% endif %}
 
       {% for num in page_obj.paginator.page_range %}
       <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-        <a class="page-link" href="?page={{ num }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}">{{ num }}</a>
+        <a class="page-link" href="?page={{ num }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department and selected_department != 'None' and selected_department != 'none' %}&department={{ selected_department }}{% endif %}">{{ num }}</a>
       </li>
       {% endfor %}
 
       {% if page_obj.has_next %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}">&raquo;</a>
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department and selected_department != 'None' and selected_department != 'none' %}&department={{ selected_department }}{% endif %}">&raquo;</a>
       </li>
       {% endif %}
     </ul>
@@ -124,4 +124,3 @@
 
 </div>
 {% endblock %}
-
