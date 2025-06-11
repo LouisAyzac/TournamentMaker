@@ -5,6 +5,13 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  /* Masquer tous les boutons de navigation sauf le bouton Accueil */
+  .nav-buttons-container .nav-button:not(:first-child) {
+    display: none !important;
+  }
+</style>
+
 <div class="container mt-5" style="color: black;">
   <h2 class="text-center mb-4">Créer un nouveau tournoi</h2>
 
@@ -17,7 +24,7 @@
     </div>
 
     <div class="form-group">
-      <label for="department"><strong>Département :</strong></label>
+      <label for="department"><strong>Ville :</strong></label>
       <input type="text" class="form-control" name="department" required>
     </div>
 
@@ -52,6 +59,28 @@
       </select>
     </div>
 
+    <div class="form-group mt-3">
+      <label><strong>Type de Tournoi :</strong></label>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="type_tournament" id="roundRobin" value="RR" checked onchange="togglePoolsField()">
+        <label class="form-check-label" for="roundRobin">
+          Tournoi à la Ronde
+        </label>
+      </div>
+       <div class="form-group mt-3" id="nb_pools_group">
+      <label for="nb_pools"><strong>Nombre de poules :</strong></label>
+      <input type="number" class="form-control" name="nb_pools" min="1">
+    </div>
+
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="type_tournament" id="directElimination" value="DE" onchange="togglePoolsField()">
+        <label class="form-check-label" for="directElimination">
+          Élimination Directe
+        </label>
+      </div>
+    </div>
+
+   
     <hr class="my-4">
 
     <div class="form-group">
@@ -65,10 +94,6 @@
     </div>
 
     <div class="form-group mt-3">
-      <label for="nb_pools"><strong>Nombre de poules :</strong></label>
-      <input type="number" class="form-control" name="nb_pools" min="1" required>
-    </div>
-    <div class="form-group mt-3">
       <label for="nb_sets_to_win"><strong>Nombre de sets pour gagner un match :</strong></label>
       <input type="number" class="form-control" name="nb_sets_to_win" min="1" required>
     </div>
@@ -77,8 +102,26 @@
       <label for="points_per_set"><strong>Points par set :</strong></label>
       <input type="number" class="form-control" name="points_per_set" min="1" required>
     </div>
+
     <button type="submit" class="btn btn-success mt-4 w-100">Créer le tournoi</button>
   </form>
 </div>
-{% endblock %}
 
+<script>
+  function togglePoolsField() {
+    var roundRobinSelected = document.getElementById('roundRobin').checked;
+    var nbPoolsGroup = document.getElementById('nb_pools_group');
+
+    if (roundRobinSelected) {
+      nbPoolsGroup.style.display = 'block';
+    } else {
+      nbPoolsGroup.style.display = 'none';
+    }
+  }
+
+  // Appeler la fonction au chargement de la page pour gérer l'état initial
+  window.onload = function() {
+    togglePoolsField();
+  };
+</script>
+{% endblock %}
