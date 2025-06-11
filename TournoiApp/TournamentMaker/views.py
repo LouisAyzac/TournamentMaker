@@ -427,11 +427,11 @@ def signup(request):
             email = request.POST.get(f'email_{index}')
             level_str = request.POST.get(f'level_{index}')
 
-                if first_name and last_name:
+            if first_name and last_name:
                     birthdate = parse_date(birthdate_str) if birthdate_str else None
                     level = int(LEVEL_MAP.get(level_str.lower(), 1)) if level_str else 1
 
-                players_data.append({
+            players_data.append({
                     'first_name': first_name,
                     'last_name': last_name,
                     'birth_date': birthdate,
@@ -439,7 +439,7 @@ def signup(request):
                     'level': level
                 })
 
-                team_score += level
+            team_score += level
 
         # Création de l’équipe
         team = Team.objects.create(name=team_name, tournament=tournament)
