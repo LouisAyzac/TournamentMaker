@@ -5,6 +5,10 @@ from django.db.models import Q
 from .models import Player, Team, Match, Pool, Ranking, Tournament, UserProfile
 from django.contrib.auth.models import User
 from django.utils.dateparse import parse_date
+from TournamentMaker.services.scheduling import ensure_pool_matches
+from django.http import Http404
+from django.urls import reverse
+
 
 LEVEL_MAP = {
     'débutant': 1,
@@ -266,36 +270,49 @@ def rankings_list(request):
 
 
 # === Scores (par joueur connecté) ===
-@login_required 
-
+@login_required
 def scores(request):
+    # le joueur doit avoir un UserProfile + une équipe
     try:
-        team = request.user.userprofile.team
+        profile = request.user.userprofile
+        team = profile.team
     except UserProfile.DoesNotExist:
-        return render(request, 'no_team.html')
+        return render(request, "no_team.html")
 
-    tournament_id = request.session.get('selected_tournament_id')
-    if not tournament_id or not team or team.tournament_id != tournament_id:
-        return render(request, 'no_team.html')
+    if not team:
+        return render(request, "no_team.html")
 
-    matches = Match.objects.filter(
-        Q(team_a=team) | Q(team_b=team),
-        team_a__tournament_id=tournament_id
-    )
+    # filtrage éventuel par match_id
+    match_id = request.GET.get("match_id")
+    base_qs = Match.objects.filter(Q(team_a=team) | Q(team_b=team))
 
-    if request.method == 'POST':
+    if match_id:
+        matches = base_qs.filter(pk=match_id)
+        if not matches.exists():
+            raise Http404("Match introuvable ou non autorisé.")
+    else:
+        matches = base_qs
+
+    if request.method == "POST":
         for match in matches:
             for i in range(1, 6):
-                score_a = request.POST.get(f'match_{match.id}_set{i}_team_a')
-                score_b = request.POST.get(f'match_{match.id}_set{i}_team_b')
-                if score_a is not None and score_a.isdigit():
-                    setattr(match, f'set{i}_team_a', int(score_a))
-                if score_b is not None and score_b.isdigit():
-                    setattr(match, f'set{i}_team_b', int(score_b))
+                a_key = f"match_{match.id}_set{i}_team_a"
+                b_key = f"match_{match.id}_set{i}_team_b"
+                score_a = request.POST.get(a_key)
+                score_b = request.POST.get(b_key)
+                if score_a and score_a.isdigit():
+                    setattr(match, f"set{i}_team_a", int(score_a))
+                if score_b and score_b.isdigit():
+                    setattr(match, f"set{i}_team_b", int(score_b))
             match.save()
-        return redirect('scores')
+        # après enregistrement, on revient sur la même page
+        redirect_url = reverse("scores")
+        if match_id:
+            redirect_url += f"?match_id={match_id}"
+        return redirect(redirect_url)
 
-    return render(request, 'scores.html', {'matches': matches})
+    return render(request, "scores.html", {"matches": matches})
+
 
 
 # === Sélection du tournoi ===
@@ -653,27 +670,37 @@ def matchs_poules(request, tournament_id):
 # Détail d'une poule
 def detail_poule(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
-    tournament = pool.tournament  # assuming your Pool model has a ForeignKey to Tournament
+    tournament = pool.tournament
 
-    matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
+    # crée les rencontres manquantes
+    ensure_pool_matches(pool)
 
+    matchs = (
+        Match.objects
+             .filter(pool=pool, phase=Match.Phase.GROUP)
+             .select_related('team_a', 'team_b')
+             .order_by('round', 'id')
+    )
+
+    # prépare sets + droit d’édition
+    user_profile = getattr(request.user, "userprofile", None)
     for match in matchs:
         match.score_sets = []
         for i in range(1, 6):
             sa = getattr(match, f"set{i}_team_a", None)
             sb = getattr(match, f"set{i}_team_b", None)
             if sa is not None and sb is not None:
-                match.score_sets.append({
-                    'set_number': i,
-                    'team_a_score': sa,
-                    'team_b_score': sb
-                })
+                match.score_sets.append(
+                    {"set_number": i, "team_a_score": sa, "team_b_score": sb}
+                )
 
-    return render(request, 'detail_poule.html', {
-        'pool': pool,
-        'matchs': matchs,
-        'tournament': tournament,  # <-- Ajoute ça !
-    })
+
+    return render(
+        request,
+        "detail_poule.html",
+        {"pool": pool, "matchs": matchs, "tournament": tournament},
+    )
+
 
 
 # Vue phase finale
