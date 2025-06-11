@@ -1,6 +1,7 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
+<<<<<<< HEAD
 <h2 class="mt-4" style="color: black;">Détails de la Poule : {{ pool.name }}</h2>
 
 <style>
@@ -25,9 +26,29 @@
         <li style="color: black;">Aucune équipe dans cette poule.</li>
     {% endfor %}
 </ul>
+=======
+<div class="container mt-5">
 
-<hr>
+    <!-- Titre centré -->
+    <h2 class="text-center mb-5">Détails de la poule : {{ pool.name }}</h2>
 
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+>>>>>>> Remy
+
+            <!-- Liste des équipes (alignée à gauche) -->
+            <div class="mb-4">
+                <h5 class="text-dark fw-bold">Liste des équipes</h5>
+                <ul class="list-unstyled">
+                    {% for team in pool.teams.all %}
+                        <li><a href="{% url 'team_detail' team.id %}">{{ team.name }}</a></li>
+                    {% empty %}
+                        <li>Aucune équipe dans cette poule.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+<<<<<<< HEAD
 <h5 style="color: black;">Matchs de la poule :</h5>
 {% if matchs %}
 <table class="table">
@@ -77,3 +98,65 @@
 
 <a href="{% url 'matchs_poules' pool.tournament.id %}" class="btn btn-secondary mt-3">Retour aux poules</a>
 {% endblock %}
+=======
+            <!-- Liste des matchs (aligné à gauche également) -->
+            <div class="mb-4">
+                <h5 class="text-dark fw-bold">Liste des matchs</h5>
+
+                {% if matchs %}
+                    <table class="table table-bordered table-sm text-center align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Match</th>
+                                <th>Score</th>
+                                <th>Vainqueur</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for match in matchs %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'team_detail' match.team_a.id %}" style="color: red;">{{ match.team_a }}</a>
+                                    <b>vs</b>
+                                    <a href="{% url 'team_detail' match.team_b.id %}" style="color: blue;">{{ match.team_b }}</a>
+                                </td>
+                                <td>
+                                    {% for set in match.score_sets %}
+                                        <div>
+                                            Set {{ set.set_number }} :
+                                            <span style="color:red">{{ set.team_a_score }}</span> -
+                                            <span style="color:blue">{{ set.team_b_score }}</span>
+                                        </div>
+                                    {% endfor %}
+                                    <a class="btn btn-sm btn-outline-primary mt-1"
+                                    href="{% url 'modifier_score_match' match.id %}">
+                                    Modifier le score
+                                    </a>
+
+                                </td>
+                                <td>
+                                    {% if match.winner_team %}
+                                        <span style="color: {% if match.winner_team == match.team_a %}red{% else %}blue{% endif %}; font-weight: bold;">
+                                            {{ match.winner_team }}
+                                        </span>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>Aucun match trouvé pour cette poule.</p>
+                {% endif %}
+            </div>
+
+            <!-- Lien de retour -->
+            <a href="{% url 'matchs_poules' pool.tournament.id %}">Retour aux poules</a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+>>>>>>> Remy
