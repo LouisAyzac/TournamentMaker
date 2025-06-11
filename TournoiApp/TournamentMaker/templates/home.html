@@ -37,8 +37,8 @@
           </select>
         </div>
         <div class="col-md-4">
-            <label for="city">Ville :</label>
-            <input type="text" name="city" id="city" class="form-control" placeholder="Nom de la ville" value="{{ selected_city }}">
+          <label for="department">Ville :</label>
+          <input type="text" name="department" id="department" class="form-control" placeholder="Numéro de département" value="{{ selected_department }}">
         </div>
         <div class="col-md-4 align-self-end">
           <button type="submit" class="btn btn-primary">Filtrer</button>
@@ -65,7 +65,7 @@
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
-              <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }} ({{ tournoi.city }})</p>
+              <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }} ({{ tournoi.department }})</p>
               <p class="card-text"><strong>📅 Dates :</strong><br>Du {{ tournoi.start_date|date:"d/m/Y" }} au {{ tournoi.end_date|date:"d/m/Y" }}</p>
             </div>
             <div class="col-md-6">

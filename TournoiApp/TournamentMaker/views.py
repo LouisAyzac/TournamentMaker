@@ -62,12 +62,12 @@ def home(request):
     # Filtres sport + département
     sports = Tournament.SPORT_CHOICES
     selected_sport = request.GET.get('sport')
-    selected_city = request.GET.get('city')
+    selected_department = request.GET.get('department')
 
     if selected_sport:
         tournois = tournois.filter(sport=selected_sport)
-    if selected_city:
-        tournois = tournois.filter(city__icontains=selected_city)
+    if selected_department:
+        tournois = tournois.filter(department__icontains=selected_department)
 
     # Pagination
     paginator = Paginator(tournois, 6)  # 6 tournois par page
@@ -82,7 +82,7 @@ def home(request):
         'category': category,
         'sports': sports,
         'selected_sport': selected_sport,
-        'selected_city': selected_city,
+        'selected_department': selected_department,
         'hide_navbar': True,
     }
 
@@ -178,25 +178,29 @@ def team_detail(request, pk):
 
     def get_winner(match, sets_to_win):
         score_a, score_b = 0, 0
-        max_sets = sets_to_win * 2 - 1
+        max_sets = sets_to_win * 2 - 1  # nombre max de sets possibles dans le match (ex: 3 sets gagnants => max 5 sets)
 
         for i in range(1, max_sets + 1):
             set_team_a = getattr(match, f'set{i}_team_a', None)
             set_team_b = getattr(match, f'set{i}_team_b', None)
             if set_team_a is None or set_team_b is None:
+                # Si un set n'a pas été joué (score manquant), on arrête la lecture
                 break
             if set_team_a > set_team_b:
                 score_a += 1
             elif set_team_b > set_team_a:
                 score_b += 1
-
+            
+            # Dès qu’une équipe atteint le nombre de sets gagnants nécessaires, on peut arrêter
             if score_a == sets_to_win:
                 return match.team_a
             if score_b == sets_to_win:
                 return match.team_b
 
+        # Si aucun n'a atteint le seuil, match nul ou non terminé
         return None
-
+    
+    sets_to_win = tournament.nb_sets_to_win
     for match in matches:
         winner = get_winner(match, sets_to_win)
         if winner:
@@ -213,29 +217,22 @@ def team_detail(request, pk):
                 pool_wins[winner.id] += 1
 
     sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
-    final_ranking = {t.id: rank + 1 for rank, t in enumerate(sorted_teams)}
 
-    return points, final_ranking
+    final_ranking = {}
+    rank = 1
+    for t in sorted_teams:
+        final_ranking[t.id] = rank
+        rank += 1
 
-def team_detail(request, pk):
-    tournament_id = request.session.get('selected_tournament_id')
-    if not tournament_id:
-        return redirect('select_tournament')
-
-    team = get_object_or_404(Team, pk=pk, tournament_id=tournament_id)
-    tournament = get_object_or_404(Tournament, id=tournament_id)
-
-    teams = Team.objects.filter(tournament_id=tournament_id)
-    matches = Match.objects.filter(team_a__tournament_id=tournament_id).select_related('team_a', 'team_b')
-
-    points, final_ranking = calculate_team_points_and_ranking(teams, matches, tournament.nb_sets_to_win)
     final_rank = final_ranking.get(team.id)
 
     return render(request, 'teams_detail.html', {
         'team': team,
-        'ranking': points.get(team.id, 0),  # Points de l'équipe
-        'final_rank': final_rank,           # Classement final
+        'ranking': ranking,
+        'final_rank': final_rank,
     })
+
+
 
 
 from django.shortcuts import render
@@ -379,15 +376,6 @@ def tournament_full(request):
     return render(request, 'tournament_full.html')
 
 
-from django.contrib.auth.models import User
-from django.db import transaction
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
-from django.shortcuts import render, redirect
-from django.utils.dateparse import parse_date
-
 def signup(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
@@ -428,10 +416,10 @@ def signup(request):
             level_str = request.POST.get(f'level_{index}')
 
             if first_name and last_name:
-                    birthdate = parse_date(birthdate_str) if birthdate_str else None
-                    level = int(LEVEL_MAP.get(level_str.lower(), 1)) if level_str else 1
+                birthdate = parse_date(birthdate_str) if birthdate_str else None
+                level = int(LEVEL_MAP.get(level_str.lower(), 1)) if level_str else 1
 
-            players_data.append({
+                players_data.append({
                     'first_name': first_name,
                     'last_name': last_name,
                     'birth_date': birthdate,
@@ -439,7 +427,7 @@ def signup(request):
                     'level': level
                 })
 
-            team_score += level
+                team_score += level
 
         # Création de l’équipe
         team = Team.objects.create(name=team_name, tournament=tournament)
@@ -789,16 +777,11 @@ from datetime import datetime
 def parse_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d').date()
 
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.utils.dateparse import parse_date
-from .models import Tournament, Pool
-
 def create_tournament(request):
     if request.method == 'POST':
         # Retrieve form data
         name = request.POST.get('name')
-        city = request.POST.get('city') 
+        department = request.POST.get('department')
         address = request.POST.get('address')
         is_indoor = request.POST.get('is_indoor') == 'on'
         start_date = parse_date(request.POST.get('start_date'))
@@ -814,7 +797,7 @@ def create_tournament(request):
         points_per_set = request.POST.get('points_per_set')
 
         # Basic validation
-        if not all([name, city, start_date, end_date, sport, nb_teams, players_per_team, nb_sets_to_win, points_per_set]):
+        if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team, nb_sets_to_win, points_per_set]):
             messages.error(request, "Tous les champs requis ne sont pas remplis.")
             return redirect('create_tournament')
 
@@ -838,7 +821,7 @@ def create_tournament(request):
         # Create the tournament
         tournoi = Tournament.objects.create(
             name=name,
-            city=city,
+            department=department,
             address=address,
             is_indoor=is_indoor,
             start_date=start_date,
@@ -908,9 +891,9 @@ class TournamentListView(ListView):
             queryset = queryset.filter(sport=sport)
         
         # Filtrage par département
-        city = self.request.GET.get('city')
-        if city:
-            queryset = queryset.filter(city__icontains=city)
+        department = self.request.GET.get('department')
+        if department:
+            queryset = queryset.filter(department__icontains=department)
         
         return queryset.order_by('start_date')
 
@@ -918,7 +901,7 @@ class TournamentListView(ListView):
         context = super().get_context_data(**kwargs)
         context['sports'] = Tournament.SPORT_CHOICES
         context['selected_sport'] = self.request.GET.get('sport', '')
-        context['selected_city'] = self.request.GET.get('city', '')
+        context['selected_department'] = self.request.GET.get('department', '')
         return context
     
 from django.views.generic import DetailView
