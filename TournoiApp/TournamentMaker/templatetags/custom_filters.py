@@ -12,8 +12,6 @@ def get_set_score(match, set_number):
     if set_team_a is not None and set_team_b is not None:
         return f'{set_team_a}-{set_team_b}'
     return 'N/A'
-<<<<<<< HEAD
-=======
 
 
 from django import template
@@ -25,4 +23,3 @@ def make_range(value):
         return range(int(value))
     except (TypeError, ValueError):
         return range(0)
->>>>>>> louis
