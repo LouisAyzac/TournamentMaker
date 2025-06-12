@@ -5,21 +5,11 @@
 
     <h2 class="text-center mb-5">Détails de la poule : {{ pool.name }}</h2>
 
-    <!-- Liste des équipes -->
-    <div class="mb-4">
-        <h4>Équipes dans cette poule :</h4>
-        <ul>
-            {% for team in pool.teams.all %}
-                <li><a href="{% url 'team_detail' team.id %}">{{ team.name }}</a></li>
-            {% empty %}
-                <li>Aucune équipe dans cette poule.</li>
-            {% endfor %}
-        </ul>
-    </div>
+    
 
     <!-- Matchs joués -->
     <div class="mb-4">
-        <h4>Matchs joués :</h4>
+        <h4 style="color: black;">Matchs joués :</h4>
         {% if matchs %}
             <table class="table table-bordered table-sm text-center align-middle">
                 <thead>
