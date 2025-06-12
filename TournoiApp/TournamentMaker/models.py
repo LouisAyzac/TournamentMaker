@@ -202,6 +202,8 @@ class Pool(models.Model):
             Ranking.objects.update_or_create(team=stat["team"], defaults={"rank": i})
 
 class Match(models.Model):
+    tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
+
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
     team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a')
     team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')

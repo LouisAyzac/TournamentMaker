@@ -1238,46 +1238,28 @@ def score_match(request, match_id):
     user = request.user
 
     # Cas admin : autorisé partout
-    # Cas admin : autorisé partout
     if user.is_superuser:
         authorized = True
     else:
-        authorized = False  # par défaut
-
-        # 🔥 On récupère le tournoi
-        if match.pool:
-            tournament = match.pool.tournament
-        else:
-            tournament = match.team_a.tournament
-
-        # 1️⃣ Test organisateur du tournoi
         try:
-            organisateur = user.organisateur  # nécessite que Organisateur ait un OneToOne vers User
-            if tournament.organizer and tournament.organizer == organisateur:
+            user_profile = user.userprofile
+            user_team = user_profile.team
+
+            # Vérifier que c'est bien le CAPITAINE de son équipe
+            if user_team == match.team_a and match.team_a.captain == user_profile:
                 authorized = True
-        except:
-            pass  # Pas organisateur → on passe au test capitaine
+            elif user_team == match.team_b and match.team_b.captain == user_profile:
+                authorized = True
+            else:
+                authorized = False
 
-        # 2️⃣ Sinon test capitaine
-        if not authorized:
-            try:
-                user_profile = user.userprofile
-                user_team = user_profile.team
+        except UserProfile.DoesNotExist:
+            authorized = False
 
-                # Vérifier que c'est bien le CAPITAINE de son équipe
-                if user_team == match.team_a and match.team_a.captain == user_profile:
-                    authorized = True
-                elif user_team == match.team_b and match.team_b.captain == user_profile:
-                    authorized = True
-            except UserProfile.DoesNotExist:
-                pass  # Pas de UserProfile → pas capitaine
-
-    # 🔥 Si pas autorisé → page no_team
     if not authorized:
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match."
         })
-
 
     # 🔥 On récupère le tournoi
     # 🔥 On récupère le tournoi
@@ -1355,3 +1337,81 @@ def score_match(request, match_id):
 def home_landing(request):
     return render(request, 'home_landing.html', {'hide_navbar': True})
  
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Pool, Ranking, Tournament, Match, Team
+
+def afficher_deux_premiers(request, tournament_id):
+    tournament = get_object_or_404(Tournament, id=tournament_id)
+
+    # Vérifie si les matchs ont déjà été créés pour la phase finale
+    matchs_existent = Match.objects.filter(tournament=tournament, phase='quarter').exists()
+
+    pools = Pool.objects.filter(tournament=tournament)
+    data = []
+    qualified_teams = []
+
+    for pool in pools:
+        pool.calculate_rankings()
+        top_rankings = Ranking.objects.filter(team__pool=pool).order_by('rank')[:2]
+        data.append({
+            'pool': pool,
+            'rankings': top_rankings
+        })
+        qualified_teams.extend([ranking.team for ranking in top_rankings])
+
+    nb_matches = len(qualified_teams) // 2
+    match_range = range(nb_matches)
+
+    if request.method == 'POST' and not matchs_existent:
+        created_match_ids = []
+
+        for i in match_range:
+            team_a_id = request.POST.get(f'team_a_{i}')
+            team_b_id = request.POST.get(f'team_b_{i}')
+
+            if team_a_id and team_b_id and team_a_id != team_b_id:
+                match = Match.objects.create(
+                    team_a_id=team_a_id,
+                    team_b_id=team_b_id,
+                    tournament=tournament,
+                    phase='quarter',
+                    statut='ND'
+                )
+                created_match_ids.append(match.id)
+
+        request.session['created_match_ids'] = created_match_ids
+        return redirect('matchs_choice')
+
+    return render(request, 'matchs_finale.html', {
+        'data': data,
+        'tournament': tournament,
+        'qualified_teams': qualified_teams,
+        'match_range': match_range,
+        'matchs_existent': matchs_existent,  # ← on passe cette info au template
+    })
+
+
+
+from django.shortcuts import render
+from .models import Match
+
+from django.shortcuts import render
+from .models import Match
+
+def liste_matchs_phase_finale(request):
+    tournament_id = request.GET.get('tournament_id')
+
+    if tournament_id:
+        matchs = Match.objects.filter(tournament_id=tournament_id, phase='quarter')
+        message = "Matchs de phase finale pour ce tournoi." if matchs.exists() else "Aucun match n’a été créé pour ce tournoi."
+    else:
+        matchs = Match.objects.none()
+        message = "Aucun tournoi spécifié."
+
+    return render(request, 'liste_matchs_phase_finale.html', {
+        'matchs': matchs,
+        'message': message
+    })
+

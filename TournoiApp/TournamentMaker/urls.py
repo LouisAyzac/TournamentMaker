@@ -30,8 +30,12 @@ urlpatterns = [
     path('matchs/', views.match_choice, name='matchs_choice'),
     path('matchs/poule/<int:pool_id>/', views.detail_poule, name='detail_poule'),
     path('tournoi/<int:tournament_id>/poules/', views.matchs_poules, name='matchs_poules'),
-    path('matchs/finale/', views.matchs_finale, name='matchs_finale'),
+    path('matchs-finale/<int:tournament_id>/', views.afficher_deux_premiers, name='matchs_finale'),
+    path('matchs-finale/liste/', views.liste_matchs_phase_finale, name='liste_matchs_phase_finale'),  # ← ajout ici
     path('matchs-en-cours/', views.matchs_en_cours, name='matchs_en_cours'),
+    path('match/<int:match_id>/score/', views.score_match, name='score_match'),
+
+    
 
     # Pools et classements
     path('pools/', views.pool_list, name='pool_list'),
