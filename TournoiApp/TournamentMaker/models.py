@@ -427,8 +427,6 @@ def auto_generate_pool_matches(sender, instance, **kwargs):
                 phase='pool',
             )
             print(f"Match créé : {team_a.name} vs {team_b.name} dans {pool.name}")
-<<<<<<< HEAD
-=======
+ 
 
-
->>>>>>> antoine
+ 

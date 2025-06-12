@@ -578,77 +578,59 @@ from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 from .models import Pool, Match, Tournament
 
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Q
+from .models import Tournament, Pool, Match
+
 def matchs_poules(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     pools_data = []
 
-<<<<<<< HEAD
-=======
     # On récupère les pools du tournoi
->>>>>>> antoine
     pools = Pool.objects.filter(tournament=tournament)
 
     for pool in pools.prefetch_related('teams'):
         stats = []
 
         for team in pool.teams.all():
-            # On récupère les matchs de cette équipe dans cette pool
+            # On récupère les matchs joués de cette équipe dans cette pool
             matchs_joues = Match.objects.filter(pool=pool, phase='pool')\
                 .filter(Q(team_a=team) | Q(team_b=team))\
                 .exclude(statut='ND')  # On ne prend pas les matchs "non débuté"
 
             total_joues = matchs_joues.count()
-<<<<<<< HEAD
-            victoires = sum(1 for match in matchs_joues if match.winner_team == team)
-            defaites = total_joues - victoires
 
-            sets_gagnes = 0
-            sets_perdus = 0
-            points_gagnes = 0
-            points_perdus = 0
-
-            for match in matchs_joues:
-                for i in range(1, 6):
-                    a_score = getattr(match, f'set{i}_team_a', None)
-                    b_score = getattr(match, f'set{i}_team_b', None)
-
-                    if a_score is not None and b_score is not None and (a_score != 0 or b_score != 0):
-                        if match.team_a == team:
-                            if a_score > b_score:
-                                sets_gagnes += 1
-                            elif b_score > a_score:
-                                sets_perdus += 1
-                            points_gagnes += a_score
-                            points_perdus += b_score
-                        elif match.team_b == team:
-                            if b_score > a_score:
-                                sets_gagnes += 1
-                            elif a_score > b_score:
-                                sets_perdus += 1
-                            points_gagnes += b_score
-                            points_perdus += a_score
-
-            # ➜ On calcule les différences ici
-            diff_sets = sets_gagnes - sets_perdus
-            diff_points = points_gagnes - points_perdus
-=======
-
-            # ⚠ On utilise winner_side, car c'est ce qui est mis à jour dans score_match
             victoires = 0
             defaites = 0
+            diff_sets = 0
+            diff_points = 0
 
             for match in matchs_joues:
+                # Victoire/défaite
                 if match.winner_side == 'A' and match.team_a == team:
                     victoires += 1
                 elif match.winner_side == 'B' and match.team_b == team:
                     victoires += 1
                 elif match.winner_side is not None:
-                    # Si le match a un winner, et que ce n'est pas cette équipe => défaite
                     defaites += 1
+
+                # Calculs goal average
+                for i in range(1, 6):  # max 5 sets
+                    score_a = getattr(match, f'set{i}_team_a', None)
+                    score_b = getattr(match, f'set{i}_team_b', None)
+
+                    if score_a is None or score_b is None:
+                        break
+
+                    if match.team_a == team:
+                        diff_sets += score_a - score_b
+                        diff_points += score_a - score_b
+                    elif match.team_b == team:
+                        diff_sets += score_b - score_a
+                        diff_points += score_b - score_a
 
             # Calcul des points (3 points par victoire en volley)
             points = victoires * 3
->>>>>>> antoine
 
             stats.append({
                 'team': team,
@@ -659,7 +641,6 @@ def matchs_poules(request, tournament_id):
                 'diff_points': diff_points,
             })
 
-<<<<<<< HEAD
         # Tri : victoires -> diff sets -> diff points
         stats.sort(
             key=lambda x: (
@@ -671,33 +652,19 @@ def matchs_poules(request, tournament_id):
         )
 
         # Attribution du rang
-=======
-        # On trie les équipes par points
-        stats.sort(key=lambda x: x['points'], reverse=True)
-
-        # On ajoute le classement
->>>>>>> antoine
         for index, team_data in enumerate(stats, start=1):
             team_data['rank'] = index
 
         # On ajoute cette pool au résultat
         pools_data.append({'pool': pool, 'stats': stats})
 
-<<<<<<< HEAD
-=======
     # On passe les données au template
->>>>>>> antoine
     return render(request, 'matchs_poules.html', {
         'pools_data': pools_data,
         'tournament': tournament
     })
 
-
-<<<<<<< HEAD
-
-
-=======
->>>>>>> antoine
+ 
 # Détail d'une poule
 from django.shortcuts import render, get_object_or_404
 from .models import Pool, Match
@@ -829,82 +796,7 @@ from datetime import datetime
 
 def parse_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d').date()
-
-<<<<<<< HEAD
-def create_tournament_step1(request):
-    if request.method == 'POST':
-        # Enregistre les infos dans la session
-        request.session['step1'] = {
-            'name': request.POST.get('name'),
-            'department': request.POST.get('department'),
-            'address': request.POST.get('address'),
-            'is_indoor': request.POST.get('is_indoor') == 'on',
-            'start_date': request.POST.get('start_date'),
-            'end_date': request.POST.get('end_date'),
-            'sport': request.POST.get('sport'),
-            'type_tournament': request.POST.get('type_tournament'),
-            'nb_pools': request.POST.get('nb_pools'),
-        }
-        return redirect('create_tournament_step2')
-    
-    return render(request, 'create_tournament_step1.html')
-
-def create_tournament_step2(request):
-    step1 = request.session.get('step1')
-    if not step1:
-        return redirect('create_tournament_step1')
-
-    sport = step1['sport']
-
-    if request.method == 'POST':
-        common_data = {
-            'name': step1['name'],
-            'department': step1['department'],
-            'address': step1['address'],
-            'is_indoor': step1['is_indoor'],
-            'start_date': parse_date(step1['start_date']),
-            'end_date': parse_date(step1['end_date']),
-            'sport': sport,
-            'type_tournament': step1['type_tournament'],
-            'number_of_pools': int(step1.get('nb_pools') or 0),
-            'max_teams': int(request.POST.get('nb_teams')),
-            'players_per_team': int(request.POST.get('players_per_team')),
-        }
-
-        if sport == 'volleyball':
-            common_data.update({
-                'nb_sets_to_win': int(request.POST.get('nb_sets_to_win')),
-                'points_per_set': int(request.POST.get('points_per_set')),
-            })
-            
-            
-        elif sport == 'football':
-            common_data.update({
-                'match_duration': int(request.POST.get('match_duration')),
-                'extra_time': request.POST.get('extra_time') == 'on',
-                'penalty_shootout': request.POST.get('penalty_shootout') == 'on',
-            })
-        elif sport == 'rugby':
-            common_data.update({
-                'match_duration': int(request.POST.get('match_duration')),
-                'half_time_duration': int(request.POST.get('half_time_duration')),
-            })
-        elif sport == 'basketball':
-            common_data.update({
-                'quarter_duration': int(request.POST.get('quarter_duration')),
-                'number_of_quarters': int(request.POST.get('number_of_quarters')),
-            })
-
-            
-        # Création du tournoi
-        tournoi = Tournament.objects.create(**common_data)
-        return redirect('home')
-
-    return render(request, 'create_tournament_step2.html', {'sport': sport})
-
-""""
-def create_tournament(request):
-=======
+ 
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
@@ -912,7 +804,7 @@ from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 
 '''def create_tournament(request):
->>>>>>> antoine
+
     if request.method == 'POST':
         # Retrieve form data
         name = request.POST.get('name')
@@ -1029,10 +921,7 @@ from django.core.mail import send_mail
         return redirect('home')
 
     return render(request, 'create_tournament.html')
-<<<<<<< HEAD
-"""
-=======
-
+ 
 '''
 def create_tournament_step1(request):
     if request.method == 'POST':
@@ -1055,6 +944,10 @@ def create_tournament_step1(request):
     return render(request, 'create_tournament_step1.html')
 
 def create_tournament_step2(request):
+    print("🎯 create_tournament_step2 appelée :", request.method)
+    if request.method == 'POST':
+        print("📥 POST reçu :", request.POST)
+
     step1 = request.session.get('step1')
     if not step1:
         return redirect('create_tournament_step1')
@@ -1180,8 +1073,7 @@ L'équipe du tournoi
 
     return render(request, 'create_tournament_step2.html', {'sport': sport})
 
->>>>>>> antoine
-
+ 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
 
@@ -1457,11 +1349,9 @@ def score_match(request, match_id):
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
-<<<<<<< HEAD
+
     })
 
 def home_landing(request):
     return render(request, 'home_landing.html', {'hide_navbar': True})
-=======
-    })
->>>>>>> antoine
+ 
