@@ -147,10 +147,11 @@ class Pool(models.Model):
         return all(match.get_auto_winner(nb_sets_to_win) is not None for match in self.matches.all())
 
     def calculate_rankings(self):
+        nb_sets_to_win = self.tournament.nb_sets_to_win  # 👈 on récupère ici
         stats = {team.id: {"team": team, "wins": 0, "sets_won": 0, "sets_lost": 0} for team in self.teams.all()}
 
         for match in self.matches.all():
-            winner = match.get_auto_winner()
+            winner = match.get_auto_winner(nb_sets_to_win)  # 👈 on passe nb_sets_to_win
             if not winner:
                 continue
             loser = match.team_a if winner == match.team_b else match.team_b

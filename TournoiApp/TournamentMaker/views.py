@@ -472,7 +472,7 @@ def signup(request):
 
             if i == 0 and player_data['email']:
                 email = player_data['email']
-                username = f"{email}_{team.id}"
+                username = email
                 user = User.objects.create_user(username=username, email=email)
                 user_profile = UserProfile.objects.create(
                     user=user,
@@ -994,29 +994,33 @@ from django.urls import reverse
 @login_required
 def score_match(request, match_id):
     match = get_object_or_404(Match, id=match_id)
-    if match.phase == 'pool' and match.pool:
-        back_url = reverse('detail_poule', args=[match.pool.id])
+    user = request.user
+
+    # Cas admin : autorisé partout
+    if user.is_superuser:
+        authorized = True
     else:
-        back_url = reverse('direct_elimination')
+        try:
+            user_profile = user.userprofile
+            user_team = user_profile.team
 
-    return render(request, 'score_match.html', {
-        'match': match,
-        'back_url': back_url
-    })
-    try:
-        user_profile = request.user.userprofile
-    except UserProfile.DoesNotExist:
-        return render(request, 'no_team.html')
+            # Vérifier que c'est bien le CAPITAINE de son équipe
+            if user_team == match.team_a and match.team_a.captain == user_profile:
+                authorized = True
+            elif user_team == match.team_b and match.team_b.captain == user_profile:
+                authorized = True
+            else:
+                authorized = False
 
-    user_team = user_profile.team
+        except UserProfile.DoesNotExist:
+            authorized = False
 
-    # ❌ Si l’utilisateur n’est pas capitaine d’une équipe concernée
-    if user_team != match.team_a and user_team != match.team_b:
+    if not authorized:
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match."
         })
 
-    # ✅ Il est autorisé à modifier le score
+    # Si autorisé → traiter le formulaire
     if request.method == 'POST':
         match.set1_team_a = int(request.POST.get('set1_team_a', 0))
         match.set1_team_b = int(request.POST.get('set1_team_b', 0))
@@ -1027,4 +1031,13 @@ def score_match(request, match_id):
         match.save()
         return redirect('score_match', match_id=match.id)
 
-    return render(request, 'score_match.html', {'match': match})
+    # Préparer le back_url intelligent
+    if match.phase == 'pool' and match.pool:
+        back_url = reverse('detail_poule', args=[match.pool.id])
+    else:
+        back_url = reverse('direct_elimination')
+
+    return render(request, 'score_match.html', {
+        'match': match,
+        'back_url': back_url
+    })
