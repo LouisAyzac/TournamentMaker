@@ -1,13 +1,16 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
+
 <h2 class="text-center mt-4">Phase de Poule - {{ tournament.name }}</h2>
 
 {% if pools_data %}
     {% for pool_data in pools_data %}
         <h4 class="mt-4 text-primary fw-bold">
             Poule {{ pool_data.pool.name }}
-            <a href="{% url 'detail_poule' pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">Voir les matchs</a>
+            <a href="{% url 'detail_poule' pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">
+                Voir les matchs
+            </a>
         </h4>
 
         <table class="table table-bordered table-sm text-center align-middle">
@@ -26,7 +29,11 @@
                 {% if pool_data.stats %}
                     {% for team_data in pool_data.stats %}
                     <tr>
-                        <td><a href="{% url 'team_detail' team_data.team.id %}">{{ team_data.team.name }}</a></td>
+                        <td>
+                            <a href="{% url 'team_detail' team_data.team.id %}">
+                                {{ team_data.team.name }}
+                            </a>
+                        </td>
                         <td>{{ team_data.victoires }}</td>
                         <td>{{ team_data.defaites }}</td>
                         <td>{{ team_data.matchs_joues }}</td>
@@ -37,7 +44,13 @@
                     {% endfor %}
                 {% else %}
                     <tr>
+<<<<<<< HEAD
                         <td colspan="8" class="text-muted">Aucune équipe dans cette poule.</td>
+=======
+                        <td colspan="6" class="text-muted">
+                            Aucune équipe dans cette poule.
+                        </td>
+>>>>>>> antoine
                     </tr>
                 {% endif %}
             </tbody>

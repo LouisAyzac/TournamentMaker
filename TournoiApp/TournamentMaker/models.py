@@ -10,6 +10,12 @@ from django.db import models
 from datetime import date
 from django.db import models
 from datetime import date
+class Organisateur(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Organisateur: {self.user.email}"
 
 from django.db import models
 from datetime import date
@@ -42,6 +48,7 @@ class Tournament(models.Model):
     
     nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
     points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
+    organizer = models.OneToOneField(Organisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name='organized_tournament')
 
     
     match_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un match (en minutes)")
@@ -420,3 +427,8 @@ def auto_generate_pool_matches(sender, instance, **kwargs):
                 phase='pool',
             )
             print(f"Match créé : {team_a.name} vs {team_b.name} dans {pool.name}")
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> antoine
