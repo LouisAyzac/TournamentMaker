@@ -37,8 +37,8 @@
           </select>
         </div>
         <div class="col-md-4">
-          <label for="department">Ville :</label>
-          <input type="text" name="department" id="department" class="form-control" placeholder="Numéro de département" value="{{ selected_department }}">
+          <label for="city">Ville :</label>
+          <input type="text" name="city" id="city" class="form-control" placeholder="ville" value="{{ selected_city }}">
         </div>
         <div class="col-md-4 align-self-end">
           <button type="submit" class="btn btn-primary">Filtrer</button>
@@ -65,7 +65,7 @@
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
-              <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }} ({{ tournoi.department }})</p>
+              <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }} ({{ tournoi.city }})</p>
               <p class="card-text"><strong>📅 Dates :</strong><br>Du {{ tournoi.start_date|date:"d/m/Y" }} au {{ tournoi.end_date|date:"d/m/Y" }}</p>
             </div>
             <div class="col-md-6">
@@ -103,19 +103,19 @@
     <ul class="pagination justify-content-center">
       {% if page_obj.has_previous %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}">&laquo;</a>
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_city %}&city={{ selected_city }}{% endif %}">&laquo;</a>
       </li>
       {% endif %}
 
       {% for num in page_obj.paginator.page_range %}
       <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-        <a class="page-link" href="?page={{ num }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}">{{ num }}</a>
+        <a class="page-link" href="?page={{ num }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_city %}&city={{ selected_city }}{% endif %}">{{ num }}</a>
       </li>
       {% endfor %}
 
       {% if page_obj.has_next %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}">&raquo;</a>
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_city %}&city={{ selected_city }}{% endif %}">&raquo;</a>
       </li>
       {% endif %}
     </ul>
