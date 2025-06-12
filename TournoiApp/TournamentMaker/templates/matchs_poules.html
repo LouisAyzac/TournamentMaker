@@ -15,7 +15,6 @@
                 <tr>
                     <th style="background-color: yellow; color: black;">ÉQUIPE</th>
                     <th style="background-color: #4caf50; color: white;">V</th>
-                    <th style="background-color: #2196f3; color: white;">N</th>
                     <th style="background-color: #f44336; color: white;">D</th>
                     <th style="background-color: #ffeb99; color: black;">MJ</th>
                     <th style="background-color: #f59e0b; color: white;">PTS</th>
@@ -28,7 +27,6 @@
                     <tr>
                         <td><a href="{% url 'team_detail' team_data.team.id %}">{{ team_data.team.name }}</a></td>
                         <td>{{ team_data.victoires }}</td>
-                        <td>0</td>
                         <td>{{ team_data.defaites }}</td>
                         <td>{{ team_data.matchs_joues }}</td>
                         <td>{{ team_data.points }}</td>

@@ -45,7 +45,8 @@ urlpatterns = [
     path('rankings/', views.rankings_list, name='rankings_list'),
 
     # Tournois
-    path('creer_tournoi/', views.create_tournament, name='create_tournament'),
+    path('creer_tournoi/etape1/', views.create_tournament_step1, name='create_tournament'),
+    path('creer_tournoi/etape2/', views.create_tournament_step2, name='create_tournament_step2'),
     path('tournaments/', TournamentListView.as_view(), name='tournament_list'),
     path('tournament/<int:pk>/', TournamentDetailView.as_view(), name='tournament_detail'),
     path('tournament/full/', views.tournament_full, name='tournament_full'),
