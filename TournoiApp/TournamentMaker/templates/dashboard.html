@@ -3,6 +3,15 @@
 {% block content %}
   <div class="container mt-5 text-center">
 
+    {% if tournoi.teams.count >= tournoi.max_teams %}
+      <style>
+        .nav-buttons-container .nav-button:nth-child(4) {
+          display: none !important;
+        }
+      </style>
+    {% endif %}
+
+
     <!-- Nom du tournoi en gros -->
     <h1 class="display-3 fw-bold mb-3" style="color: black;">{{ tournoi.name }}</h1>
 
