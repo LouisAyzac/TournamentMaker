@@ -15,10 +15,17 @@
                 <tr>
                     <th style="background-color: yellow; color: black;">ÉQUIPE</th>
                     <th style="background-color: #4caf50; color: white;">V</th>
+<<<<<<< HEAD
                     <th style="background-color: #f44336; color: white;">D</th>
                     <th style="background-color: #ffeb99; color: black;">MJ</th>
                     <th style="background-color: #ff9800; color: white;">Diff. Sets</th>
                     <th style="background-color: #03a9f4; color: white;">Diff. Points</th>
+=======
+                    <th style="background-color: #2196f3; color: white;">N</th>
+                    <th style="background-color: #f44336; color: white;">D</th>
+                    <th style="background-color: #ffeb99; color: black;">MJ</th>
+                    <th style="background-color: #f59e0b; color: white;">PTS</th>
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
                     <th style="background-color: #9c27b0; color: white;">Classement</th>
                 </tr>
             </thead>
@@ -28,24 +35,42 @@
                     <tr>
                         <td><a href="{% url 'team_detail' team_data.team.id %}">{{ team_data.team.name }}</a></td>
                         <td>{{ team_data.victoires }}</td>
+<<<<<<< HEAD
                         <td>{{ team_data.defaites }}</td>
                         <td>{{ team_data.matchs_joues }}</td>
                         <td>{{ team_data.diff_sets }}</td>
                         <td>{{ team_data.diff_points }}</td>
+=======
+                        <td>0</td>
+                        <td>{{ team_data.defaites }}</td>
+                        <td>{{ team_data.matchs_joues }}</td>
+                        <td>{{ team_data.points }}</td>
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
                         <td><strong>{{ team_data.rank }}</strong></td>
                     </tr>
                     {% endfor %}
                 {% else %}
                     <tr>
+<<<<<<< HEAD
                         <td colspan="8" class="text-muted">Aucune équipe dans cette poule.</td>
+=======
+                        <td colspan="7" class="text-muted">Aucune équipe dans cette poule.</td>
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
                     </tr>
                 {% endif %}
             </tbody>
         </table>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
     {% endfor %}
 {% else %}
     <p class="text-center mt-4">Aucune poule trouvée.</p>
 {% endif %}
 
+<<<<<<< HEAD
 {% endblock %}
+=======
+{% endblock %}
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
