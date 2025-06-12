@@ -39,21 +39,23 @@ class Tournament(models.Model):
     number_of_pools = models.IntegerField(default=0)
     type_tournament = models.CharField(max_length=2, choices=TOURNAMENT_TYPE_CHOICES, default='RR')
 
-    # Volleyball
+    
     nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
     points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
 
-    # Football
+    """"
     match_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un match (en minutes)")
     extra_time = models.BooleanField(null=True, blank=True, help_text="Prolongations possibles")
     penalty_shootout = models.BooleanField(null=True, blank=True, help_text="Tirs au but en cas d’égalité")
 
-    # Rugby
+    
     half_time_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée de la mi-temps (en minutes)")
 
-    # Basketball
+    
     quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
     number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
+
+    """
 
     def __str__(self):
         return self.name

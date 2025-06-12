@@ -34,10 +34,13 @@
           {% if tournoi.type_tournament == 'RR' %}
           <p class="mb-2"><i class="fas fa-th-large text-primary me-2"></i><strong>Nombre de poules :</strong> {{ tournoi.number_of_pools }}</p>
           {% endif %}
+          <!--
           {# 🎯 Affichage conditionnel selon le sport #}
           {% if tournoi.sport == 'volleyball' %}
+          -->
             <p class="mb-2"><i class="fas fa-trophy text-primary me-2"></i><strong>Sets pour gagner :</strong> {{ tournoi.nb_sets_to_win }}</p>
             <p class="mb-2"><i class="fas fa-star text-primary me-2"></i><strong>Points par set :</strong> {{ tournoi.points_per_set }}</p>
+          <!-- 
           {% elif tournoi.sport == 'football' %}
             <p class="mb-2"><i class="fas fa-clock text-primary me-2"></i><strong>Durée du match :</strong> {{ tournoi.match_duration }} min</p>
             <p class="mb-2"><i class="fas fa-stopwatch text-primary me-2"></i><strong>Prolongations :</strong> {{ tournoi.extra_time|yesno:"Oui,Non" }}</p>
@@ -48,6 +51,7 @@
           {% elif tournoi.sport == 'rugby' %}
             <p class="mb-2"><i class="fas fa-star text-primary me-2"></i><strong>Durée de la mi-temps :</strong> {{ tournoi.half_time_duration }} min</p>
           {% endif %}
+          -->
         </div>
       </div>
     </div>
