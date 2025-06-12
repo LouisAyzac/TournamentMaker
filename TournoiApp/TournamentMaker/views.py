@@ -907,9 +907,6 @@ from .models import Tournament, Team
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Tournament, Team
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Tournament, Team, Match
-
 def direct_elimination(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
@@ -920,81 +917,28 @@ def direct_elimination(request):
     if tournament.type_tournament != 'DE':
         return redirect('home')
 
-    def get_matchups(phase):
-        matches = Match.objects.filter(
-            team_a__tournament=tournament,
-            phase=phase
-        )
-        teams_in_matches = set()
-        matchup_list = []
+    teams = list(Team.objects.filter(tournament=tournament).order_by('id'))
 
-        for match in matches:
-            team1 = match.team_a
-            team2 = match.team_b
-            teams_in_matches.add(team1.id)
-            if team2:
-                teams_in_matches.add(team2.id)
-            matchup_list.append((team1, team2, match))
+    # Récupérer tous les matchs existants
+    matches = Match.objects.filter(team_a__tournament=tournament, phase='quarter')
+    match_lookup = {
+        (m.team_a.id, m.team_b.id): m for m in matches
+    }
 
-        # Ajouter les équipes en attente s’il en reste
-        remaining_teams = Team.objects.filter(
-            tournament=tournament
-        ).exclude(id__in=teams_in_matches)
-
-        remaining_teams = list(remaining_teams)
-        for i in range(0, len(remaining_teams), 2):
-            team1 = remaining_teams[i]
-            team2 = remaining_teams[i + 1] if i + 1 < len(remaining_teams) else None
-            matchup_list.append((team1, team2, None))
-
-        return matchup_list
-
-    def get_winners(phase):
-        return [
-            m.winner_team for m in Match.objects.filter(
-                tournament=tournament,
-                phase=phase,
-                statut='T',
-                winner_side__isnull=False
-            )
-        ]
-
-    def get_or_create_matchup(team1, team2, phase):
-        if not team1 or not team2:
-            return (team1, team2, None)
-        match = Match.objects.filter(
-            tournament=tournament,
-            phase=phase,
-            team_a=team1,
-            team_b=team2
-        ).first()
-        return (team1, team2, match)
-
-    # Quarts
-    quarter_matchups = get_matchups('quarter')
-
-    # Demi (1 seule si 2 vainqueurs de quarts)
-    semi_matchups = []
-    quarter_winners = get_winners('quarter')
-    if len(quarter_winners) >= 2:
-        team1 = quarter_winners[0]
-        team2 = quarter_winners[1]
-        semi_matchups = [get_or_create_matchup(team1, team2, 'semi')]
-
-    # Finale (1 seule si 2 vainqueurs de demis)
-    final_matchups = []
-    semi_winners = get_winners('semi')
-    if len(semi_winners) >= 2:
-        team1 = semi_winners[0]
-        team2 = semi_winners[1]
-        final_matchups = [get_or_create_matchup(team1, team2, 'final')]
+    # Construire les paires avec match existant ou non
+    matchups = []
+    for i in range(0, len(teams), 2):
+        team1 = teams[i]
+        team2 = teams[i + 1] if i + 1 < len(teams) else None
+        match = match_lookup.get((team1.id, team2.id)) if team2 else None
+        matchups.append((team1, team2, match))
 
     return render(request, 'direct_elimination.html', {
         'tournament': tournament,
-        'quarter_matchups': quarter_matchups,
-        'semi_matchups': semi_matchups,
-        'final_matchups': final_matchups,
+        'matchups': matchups,
     })
+
+
 
 
 from .models import Match, Team, Tournament
@@ -1047,70 +991,104 @@ from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
 from django.urls import reverse
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render, redirect
-from django.urls import reverse
-from .models import Match
-
+@login_required
 @login_required
 def score_match(request, match_id):
     match = get_object_or_404(Match, id=match_id)
+    user = request.user
 
+    # Cas admin : autorisé partout
+    if user.is_superuser:
+        authorized = True
+    else:
+        try:
+            user_profile = user.userprofile
+            user_team = user_profile.team
+
+            # Vérifier que c'est bien le CAPITAINE de son équipe
+            if user_team == match.team_a and match.team_a.captain == user_profile:
+                authorized = True
+            elif user_team == match.team_b and match.team_b.captain == user_profile:
+                authorized = True
+            else:
+                authorized = False
+
+        except UserProfile.DoesNotExist:
+            authorized = False
+
+    if not authorized:
+        return render(request, 'no_team.html', {
+            'error': "Vous n’avez pas le droit de modifier ce match."
+        })
+
+    # 🔥 On récupère le tournoi
+    # 🔥 On récupère le tournoi
+    if match.pool:
+        tournament = match.pool.tournament
+    else:
+        tournament = match.team_a.tournament  # 🔥 C'est sûr ici
+
+
+    # 🔥 Règle : 1 set gagnant → 1 set affiché / 2 → 3 sets / 3 → 5 sets
+    nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
+    set_numbers = list(range(1, nb_sets_display + 1))
+
+    # 🔥 On prépare un dict pour le template
+    score_fields = {}
+    for set_number in set_numbers:
+        score_fields[f'set{set_number}_team_a'] = getattr(match, f'set{set_number}_team_a')
+        score_fields[f'set{set_number}_team_b'] = getattr(match, f'set{set_number}_team_b')
+
+    # 🔥 Traitement du POST
+    if request.method == 'POST':
+        for set_number in set_numbers:
+            team_a_field = f'set{set_number}_team_a'
+            team_b_field = f'set{set_number}_team_b'
+
+            value_a = request.POST.get(team_a_field, '')
+            value_b = request.POST.get(team_b_field, '')
+
+            # Si vide ou non numérique → mettre 0
+            value_a = int(value_a) if value_a.isdigit() else 0
+            value_b = int(value_b) if value_b.isdigit() else 0
+
+            setattr(match, team_a_field, value_a)
+            setattr(match, team_b_field, value_b)
+
+        # Met à jour auto winner
+        winner = match.get_auto_winner(tournament.nb_sets_to_win)
+        if winner == match.team_a:
+            match.winner_side = 'A'
+        elif winner == match.team_b:
+            match.winner_side = 'B'
+        else:
+            match.winner_side = None
+
+        # 🔥 Met à jour le statut du match
+        if winner is not None:
+            match.statut = 'T'  # Terminé
+        elif any(getattr(match, f'set{i}_team_a', 0) != 0 or getattr(match, f'set{i}_team_b', 0) != 0 for i in set_numbers):
+            match.statut = 'EC'  # En cours
+        else:
+            match.statut = 'ND'  # Non débuté
+
+        match.save()
+
+        # 🟢 Force le recalcul du classement de la pool si on est en phase de poule
+        if match.phase == 'pool' and match.pool:
+            match.pool.calculate_rankings()
+        return redirect('score_match', match_id=match.id)
+
+    # Préparer le back_url intelligent
     if match.phase == 'pool' and match.pool:
         back_url = reverse('detail_poule', args=[match.pool.id])
     else:
         back_url = reverse('direct_elimination')
 
-    # ✅ Autoriser l’admin sans vérifier d'équipe
-    if request.user.is_staff or request.user.is_superuser:
-        can_edit = True
-    else:
-        try:
-            user_profile = request.user.userprofile
-            user_team = user_profile.team
-            can_edit = user_team == match.team_a or user_team == match.team_b
-        except Exception:
-            can_edit = False
-
-    if not can_edit:
-        return render(request, 'no_team.html', {
-            'error': "Vous n’avez pas le droit de modifier ce match."
-        })
-
-    if request.method == 'POST':
-        match.set1_team_a = int(request.POST.get('set1_team_a', 0))
-        match.set1_team_b = int(request.POST.get('set1_team_b', 0))
-        match.set2_team_a = int(request.POST.get('set2_team_a', 0))
-        match.set2_team_b = int(request.POST.get('set2_team_b', 0))
-        match.set3_team_a = int(request.POST.get('set3_team_a', 0))
-        match.set3_team_b = int(request.POST.get('set3_team_b', 0))
-        match.save()
-
-        # 🧠 Déterminer automatiquement le gagnant
-        winner = match.set_winner_automatically(nb_sets_to_win=2)
-
-        # ➕ Créer un match suivant avec ce gagnant
-        if winner:
-            existing_waiting_match = Match.objects.filter(
-                team_b__isnull=True,
-                phase=match.phase,
-                statut='ND',
-                team_a__tournament=winner.tournament
-            ).exclude(id=match.id).first()
-
-            if existing_waiting_match:
-                existing_waiting_match.team_b = winner
-                existing_waiting_match.save()
-            else:
-                Match.objects.create(
-                    team_a=winner,
-                    team_b=None,
-                    phase=match.phase
-                )
-
-        return redirect('direct_elimination')
-
+    # 🔥 On passe les infos au template
     return render(request, 'score_match.html', {
         'match': match,
-        'back_url': back_url
+        'back_url': back_url,
+        'set_numbers': set_numbers,
+        'score_fields': score_fields,
     })
