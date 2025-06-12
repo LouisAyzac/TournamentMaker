@@ -928,9 +928,7 @@ from .models import Tournament, Team
 
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Tournament, Team
-
-<<<<<<< HEAD
-=======
+ 
 from collections import defaultdict
 
 from math import ceil, log2
@@ -951,8 +949,7 @@ from math import ceil, log2
 from collections import defaultdict
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Match, Team, Tournament
-
->>>>>>> louis
+ 
 def direct_elimination(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
@@ -962,28 +959,7 @@ def direct_elimination(request):
 
     if tournament.type_tournament != 'DE':
         return redirect('home')
-
-<<<<<<< HEAD
-    teams = list(Team.objects.filter(tournament=tournament).order_by('id'))
-
-    # Récupérer tous les matchs existants
-    matches = Match.objects.filter(team_a__tournament=tournament, phase='quarter')
-    match_lookup = {
-        (m.team_a.id, m.team_b.id): m for m in matches
-    }
-
-    # Construire les paires avec match existant ou non
-    matchups = []
-    for i in range(0, len(teams), 2):
-        team1 = teams[i]
-        team2 = teams[i + 1] if i + 1 < len(teams) else None
-        match = match_lookup.get((team1.id, team2.id)) if team2 else None
-        matchups.append((team1, team2, match))
-
-    return render(request, 'direct_elimination.html', {
-        'tournament': tournament,
-        'matchups': matchups,
-=======
+ 
     # 🔁 Vérifie les équipes et le nombre attendu de matchs de premier tour
     teams = list(Team.objects.filter(tournament=tournament))
     num_teams = len(teams)
@@ -1042,54 +1018,12 @@ def direct_elimination(request):
     return render(request, 'direct_elimination.html', {
         'tournament': tournament,
         'all_matches': all_matches,
->>>>>>> louis
+
     })
 
 
 
-
-<<<<<<< HEAD
-from .models import Match, Team, Tournament
-def create_elimination_match(request):
-    if request.method == 'POST':
-        team_a_id = request.POST.get('team_a_id')
-        team_b_id = request.POST.get('team_b_id')
-        tournament_id = request.session.get('selected_tournament_id')
-
-        if not (team_a_id and team_b_id and tournament_id):
-            return redirect('direct_elimination')
-
-        try:
-            team_a = Team.objects.get(id=team_a_id)
-            team_b = Team.objects.get(id=team_b_id)
-            tournament = Tournament.objects.get(id=tournament_id)
-        except (Team.DoesNotExist, Tournament.DoesNotExist):
-            return redirect('direct_elimination')
-
-        # Vérifie si un match identique existe déjà
-        match = Match.objects.filter(
-            team_a=team_a,
-            team_b=team_b,
-            phase='quarter'  # adapte si tu veux gérer les phases dynamiquement
-        ).first()
-
-        if not match:
-            match = Match.objects.create(
-                team_a=team_a,
-                team_b=team_b,
-                phase='quarter',
-            )
-
-        return redirect('score_match', match_id=match.id)
-
-    return redirect('direct_elimination')
-
-    
-
-
-
-=======
->>>>>>> louis
+ 
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Match
 
@@ -1099,9 +1033,7 @@ from .models import Match
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
-
-<<<<<<< HEAD
-=======
+ 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
@@ -1109,8 +1041,7 @@ from .models import Match, UserProfile
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
-
->>>>>>> louis
+ 
 @login_required
 def score_match(request, match_id):
     match = get_object_or_404(Match, id=match_id)
@@ -1121,24 +1052,17 @@ def score_match(request, match_id):
         return render(request, 'no_team.html')
 
     user_team = user_profile.team
-
-<<<<<<< HEAD
-    # ❌ Si l’utilisateur n’est pas capitaine d’une équipe concernée
-=======
+ 
     # ❌ Vérifie si l'utilisateur peut modifier le match
->>>>>>> louis
+
     if user_team != match.team_a and user_team != match.team_b:
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match."
         })
-
-<<<<<<< HEAD
-    # ✅ Il est autorisé à modifier le score
-    if request.method == 'POST':
-=======
+ 
     if request.method == 'POST':
         # ✅ Enregistrement des scores
->>>>>>> louis
+
         match.set1_team_a = int(request.POST.get('set1_team_a', 0))
         match.set1_team_b = int(request.POST.get('set1_team_b', 0))
         match.set2_team_a = int(request.POST.get('set2_team_a', 0))
@@ -1146,12 +1070,7 @@ def score_match(request, match_id):
         match.set3_team_a = int(request.POST.get('set3_team_a', 0))
         match.set3_team_b = int(request.POST.get('set3_team_b', 0))
         match.save()
-<<<<<<< HEAD
-        return redirect('score_match', match_id=match.id)
-
-    return render(request, 'score_match.html', {'match': match})
-=======
-
+ 
         # 🧠 Déterminer le gagnant automatiquement
         nb_sets_to_win = 2  # Change à 3 si BO5
         winner = match.get_auto_winner(nb_sets_to_win)
@@ -1270,4 +1189,4 @@ def create_elimination_match(request):
 
 
 
->>>>>>> louis
+ 
