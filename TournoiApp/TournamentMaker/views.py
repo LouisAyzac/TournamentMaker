@@ -801,6 +801,7 @@ def create_tournament_step1(request):
             'nb_pools': request.POST.get('nb_pools'),
         }
         return redirect('create_tournament_step2')
+
     
     return render(request, 'create_tournament_step1.html')
 
