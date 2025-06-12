@@ -177,10 +177,12 @@ class Pool(models.Model):
 
 class Match(models.Model):
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
-    team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a')
-    team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')
+    team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a',  null=True, blank=True )
+    team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b', null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True, verbose_name="Heure de début")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Heure de fin")
+    tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)  # ← AJOUT
+
 
     STATUT_CHOICES = [
         ('ND', 'Non débuté'),
@@ -233,7 +235,6 @@ class Match(models.Model):
         if self.set5_team_a is not None and self.set5_team_b is not None:
             sets.append((self.set5_team_a, self.set5_team_b))
 
-        # Filtrer les sets non joués (où les deux scores sont à 0)
         sets_played = [(a, b) for a, b in sets if a != 0 or b != 0]
 
         score_a = sum(1 for a, b in sets_played if a > b)
@@ -245,6 +246,19 @@ class Match(models.Model):
             return self.team_b
         else:
             return None
+
+    def set_winner_automatically(self, nb_sets_to_win=2):
+        """Détermine et enregistre le gagnant du match en fonction des sets"""
+        winner = self.get_auto_winner(nb_sets_to_win)
+        if winner == self.team_a:
+            self.winner_side = 'A'
+        elif winner == self.team_b:
+            self.winner_side = 'B'
+
+        if winner:
+            self.statut = 'T'
+        self.save()
+        return winner
 
 class Ranking(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)
