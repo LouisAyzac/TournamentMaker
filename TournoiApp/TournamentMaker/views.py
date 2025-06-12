@@ -472,7 +472,7 @@ def signup(request):
 
             if i == 0 and player_data['email']:
                 email = player_data['email']
-                username = email
+                username = f"{email}_{team.id}"
                 user = User.objects.create_user(username=username, email=email)
                 user_profile = UserProfile.objects.create(
                     user=user,
@@ -1064,7 +1064,19 @@ def score_match(request, match_id):
         else:
             match.winner_side = None
 
+        # 🔥 Met à jour le statut du match
+        if winner is not None:
+            match.statut = 'T'  # Terminé
+        elif any(getattr(match, f'set{i}_team_a', 0) != 0 or getattr(match, f'set{i}_team_b', 0) != 0 for i in set_numbers):
+            match.statut = 'EC'  # En cours
+        else:
+            match.statut = 'ND'  # Non débuté
+
         match.save()
+
+        # 🟢 Force le recalcul du classement de la pool si on est en phase de poule
+        if match.phase == 'pool' and match.pool:
+            match.pool.calculate_rankings()
         return redirect('score_match', match_id=match.id)
 
     # Préparer le back_url intelligent
@@ -1073,16 +1085,10 @@ def score_match(request, match_id):
     else:
         back_url = reverse('direct_elimination')
 
-<<<<<<< HEAD
-    return render(request, 'score_match.html', {
-        'match': match,
-        'back_url': back_url
-=======
     # 🔥 On passe les infos au template
     return render(request, 'score_match.html', {
         'match': match,
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
->>>>>>> dev
     })
