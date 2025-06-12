@@ -579,12 +579,7 @@ def matchs_poules(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     pools_data = []
 
-    # 🔥 On filtre les pools du tournoi en question
     pools = Pool.objects.filter(tournament=tournament)
-    print("Pools récupérées :", pools)  # Debugging, vérifier si on récupère bien des pools
-
-    if not pools:
-        print("Aucune pool trouvée pour ce tournoi.")  # Si aucune pool n'est trouvée
 
     for pool in pools.prefetch_related('teams'):
         stats = []
@@ -597,29 +592,67 @@ def matchs_poules(request, tournament_id):
             total_joues = matchs_joues.count()
             victoires = sum(1 for match in matchs_joues if match.winner_team == team)
             defaites = total_joues - victoires
-            points = victoires * 3  # 3 points par victoire
+
+            sets_gagnes = 0
+            sets_perdus = 0
+            points_gagnes = 0
+            points_perdus = 0
+
+            for match in matchs_joues:
+                for i in range(1, 6):
+                    a_score = getattr(match, f'set{i}_team_a', None)
+                    b_score = getattr(match, f'set{i}_team_b', None)
+
+                    if a_score is not None and b_score is not None and (a_score != 0 or b_score != 0):
+                        if match.team_a == team:
+                            if a_score > b_score:
+                                sets_gagnes += 1
+                            elif b_score > a_score:
+                                sets_perdus += 1
+                            points_gagnes += a_score
+                            points_perdus += b_score
+                        elif match.team_b == team:
+                            if b_score > a_score:
+                                sets_gagnes += 1
+                            elif a_score > b_score:
+                                sets_perdus += 1
+                            points_gagnes += b_score
+                            points_perdus += a_score
+
+            # ➜ On calcule les différences ici
+            diff_sets = sets_gagnes - sets_perdus
+            diff_points = points_gagnes - points_perdus
 
             stats.append({
                 'team': team,
                 'matchs_joues': total_joues,
                 'victoires': victoires,
                 'defaites': defaites,
-                'points': points
+                'diff_sets': diff_sets,
+                'diff_points': diff_points,
             })
 
-        # Classement selon les points
-        stats.sort(key=lambda x: x['points'], reverse=True)
+        # Tri : victoires -> diff sets -> diff points
+        stats.sort(
+            key=lambda x: (
+                x['victoires'],
+                x['diff_sets'],
+                x['diff_points']
+            ),
+            reverse=True
+        )
+
+        # Attribution du rang
         for index, team_data in enumerate(stats, start=1):
             team_data['rank'] = index
 
         pools_data.append({'pool': pool, 'stats': stats})
 
-    print("Pools data envoyées :", pools_data)  # Vérifier si les données sont bien envoyées
-
     return render(request, 'matchs_poules.html', {
         'pools_data': pools_data,
         'tournament': tournament
     })
+
 
 
 
