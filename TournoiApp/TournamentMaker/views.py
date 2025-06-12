@@ -582,10 +582,7 @@ def matchs_poules(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     pools_data = []
 
-<<<<<<< HEAD
-=======
     # On récupère les pools du tournoi
->>>>>>> antoine
     pools = Pool.objects.filter(tournament=tournament)
 
     for pool in pools.prefetch_related('teams'):
@@ -598,7 +595,6 @@ def matchs_poules(request, tournament_id):
                 .exclude(statut='ND')  # On ne prend pas les matchs "non débuté"
 
             total_joues = matchs_joues.count()
-<<<<<<< HEAD
             victoires = sum(1 for match in matchs_joues if match.winner_team == team)
             defaites = total_joues - victoires
 
@@ -631,24 +627,6 @@ def matchs_poules(request, tournament_id):
             # ➜ On calcule les différences ici
             diff_sets = sets_gagnes - sets_perdus
             diff_points = points_gagnes - points_perdus
-=======
-
-            # ⚠ On utilise winner_side, car c'est ce qui est mis à jour dans score_match
-            victoires = 0
-            defaites = 0
-
-            for match in matchs_joues:
-                if match.winner_side == 'A' and match.team_a == team:
-                    victoires += 1
-                elif match.winner_side == 'B' and match.team_b == team:
-                    victoires += 1
-                elif match.winner_side is not None:
-                    # Si le match a un winner, et que ce n'est pas cette équipe => défaite
-                    defaites += 1
-
-            # Calcul des points (3 points par victoire en volley)
-            points = victoires * 3
->>>>>>> antoine
 
             stats.append({
                 'team': team,
@@ -659,7 +637,6 @@ def matchs_poules(request, tournament_id):
                 'diff_points': diff_points,
             })
 
-<<<<<<< HEAD
         # Tri : victoires -> diff sets -> diff points
         stats.sort(
             key=lambda x: (
@@ -671,33 +648,20 @@ def matchs_poules(request, tournament_id):
         )
 
         # Attribution du rang
-=======
-        # On trie les équipes par points
-        stats.sort(key=lambda x: x['points'], reverse=True)
-
-        # On ajoute le classement
->>>>>>> antoine
         for index, team_data in enumerate(stats, start=1):
             team_data['rank'] = index
 
         # On ajoute cette pool au résultat
         pools_data.append({'pool': pool, 'stats': stats})
 
-<<<<<<< HEAD
-=======
-    # On passe les données au template
->>>>>>> antoine
     return render(request, 'matchs_poules.html', {
         'pools_data': pools_data,
         'tournament': tournament
     })
 
 
-<<<<<<< HEAD
 
 
-=======
->>>>>>> antoine
 # Détail d'une poule
 from django.shortcuts import render, get_object_or_404
 from .models import Pool, Match
