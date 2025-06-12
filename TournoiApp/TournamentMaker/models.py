@@ -143,7 +143,8 @@ class Pool(models.Model):
         return self.teams.all()
 
     def all_matches_played(self):
-        return all(match.get_auto_winner() is not None for match in self.matches.all())
+        nb_sets_to_win = self.tournament.nb_sets_to_win
+        return all(match.get_auto_winner(nb_sets_to_win) is not None for match in self.matches.all())
 
     def calculate_rankings(self):
         stats = {team.id: {"team": team, "wins": 0, "sets_won": 0, "sets_lost": 0} for team in self.teams.all()}
@@ -366,3 +367,37 @@ def create_pools_for_tournament(sender, instance, created, **kwargs):
             pool_name = f"Pool {i}"
             pool = Pool.objects.create(name=pool_name, tournament=instance)
             print(f"Pool créée : {pool.name} pour le tournoi {instance.name}")
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from .models import Team, Match, Pool
+
+@receiver(post_save, sender=Team)
+def auto_generate_pool_matches(sender, instance, **kwargs):
+    pool = instance.pool
+    if pool is None:
+        return
+
+    # Récupérer toutes les équipes de la pool
+    teams = list(pool.teams.all())
+
+    # Récupérer les matchs existants dans cette pool (phase 'pool')
+    existing_matches = Match.objects.filter(pool=pool, phase='pool')
+    existing_pairs = set()
+    for m in existing_matches:
+        pair = tuple(sorted([m.team_a.id, m.team_b.id]))
+        existing_pairs.add(pair)
+
+    # Pour chaque paire d’équipes
+    from itertools import combinations
+    for team_a, team_b in combinations(teams, 2):
+        pair = tuple(sorted([team_a.id, team_b.id]))
+        if pair not in existing_pairs:
+            # Créer le match en base
+            Match.objects.create(
+                pool=pool,
+                team_a=team_a,
+                team_b=team_b,
+                phase='pool',
+            )
+            print(f"Match créé : {team_a.name} vs {team_b.name} dans {pool.name}")

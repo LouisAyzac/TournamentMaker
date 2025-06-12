@@ -631,9 +631,10 @@ def detail_poule(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
     tournament = pool.tournament
 
-    # Matchs joués dans la poule
+    # Matchs joués et créés dans la poule (phase 'pool')
     matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
 
+    # On prépare les scores par sets (comme tu le fais déjà)
     for match in matchs:
         match.score_sets = []
         for i in range(1, 6):
@@ -646,35 +647,12 @@ def detail_poule(request, pool_id):
                     'team_b_score': sb
                 })
 
-    # Toutes les équipes de la poule
-    teams = list(pool.teams.all())
-
-    # Trouver toutes les paires possibles d'équipes
-    from itertools import combinations
-    all_pairs = list(combinations(teams, 2))
-
-    # Trouver les paires qui n'ont pas encore joué (matchs déjà existants)
-    played_pairs = set()
-    for m in matchs:
-        pair = tuple(sorted([m.team_a.id, m.team_b.id]))
-        played_pairs.add(pair)
-
-    # Matchs possibles = paires non jouées
-    matchs_possibles = []
-    for team_a, team_b in all_pairs:
-        pair = tuple(sorted([team_a.id, team_b.id]))
-        if pair not in played_pairs:
-            # Créer un objet Match fictif pour affichage (pas en base)
-            from types import SimpleNamespace
-            m = SimpleNamespace(team_a=team_a, team_b=team_b)
-            matchs_possibles.append(m)
-
     return render(request, 'detail_poule.html', {
         'pool': pool,
         'matchs': matchs,
-        'matchs_possibles': matchs_possibles,
         'tournament': tournament,
     })
+
 
 # Vue phase finale
 def matchs_finale(request):
@@ -1011,11 +989,20 @@ from .models import Match
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
+from django.urls import reverse
 
 @login_required
 def score_match(request, match_id):
     match = get_object_or_404(Match, id=match_id)
+    if match.phase == 'pool' and match.pool:
+        back_url = reverse('detail_poule', args=[match.pool.id])
+    else:
+        back_url = reverse('direct_elimination')
 
+    return render(request, 'score_match.html', {
+        'match': match,
+        'back_url': back_url
+    })
     try:
         user_profile = request.user.userprofile
     except UserProfile.DoesNotExist:

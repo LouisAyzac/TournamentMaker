@@ -107,6 +107,6 @@
     <button type="submit" class="submit-btn">Enregistrer le score</button>
   </form>
 
-  <a href="{% url 'direct_elimination' %}" class="back-link">← Retour à la phase éliminatoire</a>
+  <a href="{{ back_url }}" class="back-link">← Retour</a>
 </div>
 {% endblock %}
