@@ -31,9 +31,15 @@
 
     <a href="{% url 'matchs_poules' tournament.id %}" class="btn btn-primary choice-button">
         Phase de Poule
+   <a href="{% url 'liste_matchs_phase_finale' %}?tournament_id={{ tournament.id }}" class="btn btn-success choice-button">
+    Phase Finale
+</a>
+
+
+    <!-- ✅ Nouveau bouton pour créer les matchs -->
+    <a href="{% url 'matchs_finale' tournament.id %}" class="btn btn-warning choice-button">
+        Création des matchs de la phase finale
     </a>
-    <a href="{% url 'matchs_finale' %}" class="btn btn-success choice-button">
-        Phase Finale
-    </a>
+
 </div>
 {% endblock %}

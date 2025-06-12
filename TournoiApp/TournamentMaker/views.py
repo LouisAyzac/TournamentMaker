@@ -1092,3 +1092,80 @@ def score_match(request, match_id):
         'set_numbers': set_numbers,
         'score_fields': score_fields,
     })
+from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Pool, Ranking, Tournament, Match, Team
+
+def afficher_deux_premiers(request, tournament_id):
+    tournament = get_object_or_404(Tournament, id=tournament_id)
+
+    # Vérifie si les matchs ont déjà été créés pour la phase finale
+    matchs_existent = Match.objects.filter(tournament=tournament, phase='quarter').exists()
+
+    pools = Pool.objects.filter(tournament=tournament)
+    data = []
+    qualified_teams = []
+
+    for pool in pools:
+        pool.calculate_rankings()
+        top_rankings = Ranking.objects.filter(team__pool=pool).order_by('rank')[:2]
+        data.append({
+            'pool': pool,
+            'rankings': top_rankings
+        })
+        qualified_teams.extend([ranking.team for ranking in top_rankings])
+
+    nb_matches = len(qualified_teams) // 2
+    match_range = range(nb_matches)
+
+    if request.method == 'POST' and not matchs_existent:
+        created_match_ids = []
+
+        for i in match_range:
+            team_a_id = request.POST.get(f'team_a_{i}')
+            team_b_id = request.POST.get(f'team_b_{i}')
+
+            if team_a_id and team_b_id and team_a_id != team_b_id:
+                match = Match.objects.create(
+                    team_a_id=team_a_id,
+                    team_b_id=team_b_id,
+                    tournament=tournament,
+                    phase='quarter',
+                    statut='ND'
+                )
+                created_match_ids.append(match.id)
+
+        request.session['created_match_ids'] = created_match_ids
+        return redirect('matchs_choice')
+
+    return render(request, 'matchs_finale.html', {
+        'data': data,
+        'tournament': tournament,
+        'qualified_teams': qualified_teams,
+        'match_range': match_range,
+        'matchs_existent': matchs_existent,  # ← on passe cette info au template
+    })
+
+
+
+from django.shortcuts import render
+from .models import Match
+
+from django.shortcuts import render
+from .models import Match
+
+def liste_matchs_phase_finale(request):
+    tournament_id = request.GET.get('tournament_id')
+
+    if tournament_id:
+        matchs = Match.objects.filter(tournament_id=tournament_id, phase='quarter')
+        message = "Matchs de phase finale pour ce tournoi." if matchs.exists() else "Aucun match n’a été créé pour ce tournoi."
+    else:
+        matchs = Match.objects.none()
+        message = "Aucun tournoi spécifié."
+
+    return render(request, 'liste_matchs_phase_finale.html', {
+        'matchs': matchs,
+        'message': message
+    })
+

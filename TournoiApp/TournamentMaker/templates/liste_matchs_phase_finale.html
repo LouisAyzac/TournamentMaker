@@ -1,0 +1,68 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<h1 style="color: black;">Matchs de la phase finale</h1>
+
+{% if message %}
+  <p style="color: black;"><strong>{{ message }}</strong></p>
+{% endif %}
+
+{% if matchs %}
+  <style>
+    .match-card {
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        padding: 10px 15px;
+        margin: 10px 0 10px 20px;
+        width: 320px;
+        background-color: #f9f9f9;
+        cursor: pointer;
+        transition: background-color 0.2s, box-shadow 0.2s;
+        text-align: left;
+    }
+
+    .match-card:hover {
+        background-color: #f1f1f1;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .team-name {
+        font-weight: bold;
+        font-size: 1rem;
+        display: inline-block;
+    }
+
+    .vs {
+        margin: 0 8px;
+        font-size: 0.95rem;
+        color: black; /* ← ✅ Le "vs" est maintenant noir */
+    }
+
+    .winner {
+        color: green;
+    }
+
+    a.match-link {
+        text-decoration: none;
+        color: inherit;
+    }
+  </style>
+
+  {% for match in matchs %}
+    <a href="{% url 'score_match' match.id %}?tournament_id={{ match.tournament.id }}" class="match-link">
+      <div class="match-card">
+        <span class="team-name {% if match.winner_team == match.team_a %}winner{% endif %}">
+          {{ match.team_a.name }}
+        </span>
+        <span class="vs">vs</span>
+        <span class="team-name {% if match.winner_team == match.team_b %}winner{% endif %}">
+          {{ match.team_b.name }}
+        </span>
+      </div>
+    </a>
+  {% endfor %}
+
+{% else %}
+  <p style="color: black;">Aucun match à afficher.</p>
+{% endif %}
+{% endblock %}
