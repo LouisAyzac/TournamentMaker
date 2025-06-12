@@ -214,11 +214,11 @@ class Match(models.Model):
         ('third_place', 'Petite finale'),
     ]
     phase = models.CharField(max_length=20, choices=PHASE_CHOICES, default='pool')
- 
+
     next_match = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_matches')
     next_match_slot = models.CharField(max_length=1, choices=[('A', 'Team A'), ('B', 'Team B')], null=True, blank=True)
 
- 
+
     @property
     def winner_team(self):
         return self.team_a if self.winner_side == 'A' else self.team_b if self.winner_side == 'B' else None

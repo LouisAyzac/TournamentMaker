@@ -447,11 +447,7 @@ def signup(request):
             for pool in pools:
                 teams_in_pool = pool.teams.all()
                 total_score = sum(
-<<<<<<< HEAD
                     sum(int(player.level) for player in team.players.all() if player.level)
-=======
-                    sum(player.level for player in team.players.all())
->>>>>>> antoine
                     for team in teams_in_pool
                 )
                 team_count = teams_in_pool.count()
@@ -932,7 +928,7 @@ from .models import Tournament, Team
 
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Tournament, Team
- 
+
 from collections import defaultdict
 
 from math import ceil, log2
@@ -953,7 +949,7 @@ from math import ceil, log2
 from collections import defaultdict
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Match, Team, Tournament
- 
+
 def direct_elimination(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
@@ -963,7 +959,7 @@ def direct_elimination(request):
 
     if tournament.type_tournament != 'DE':
         return redirect('home')
- 
+
     # 🔁 Vérifie les équipes et le nombre attendu de matchs de premier tour
     teams = list(Team.objects.filter(tournament=tournament))
     num_teams = len(teams)
@@ -1022,22 +1018,17 @@ def direct_elimination(request):
     return render(request, 'direct_elimination.html', {
         'tournament': tournament,
         'all_matches': all_matches,
-
     })
 
 
 
- 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Match
 
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Match
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render, redirect
-from .models import Match, UserProfile
- 
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Match
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
@@ -1045,7 +1036,11 @@ from .models import Match, UserProfile
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
- 
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render, redirect
+from .models import Match, UserProfile
+
 @login_required
 def score_match(request, match_id):
     match = get_object_or_404(Match, id=match_id)
@@ -1056,17 +1051,15 @@ def score_match(request, match_id):
         return render(request, 'no_team.html')
 
     user_team = user_profile.team
- 
-    # ❌ Vérifie si l'utilisateur peut modifier le match
 
+    # ❌ Vérifie si l'utilisateur peut modifier le match
     if user_team != match.team_a and user_team != match.team_b:
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match."
         })
- 
+
     if request.method == 'POST':
         # ✅ Enregistrement des scores
-
         match.set1_team_a = int(request.POST.get('set1_team_a', 0))
         match.set1_team_b = int(request.POST.get('set1_team_b', 0))
         match.set2_team_a = int(request.POST.get('set2_team_a', 0))
@@ -1074,7 +1067,7 @@ def score_match(request, match_id):
         match.set3_team_a = int(request.POST.get('set3_team_a', 0))
         match.set3_team_b = int(request.POST.get('set3_team_b', 0))
         match.save()
- 
+
         # 🧠 Déterminer le gagnant automatiquement
         nb_sets_to_win = 2  # Change à 3 si BO5
         winner = match.get_auto_winner(nb_sets_to_win)
@@ -1193,4 +1186,3 @@ def create_elimination_match(request):
 
 
 
- 
