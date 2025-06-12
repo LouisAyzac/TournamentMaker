@@ -575,29 +575,43 @@ from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
 from .models import Pool, Match, Tournament
 
-def matchs_poules(request, tournament_id): 
+from django.db.models import Q
+from django.shortcuts import render, get_object_or_404
+from .models import Pool, Match, Tournament
+
+def matchs_poules(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     pools_data = []
 
-    # 🔥 On filtre les pools du tournoi en question
+    # On récupère les pools du tournoi
     pools = Pool.objects.filter(tournament=tournament)
-    print("Pools récupérées :", pools)  # Debugging, vérifier si on récupère bien des pools
-
-    if not pools:
-        print("Aucune pool trouvée pour ce tournoi.")  # Si aucune pool n'est trouvée
 
     for pool in pools.prefetch_related('teams'):
         stats = []
 
         for team in pool.teams.all():
+            # On récupère les matchs de cette équipe dans cette pool
             matchs_joues = Match.objects.filter(pool=pool, phase='pool')\
                 .filter(Q(team_a=team) | Q(team_b=team))\
-                .exclude(statut='ND')
+                .exclude(statut='ND')  # On ne prend pas les matchs "non débuté"
 
             total_joues = matchs_joues.count()
-            victoires = sum(1 for match in matchs_joues if match.winner_team == team)
-            defaites = total_joues - victoires
-            points = victoires * 3  # 3 points par victoire
+
+            # ⚠ On utilise winner_side, car c'est ce qui est mis à jour dans score_match
+            victoires = 0
+            defaites = 0
+
+            for match in matchs_joues:
+                if match.winner_side == 'A' and match.team_a == team:
+                    victoires += 1
+                elif match.winner_side == 'B' and match.team_b == team:
+                    victoires += 1
+                elif match.winner_side is not None:
+                    # Si le match a un winner, et que ce n'est pas cette équipe => défaite
+                    defaites += 1
+
+            # Calcul des points (3 points par victoire en volley)
+            points = victoires * 3
 
             stats.append({
                 'team': team,
@@ -607,20 +621,21 @@ def matchs_poules(request, tournament_id):
                 'points': points
             })
 
-        # Classement selon les points
+        # On trie les équipes par points
         stats.sort(key=lambda x: x['points'], reverse=True)
+
+        # On ajoute le classement
         for index, team_data in enumerate(stats, start=1):
             team_data['rank'] = index
 
+        # On ajoute cette pool au résultat
         pools_data.append({'pool': pool, 'stats': stats})
 
-    print("Pools data envoyées :", pools_data)  # Vérifier si les données sont bien envoyées
-
+    # On passe les données au template
     return render(request, 'matchs_poules.html', {
         'pools_data': pools_data,
         'tournament': tournament
     })
-
 
 
 # Détail d'une poule
