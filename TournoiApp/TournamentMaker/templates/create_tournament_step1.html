@@ -30,7 +30,7 @@
 
     <div class="form-group">
       <label for="address"><strong>Adresse :</strong></label>
-      <input type="text" class="form-control" name="address">
+      <input type="text" class="form-control" name="address" required>
     </div>
 
     <div class="form-group form-check mt-3">
@@ -67,7 +67,7 @@
           Tournoi à la Ronde
         </label>
       </div>
-       <div class="form-group mt-3" id="nb_pools_group">
+      <div class="form-group mt-3" id="nb_pools_group">
       <label for="nb_pools"><strong>Nombre de poules :</strong></label>
       <input type="number" class="form-control" name="nb_pools" min="1">
     </div>
@@ -81,7 +81,7 @@
     </div>
 
    
-    <hr class="my-4">
+    <!--<hr class="my-4">
 
     <div class="form-group">
       <label for="nb_teams"><strong>Nombre d’équipes :</strong></label>
@@ -105,23 +105,24 @@
 
     <button type="submit" class="btn btn-success mt-4 w-100">Créer le tournoi</button>
   </form>
-</div>
+</div> -->
 
+<button type="submit" class="btn btn-success mt-4 w-100">Étape suivante</button>
 <script>
   function togglePoolsField() {
     var roundRobinSelected = document.getElementById('roundRobin').checked;
     var nbPoolsGroup = document.getElementById('nb_pools_group');
+    var nbPoolsInput = nbPoolsGroup.querySelector('input');
 
     if (roundRobinSelected) {
       nbPoolsGroup.style.display = 'block';
+      nbPoolsInput.setAttribute('required', 'required');
     } else {
       nbPoolsGroup.style.display = 'none';
+      nbPoolsInput.removeAttribute('required');
     }
   }
 
-  // Appeler la fonction au chargement de la page pour gérer l'état initial
-  window.onload = function() {
-    togglePoolsField();
-  };
+  window.onload = togglePoolsField;
 </script>
 {% endblock %}

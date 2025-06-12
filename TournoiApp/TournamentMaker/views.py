@@ -776,6 +776,76 @@ from datetime import datetime
 def parse_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d').date()
 
+def create_tournament_step1(request):
+    if request.method == 'POST':
+        # Enregistre les infos dans la session
+        request.session['step1'] = {
+            'name': request.POST.get('name'),
+            'department': request.POST.get('department'),
+            'address': request.POST.get('address'),
+            'is_indoor': request.POST.get('is_indoor') == 'on',
+            'start_date': request.POST.get('start_date'),
+            'end_date': request.POST.get('end_date'),
+            'sport': request.POST.get('sport'),
+            'type_tournament': request.POST.get('type_tournament'),
+            'nb_pools': request.POST.get('nb_pools'),
+        }
+        return redirect('create_tournament_step2')
+    
+    return render(request, 'create_tournament_step1.html')
+
+def create_tournament_step2(request):
+    step1 = request.session.get('step1')
+    if not step1:
+        return redirect('create_tournament_step1')
+
+    sport = step1['sport']
+
+    if request.method == 'POST':
+        common_data = {
+            'name': step1['name'],
+            'department': step1['department'],
+            'address': step1['address'],
+            'is_indoor': step1['is_indoor'],
+            'start_date': parse_date(step1['start_date']),
+            'end_date': parse_date(step1['end_date']),
+            'sport': sport,
+            'type_tournament': step1['type_tournament'],
+            'number_of_pools': int(step1.get('nb_pools') or 0),
+            'max_teams': int(request.POST.get('nb_teams')),
+            'players_per_team': int(request.POST.get('players_per_team')),
+        }
+
+        # Ajout des champs selon le sport
+        if sport == 'volleyball':
+            common_data.update({
+                'nb_sets_to_win': int(request.POST.get('nb_sets_to_win')),
+                'points_per_set': int(request.POST.get('points_per_set')),
+            })
+        elif sport == 'football':
+            common_data.update({
+                'match_duration': int(request.POST.get('match_duration')),
+                'extra_time': request.POST.get('extra_time') == 'on',
+                'penalty_shootout': request.POST.get('penalty_shootout') == 'on',
+            })
+        elif sport == 'rugby':
+            common_data.update({
+                'match_duration': int(request.POST.get('match_duration')),
+                'half_time_duration': int(request.POST.get('half_time_duration')),
+            })
+        elif sport == 'basketball':
+            common_data.update({
+                'quarter_duration': int(request.POST.get('quarter_duration')),
+                'number_of_quarters': int(request.POST.get('number_of_quarters')),
+            })
+
+        # Création du tournoi
+        tournoi = Tournament.objects.create(**common_data)
+        return redirect('home')
+
+    return render(request, 'create_tournament_step2.html', {'sport': sport})
+
+""""
 def create_tournament(request):
     if request.method == 'POST':
         # Retrieve form data
@@ -853,7 +923,7 @@ def create_tournament(request):
         return redirect('home')
 
     return render(request, 'create_tournament.html')
-
+"""
 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
