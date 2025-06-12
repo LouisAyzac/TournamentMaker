@@ -19,8 +19,8 @@
           {% endif %}
           <p class="mb-2"><i class="fas fa-building text-primary me-2"></i><strong>En intérieur :</strong> {{ tournoi.is_indoor|yesno:"Oui,Non" }}</p>
           <p class="mb-2"><i class="fas fa-users text-primary me-2"></i><strong>Équipes max :</strong> {{ tournoi.max_teams }}</p>
-          <p class="mb-2"><i class="fas fa-user-friends text-primary me-2"></i><strong>Joueurs/équipe :</strong> {{ tournoi.players_per_team }}</p>
-          <p class="mb-2"><i class="fas fa-list-ol text-primary me-2"></i><strong>Équipes inscrites :</strong> {{ tournoi.teams.count }} / {{ tournoi.max_teams }}</p>
+          <p class="mb-2"><i class="fas fa-user-friends text-primary me-2"></i><strong>Nombre de joueurs par équipe :</strong> {{ tournoi.players_per_team }}</p>
+          <p class="mb-2"><i class="fas fa-list-ol text-primary me-2"></i><strong>Équipes inscrites :</strong> {{ tournoi.teams.count }}  {{ tournoi.max_teams }}</p>
           {% if tournoi.teams.count >= tournoi.max_teams %}
           <div class="text-danger fw-bold"><i class="fas fa-exclamation-circle me-1"></i>Tournoi complet</div>
           {% endif %}
