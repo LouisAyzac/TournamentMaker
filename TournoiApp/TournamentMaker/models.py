@@ -42,10 +42,6 @@ class Tournament(models.Model):
     def __str__(self):
         return self.name
 
-    @property
-    def is_finished(self):
-        return self.end_date < date.today()
-
 
 class Team(models.Model):
     name = models.CharField(max_length=100)

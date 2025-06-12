@@ -1114,4 +1114,3 @@ def score_match(request, match_id):
         'match': match,
         'back_url': back_url
     })
-    

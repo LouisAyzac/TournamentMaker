@@ -57,11 +57,9 @@
                 <a href="{% url 'rankings_list' %}" class="nav-button">
                     <i class="fas fa-medal"></i> Classements
                 </a>
-                {% if tournoi and not tournoi.is_finished %}
-                    <a href="{% url 'signup' %}" class="nav-button">
-                        <i class="fas fa-file-alt"></i> Inscription
-                    </a>
-                {% endif %}
+                <a href="{% url 'signup' %}" class="nav-button">
+                    <i class="fas fa-file-alt"></i> Inscription
+                </a>
                 {% if request.session.type_tournament == 'RR' %}
                     <a href="{% url 'matchs_choice' %}" class="nav-button">
                         <i class="fas fa-clock"></i> Matchs
