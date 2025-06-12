@@ -25,7 +25,7 @@ class Tournament(models.Model):
     ]
 
     name = models.CharField(max_length=100)
-    department = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
     address = models.CharField(max_length=255, blank=True, null=True)
     is_indoor = models.BooleanField(default=True)
     start_date = models.DateField(default=date.today)
