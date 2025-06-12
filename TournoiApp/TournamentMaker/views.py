@@ -83,7 +83,6 @@ def home(request):
         'sports': sports,
         'selected_sport': selected_sport,
         'selected_department': selected_department,
-        'hide_navbar': True,
     }
 
     return render(request, 'home.html', context)
@@ -579,12 +578,7 @@ def matchs_poules(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     pools_data = []
 
-    # 🔥 On filtre les pools du tournoi en question
     pools = Pool.objects.filter(tournament=tournament)
-    print("Pools récupérées :", pools)  # Debugging, vérifier si on récupère bien des pools
-
-    if not pools:
-        print("Aucune pool trouvée pour ce tournoi.")  # Si aucune pool n'est trouvée
 
     for pool in pools.prefetch_related('teams'):
         stats = []
@@ -597,29 +591,67 @@ def matchs_poules(request, tournament_id):
             total_joues = matchs_joues.count()
             victoires = sum(1 for match in matchs_joues if match.winner_team == team)
             defaites = total_joues - victoires
-            points = victoires * 3  # 3 points par victoire
+
+            sets_gagnes = 0
+            sets_perdus = 0
+            points_gagnes = 0
+            points_perdus = 0
+
+            for match in matchs_joues:
+                for i in range(1, 6):
+                    a_score = getattr(match, f'set{i}_team_a', None)
+                    b_score = getattr(match, f'set{i}_team_b', None)
+
+                    if a_score is not None and b_score is not None and (a_score != 0 or b_score != 0):
+                        if match.team_a == team:
+                            if a_score > b_score:
+                                sets_gagnes += 1
+                            elif b_score > a_score:
+                                sets_perdus += 1
+                            points_gagnes += a_score
+                            points_perdus += b_score
+                        elif match.team_b == team:
+                            if b_score > a_score:
+                                sets_gagnes += 1
+                            elif a_score > b_score:
+                                sets_perdus += 1
+                            points_gagnes += b_score
+                            points_perdus += a_score
+
+            # ➜ On calcule les différences ici
+            diff_sets = sets_gagnes - sets_perdus
+            diff_points = points_gagnes - points_perdus
 
             stats.append({
                 'team': team,
                 'matchs_joues': total_joues,
                 'victoires': victoires,
                 'defaites': defaites,
-                'points': points
+                'diff_sets': diff_sets,
+                'diff_points': diff_points,
             })
 
-        # Classement selon les points
-        stats.sort(key=lambda x: x['points'], reverse=True)
+        # Tri : victoires -> diff sets -> diff points
+        stats.sort(
+            key=lambda x: (
+                x['victoires'],
+                x['diff_sets'],
+                x['diff_points']
+            ),
+            reverse=True
+        )
+
+        # Attribution du rang
         for index, team_data in enumerate(stats, start=1):
             team_data['rank'] = index
 
         pools_data.append({'pool': pool, 'stats': stats})
 
-    print("Pools data envoyées :", pools_data)  # Vérifier si les données sont bien envoyées
-
     return render(request, 'matchs_poules.html', {
         'pools_data': pools_data,
         'tournament': tournament
     })
+
 
 
 
@@ -755,6 +787,78 @@ from datetime import datetime
 def parse_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d').date()
 
+def create_tournament_step1(request):
+    if request.method == 'POST':
+        # Enregistre les infos dans la session
+        request.session['step1'] = {
+            'name': request.POST.get('name'),
+            'department': request.POST.get('department'),
+            'address': request.POST.get('address'),
+            'is_indoor': request.POST.get('is_indoor') == 'on',
+            'start_date': request.POST.get('start_date'),
+            'end_date': request.POST.get('end_date'),
+            'sport': request.POST.get('sport'),
+            'type_tournament': request.POST.get('type_tournament'),
+            'nb_pools': request.POST.get('nb_pools'),
+        }
+        return redirect('create_tournament_step2')
+    
+    return render(request, 'create_tournament_step1.html')
+
+def create_tournament_step2(request):
+    step1 = request.session.get('step1')
+    if not step1:
+        return redirect('create_tournament_step1')
+
+    sport = step1['sport']
+
+    if request.method == 'POST':
+        common_data = {
+            'name': step1['name'],
+            'department': step1['department'],
+            'address': step1['address'],
+            'is_indoor': step1['is_indoor'],
+            'start_date': parse_date(step1['start_date']),
+            'end_date': parse_date(step1['end_date']),
+            'sport': sport,
+            'type_tournament': step1['type_tournament'],
+            'number_of_pools': int(step1.get('nb_pools') or 0),
+            'max_teams': int(request.POST.get('nb_teams')),
+            'players_per_team': int(request.POST.get('players_per_team')),
+        }
+
+        if sport == 'volleyball':
+            common_data.update({
+                'nb_sets_to_win': int(request.POST.get('nb_sets_to_win')),
+                'points_per_set': int(request.POST.get('points_per_set')),
+            })
+            
+            
+        elif sport == 'football':
+            common_data.update({
+                'match_duration': int(request.POST.get('match_duration')),
+                'extra_time': request.POST.get('extra_time') == 'on',
+                'penalty_shootout': request.POST.get('penalty_shootout') == 'on',
+            })
+        elif sport == 'rugby':
+            common_data.update({
+                'match_duration': int(request.POST.get('match_duration')),
+                'half_time_duration': int(request.POST.get('half_time_duration')),
+            })
+        elif sport == 'basketball':
+            common_data.update({
+                'quarter_duration': int(request.POST.get('quarter_duration')),
+                'number_of_quarters': int(request.POST.get('number_of_quarters')),
+            })
+
+            
+        # Création du tournoi
+        tournoi = Tournament.objects.create(**common_data)
+        return redirect('home')
+
+    return render(request, 'create_tournament_step2.html', {'sport': sport})
+
+""""
 def create_tournament(request):
     if request.method == 'POST':
         # Retrieve form data
@@ -832,7 +936,7 @@ def create_tournament(request):
         return redirect('home')
 
     return render(request, 'create_tournament.html')
-
+"""
 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
@@ -1092,3 +1196,6 @@ def score_match(request, match_id):
         'set_numbers': set_numbers,
         'score_fields': score_fields,
     })
+
+def home_landing(request):
+    return render(request, 'home_landing.html', {'hide_navbar': True})
