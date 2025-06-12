@@ -6,6 +6,13 @@ from .models import Player, Team, Match, Pool, Ranking, Tournament, UserProfile
 from django.contrib.auth.models import User
 from django.utils.dateparse import parse_date
 
+LEVEL_MAP = {
+    'débutant': 1,
+    'intermédiaire': 2,
+    'avancé': 3,
+    'expert': 4,
+    'maître': 5,
+}
 
 # === Page d'accueil et généralités ===
 from django.shortcuts import render, redirect, get_object_or_404
@@ -440,7 +447,7 @@ def signup(request):
             for pool in pools:
                 teams_in_pool = pool.teams.all()
                 total_score = sum(
-                    sum(player.level for player in team.players.all())
+                    sum(int(player.level) for player in team.players.all() if player.level)
                     for team in teams_in_pool
                 )
                 team_count = teams_in_pool.count()
@@ -509,8 +516,6 @@ L'équipe du tournoi
         'players_per_team': players_per_team,
         'total_players': total_players
     })
-
-
 
  
 def signup_success(request):
@@ -619,10 +624,14 @@ def matchs_poules(request, tournament_id):
 
 
 # Détail d'une poule
+from django.shortcuts import render, get_object_or_404
+from .models import Pool, Match
+
 def detail_poule(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
-    tournament = pool.tournament  # assuming your Pool model has a ForeignKey to Tournament
+    tournament = pool.tournament
 
+    # Matchs joués dans la poule
     matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
 
     for match in matchs:
@@ -630,19 +639,42 @@ def detail_poule(request, pool_id):
         for i in range(1, 6):
             sa = getattr(match, f"set{i}_team_a", None)
             sb = getattr(match, f"set{i}_team_b", None)
-            if sa is not None and sb is not None:
+            if sa is not None and sb is not None and (sa != 0 or sb != 0):
                 match.score_sets.append({
                     'set_number': i,
                     'team_a_score': sa,
                     'team_b_score': sb
                 })
 
+    # Toutes les équipes de la poule
+    teams = list(pool.teams.all())
+
+    # Trouver toutes les paires possibles d'équipes
+    from itertools import combinations
+    all_pairs = list(combinations(teams, 2))
+
+    # Trouver les paires qui n'ont pas encore joué (matchs déjà existants)
+    played_pairs = set()
+    for m in matchs:
+        pair = tuple(sorted([m.team_a.id, m.team_b.id]))
+        played_pairs.add(pair)
+
+    # Matchs possibles = paires non jouées
+    matchs_possibles = []
+    for team_a, team_b in all_pairs:
+        pair = tuple(sorted([team_a.id, team_b.id]))
+        if pair not in played_pairs:
+            # Créer un objet Match fictif pour affichage (pas en base)
+            from types import SimpleNamespace
+            m = SimpleNamespace(team_a=team_a, team_b=team_b)
+            matchs_possibles.append(m)
+
     return render(request, 'detail_poule.html', {
         'pool': pool,
         'matchs': matchs,
-        'tournament': tournament,  # <-- Ajoute ça !
+        'matchs_possibles': matchs_possibles,
+        'tournament': tournament,
     })
-
 
 # Vue phase finale
 def matchs_finale(request):
@@ -897,8 +929,6 @@ from .models import Tournament, Team
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Tournament, Team
 
-from math import ceil
-
 def direct_elimination(request):
     tournament_id = request.session.get('selected_tournament_id')
     if not tournament_id:
@@ -910,38 +940,25 @@ def direct_elimination(request):
         return redirect('home')
 
     teams = list(Team.objects.filter(tournament=tournament).order_by('id'))
-    total_teams = len(teams)
 
-    # Récupérer tous les matchs existants du tournoi, toutes phases confondues
-    matches = Match.objects.filter(team_a__tournament=tournament)
-    match_lookup = {(m.team_a.id, m.team_b.id): m for m in matches}
+    # Récupérer tous les matchs existants
+    matches = Match.objects.filter(team_a__tournament=tournament, phase='quarter')
+    match_lookup = {
+        (m.team_a.id, m.team_b.id): m for m in matches
+    }
 
-    # Génération des tours
-    matchups_by_round = []
-    current_round = []
-
-    # Tour initial : équipes directement
-    for i in range(0, total_teams, 2):
+    # Construire les paires avec match existant ou non
+    matchups = []
+    for i in range(0, len(teams), 2):
         team1 = teams[i]
-        team2 = teams[i + 1] if i + 1 < total_teams else None
+        team2 = teams[i + 1] if i + 1 < len(teams) else None
         match = match_lookup.get((team1.id, team2.id)) if team2 else None
-        current_round.append((team1, team2, match))
-    matchups_by_round.append(current_round)
-
-    # Générer les tours suivants à vide (placeholders)
-    round_size = ceil(total_teams / 2)
-    while round_size > 1:
-        next_round = []
-        for _ in range(0, round_size, 2):
-            next_round.append((None, None, None))  # Placeholders pour future logique de gagnants
-        matchups_by_round.append(next_round)
-        round_size = ceil(round_size / 2)
+        matchups.append((team1, team2, match))
 
     return render(request, 'direct_elimination.html', {
         'tournament': tournament,
-        'matchups_by_round': matchups_by_round,
+        'matchups': matchups,
     })
-
 
 
 
