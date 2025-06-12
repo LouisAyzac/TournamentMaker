@@ -3,6 +3,7 @@
 <h2>Phase Éliminatoire - {{ tournament.name }}</h2>
 
 <style>
+<<<<<<< HEAD
   .match-block {
     display: flex;
     justify-content: space-between;
@@ -35,6 +36,101 @@
     margin-bottom: 20px;
   }
 
+=======
+  .bracket {
+    display: flex;
+    align-items: flex-start;
+    gap: 60px;
+    margin-left: 20px;
+    margin-top: 40px;
+  }
+
+  .round {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .round h3 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+    color: #333;
+  }
+
+  .connector-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    min-height: 250px;
+  }
+
+  .semi-wrapper {
+    margin-top: 40px;
+  }
+
+  .match-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #000000;
+    border-radius: 8px;
+    padding: 14px 18px;
+    background-color: #fff;
+    width: 420px;
+    box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.05);
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    transition: none;
+    cursor: default;
+    text-decoration: none;
+  }
+
+  .match-block:hover {
+    background-color: #fff;
+    cursor: default;
+  }
+
+  .team {
+    width: 40%;
+    text-align: center;
+    font-weight: bold;
+    padding: 8px;
+    border-radius: 4px;
+    color: #000;
+  }
+
+  .vs {
+    width: 20%;
+    text-align: center;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: #000000;
+  }
+
+  .vs a {
+    text-decoration: none;
+    color: #0000EE;
+  }
+
+  .winner {
+    background-color: #c6f6c6;
+    font-weight: bold;
+    font-size: 1.05rem;
+  }
+
+  .finished {
+    opacity: 0.65;
+    pointer-events: none;
+  }
+
+  .form-wrapper {
+    margin-bottom: 20px;
+  }
+
+>>>>>>> louis
   form {
     all: unset;
   }
@@ -43,6 +139,7 @@
     color: #000;
     font-size: 1.1em;
     margin-top: 20px;
+<<<<<<< HEAD
   }
 </style>
 
@@ -80,5 +177,46 @@
 {% else %}
   <p class="empty-message">Aucune équipe encore inscrite.</p>
 {% endif %}
+=======
+    text-align: center;
+  }
+
+  .status {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #000000;
+  }
+</style>
+
+<div class="bracket">
+  <!-- Quarts -->
+  <div class="round">
+    <h3>Quarts</h3>
+    {% for team1, team2, match in quarter_matchups %}
+      {% include 'match_block.html' %}
+    {% endfor %}
+  </div>
+
+  <!-- Demi centrée -->
+  <div class="connector-column">
+    <h3>Demis</h3>
+    <div class="semi-wrapper">
+      {% if semi_matchups %}
+        {% include 'match_block.html' with team1=semi_matchups.0.0 team2=semi_matchups.0.1 match=semi_matchups.0.2 %}
+      {% else %}
+        <div style="height: 120px;"></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Finale -->
+  <div class="round">
+    <h3>Finale</h3>
+    {% for team1, team2, match in final_matchups %}
+      {% include 'match_block.html' %}
+    {% endfor %}
+  </div>
+</div>
+>>>>>>> louis
 
 {% endblock %}
