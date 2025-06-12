@@ -1,44 +1,39 @@
-{% extends "base_generic.html" %}
+{% load static %}
+{% load match_extras %}
 
-{% block content %}
-<form method="post">
-  {% csrf_token %}
-  <a href="{% url 'index' %}" class="btn btn-primary" style="margin-top: 10px; display: inline-block;">Retour au menu</a>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scores</title>
+</head>
+<body>
+    <h1>Scores</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {% for match in matches %}
+        <div>
+            <h2>Match {{ match.id }} : {{ match.team_a }} vs {{ match.team_b }}</h2>
+            {% for set_number in sets_range %}
+            <div>
+                <label for="match_{{ match.id }}_set{{ set_number }}_team_a">
+                    Set {{ set_number }} - {{ match.team_a }}:
+                </label>
+                <input type="number" id="match_{{ match.id }}_set{{ set_number }}_team_a" 
+                       name="match_{{ match.id }}_set{{ set_number }}_team_a"
+                       value="{{ match|get_set_score:set_number|stringformat:'_team_a' }}" />
 
-  <table cellpadding="5" cellspacing="0" border="0">
-    <thead>
-      <tr>
-        <th>Match</th>
-        <th>Set 1 A</th><th>Set 1 B</th>
-        <th>Set 2 A</th><th>Set 2 B</th>
-        <th>Set 3 A</th><th>Set 3 B</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% regroup matches by phase as phase_groups %}
-
-      {% for group in phase_groups %}
-        <tr>
-          <td colspan="7" style="background-color: #f0f0f0; font-weight: bold;">
-            {{ group.list.0.get_phase_display }}
-          </td>
-        </tr>
-
-        {% for match in group.list %}
-        <tr>
-          <td nowrap>{{ match.team_a }} vs {{ match.team_b }}</td>
-          <td><input type="number" name="match_{{ match.id }}_set1_team_a" value="{{ match.set1_team_a }}" size="3" /></td>
-          <td><input type="number" name="match_{{ match.id }}_set1_team_b" value="{{ match.set1_team_b }}" size="3" /></td>
-          <td><input type="number" name="match_{{ match.id }}_set2_team_a" value="{{ match.set2_team_a }}" size="3" /></td>
-          <td><input type="number" name="match_{{ match.id }}_set2_team_b" value="{{ match.set2_team_b }}" size="3" /></td>
-          <td><input type="number" name="match_{{ match.id }}_set3_team_a" value="{{ match.set3_team_a }}" size="3" /></td>
-          <td><input type="number" name="match_{{ match.id }}_set3_team_b" value="{{ match.set3_team_b }}" size="3" /></td>
-        </tr>
+                <label for="match_{{ match.id }}_set{{ set_number }}_team_b">
+                    Set {{ set_number }} - {{ match.team_b }}:
+                </label>
+                <input type="number" id="match_{{ match.id }}_set{{ set_number }}_team_b" 
+                       name="match_{{ match.id }}_set{{ set_number }}_team_b"
+                       value="{{ match|get_set_score:set_number|stringformat:'_team_b' }}" />
+            </div>
+            {% endfor %}
+        </div>
+        <hr>
         {% endfor %}
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <button type="submit">Mettre à jour les scores</button>
-</form>
-{% endblock %}
+        <button type="submit">Enregistrer</button>
+    </form>
+</body>
+</html>

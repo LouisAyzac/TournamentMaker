@@ -1,4 +1,6 @@
 {% extends 'base_generic.html' %}
+{% load custom_tags %}
+
 {% block content %}
 <h2 style="text-align: center;">Modifier le score</h2>
 
@@ -86,24 +88,27 @@
 
   <form method="post">
     {% csrf_token %}
+    <form method="post">
+    {% csrf_token %}
     <table class="set-table">
+    {% for set_number in set_numbers %}
+      {% with "set"|add:set_number|stringformat:"d"|add:"_team_a" as field_team_a %}
+      {% with "set"|add:set_number|stringformat:"d"|add:"_team_b" as field_team_b %}
       <tr>
-        <td class="set-label">Set 1</td>
-        <td><input type="number" name="set1_team_a" value="{{ match.set1_team_a }}"></td>
-        <td><input type="number" name="set1_team_b" value="{{ match.set1_team_b }}"></td>
+        <td class="set-label">Set {{ set_number }}</td>
+        <td>
+          <input type="number" name="set{{ set_number }}_team_a"
+                value="{{ score_fields|get_item:field_team_a }}">
+        </td>
+        <td>
+          <input type="number" name="set{{ set_number }}_team_b"
+                value="{{ score_fields|get_item:field_team_b }}">
+        </td>
       </tr>
-      <tr>
-        <td class="set-label">Set 2</td>
-        <td><input type="number" name="set2_team_a" value="{{ match.set2_team_a }}"></td>
-        <td><input type="number" name="set2_team_b" value="{{ match.set2_team_b }}"></td>
-      </tr>
-      <tr>
-        <td class="set-label">Set 3</td>
-        <td><input type="number" name="set3_team_a" value="{{ match.set3_team_a }}"></td>
-        <td><input type="number" name="set3_team_b" value="{{ match.set3_team_b }}"></td>
-      </tr>
-    </table>
-
+      {% endwith %}
+      {% endwith %}
+    {% endfor %}
+  </table>
     <button type="submit" class="submit-btn">Enregistrer le score</button>
   </form>
 
