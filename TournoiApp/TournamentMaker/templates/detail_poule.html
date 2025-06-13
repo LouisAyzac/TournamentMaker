@@ -1,25 +1,23 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
+<style>
+  .winner-red {
+    color: red;
+  }
+
+  .winner-blue {
+    color: blue;
+  }
+</style>
 <div class="container mt-5">
 
     <h2 class="text-center mb-5">Détails de la poule : {{ pool.name }}</h2>
 
-    <!-- Liste des équipes -->
-    <div class="mb-4">
-        <h4>Équipes dans cette poule :</h4>
-        <ul>
-            {% for team in pool.teams.all %}
-                <li><a href="{% url 'team_detail' team.id %}">{{ team.name }}</a></li>
-            {% empty %}
-                <li>Aucune équipe dans cette poule.</li>
-            {% endfor %}
-        </ul>
-    </div>
-
+    
     <!-- Matchs joués -->
-    <div class="mb-4">
-        <h4>Matchs joués :</h4>
+    <div class="mb-4">  
+        <h4 style="color: black;">Matchs joués :</h4>
         {% if matchs %}
             <table class="table table-bordered table-sm text-center align-middle">
                 <thead>
@@ -53,7 +51,7 @@
                         </td>
                         <td>
                             {% if match.winner_team %}
-                                <strong style="color: {% if match.winner_team == match.team_a %}red{% else %}blue{% endif %};">
+                                <strong class="{% if match.winner_team == match.team_a %}winner-red{% else %}winner-blue{% endif %}">
                                     {{ match.winner_team.name }}
                                 </strong>
                             {% else %}
@@ -70,13 +68,14 @@
                 </tbody>
             </table>
         {% else %}
-            <p>Aucun match joué pour cette poule.</p>
+            <p style="color: black;">Aucun match possible identifié.</p>
+
         {% endif %}
     </div>
 
     <!-- Matchs possibles -->
     <div class="mb-4">
-        <h4>Matchs possibles :</h4>
+        
         {% if matchs_possibles %}
             <ul>
                 {% for m in matchs_possibles %}
@@ -88,7 +87,7 @@
                 {% endfor %}
             </ul>
         {% else %}
-            <p>Aucun match possible identifié.</p>
+            
         {% endif %}
     </div>
 
