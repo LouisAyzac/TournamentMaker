@@ -83,7 +83,6 @@ def home(request):
         'sports': sports,
         'selected_sport': selected_sport,
         'selected_department': selected_department,
-        'hide_navbar': True,
     }
 
     return render(request, 'home.html', context)
@@ -579,6 +578,10 @@ from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 from .models import Pool, Match, Tournament
 
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Q
+from .models import Tournament, Pool, Match
+
 def matchs_poules(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     pools_data = []
@@ -590,25 +593,41 @@ def matchs_poules(request, tournament_id):
         stats = []
 
         for team in pool.teams.all():
-            # On récupère les matchs de cette équipe dans cette pool
+            # On récupère les matchs joués de cette équipe dans cette pool
             matchs_joues = Match.objects.filter(pool=pool, phase='pool')\
                 .filter(Q(team_a=team) | Q(team_b=team))\
                 .exclude(statut='ND')  # On ne prend pas les matchs "non débuté"
 
             total_joues = matchs_joues.count()
 
-            # ⚠ On utilise winner_side, car c'est ce qui est mis à jour dans score_match
             victoires = 0
             defaites = 0
+            diff_sets = 0
+            diff_points = 0
 
             for match in matchs_joues:
+                # Victoire/défaite
                 if match.winner_side == 'A' and match.team_a == team:
                     victoires += 1
                 elif match.winner_side == 'B' and match.team_b == team:
                     victoires += 1
                 elif match.winner_side is not None:
-                    # Si le match a un winner, et que ce n'est pas cette équipe => défaite
                     defaites += 1
+
+                # Calculs goal average
+                for i in range(1, 6):  # max 5 sets
+                    score_a = getattr(match, f'set{i}_team_a', None)
+                    score_b = getattr(match, f'set{i}_team_b', None)
+
+                    if score_a is None or score_b is None:
+                        break
+
+                    if match.team_a == team:
+                        diff_sets += score_a - score_b
+                        diff_points += score_a - score_b
+                    elif match.team_b == team:
+                        diff_sets += score_b - score_a
+                        diff_points += score_b - score_a
 
             # Calcul des points (3 points par victoire en volley)
             points = victoires * 3
@@ -618,13 +637,21 @@ def matchs_poules(request, tournament_id):
                 'matchs_joues': total_joues,
                 'victoires': victoires,
                 'defaites': defaites,
-                'points': points
+                'diff_sets': diff_sets,
+                'diff_points': diff_points,
             })
 
-        # On trie les équipes par points
-        stats.sort(key=lambda x: x['points'], reverse=True)
+        # Tri : victoires -> diff sets -> diff points
+        stats.sort(
+            key=lambda x: (
+                x['victoires'],
+                x['diff_sets'],
+                x['diff_points']
+            ),
+            reverse=True
+        )
 
-        # On ajoute le classement
+        # Attribution du rang
         for index, team_data in enumerate(stats, start=1):
             team_data['rank'] = index
 
@@ -637,7 +664,7 @@ def matchs_poules(request, tournament_id):
         'tournament': tournament
     })
 
-
+ 
 # Détail d'une poule
 from django.shortcuts import render, get_object_or_404
 from .models import Pool, Match
@@ -769,7 +796,7 @@ from datetime import datetime
 
 def parse_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d').date()
-
+ 
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
@@ -777,6 +804,7 @@ from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 
 '''def create_tournament(request):
+
     if request.method == 'POST':
         # Retrieve form data
         name = request.POST.get('name')
@@ -893,7 +921,7 @@ from django.core.mail import send_mail
         return redirect('home')
 
     return render(request, 'create_tournament.html')
-
+ 
 '''
 def create_tournament_step1(request):
     if request.method == 'POST':
@@ -916,6 +944,10 @@ def create_tournament_step1(request):
     return render(request, 'create_tournament_step1.html')
 
 def create_tournament_step2(request):
+    print("🎯 create_tournament_step2 appelée :", request.method)
+    if request.method == 'POST':
+        print("📥 POST reçu :", request.POST)
+
     step1 = request.session.get('step1')
     if not step1:
         return redirect('create_tournament_step1')
@@ -1041,7 +1073,7 @@ L'équipe du tournoi
 
     return render(request, 'create_tournament_step2.html', {'sport': sport})
 
-
+ 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
 
@@ -1206,46 +1238,28 @@ def score_match(request, match_id):
     user = request.user
 
     # Cas admin : autorisé partout
-    # Cas admin : autorisé partout
     if user.is_superuser:
         authorized = True
     else:
-        authorized = False  # par défaut
-
-        # 🔥 On récupère le tournoi
-        if match.pool:
-            tournament = match.pool.tournament
-        else:
-            tournament = match.team_a.tournament
-
-        # 1️⃣ Test organisateur du tournoi
         try:
-            organisateur = user.organisateur  # nécessite que Organisateur ait un OneToOne vers User
-            if tournament.organizer and tournament.organizer == organisateur:
+            user_profile = user.userprofile
+            user_team = user_profile.team
+
+            # Vérifier que c'est bien le CAPITAINE de son équipe
+            if user_team == match.team_a and match.team_a.captain == user_profile:
                 authorized = True
-        except:
-            pass  # Pas organisateur → on passe au test capitaine
+            elif user_team == match.team_b and match.team_b.captain == user_profile:
+                authorized = True
+            else:
+                authorized = False
 
-        # 2️⃣ Sinon test capitaine
-        if not authorized:
-            try:
-                user_profile = user.userprofile
-                user_team = user_profile.team
+        except UserProfile.DoesNotExist:
+            authorized = False
 
-                # Vérifier que c'est bien le CAPITAINE de son équipe
-                if user_team == match.team_a and match.team_a.captain == user_profile:
-                    authorized = True
-                elif user_team == match.team_b and match.team_b.captain == user_profile:
-                    authorized = True
-            except UserProfile.DoesNotExist:
-                pass  # Pas de UserProfile → pas capitaine
-
-    # 🔥 Si pas autorisé → page no_team
     if not authorized:
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match."
         })
-
 
     # 🔥 On récupère le tournoi
     # 🔥 On récupère le tournoi
@@ -1317,4 +1331,87 @@ def score_match(request, match_id):
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
+
     })
+
+def home_landing(request):
+    return render(request, 'home_landing.html', {'hide_navbar': True})
+ 
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Pool, Ranking, Tournament, Match, Team
+
+def afficher_deux_premiers(request, tournament_id):
+    tournament = get_object_or_404(Tournament, id=tournament_id)
+
+    # Vérifie si les matchs ont déjà été créés pour la phase finale
+    matchs_existent = Match.objects.filter(tournament=tournament, phase='quarter').exists()
+
+    pools = Pool.objects.filter(tournament=tournament)
+    data = []
+    qualified_teams = []
+
+    for pool in pools:
+        pool.calculate_rankings()
+        top_rankings = Ranking.objects.filter(team__pool=pool).order_by('rank')[:2]
+        data.append({
+            'pool': pool,
+            'rankings': top_rankings
+        })
+        qualified_teams.extend([ranking.team for ranking in top_rankings])
+
+    nb_matches = len(qualified_teams) // 2
+    match_range = range(nb_matches)
+
+    if request.method == 'POST' and not matchs_existent:
+        created_match_ids = []
+
+        for i in match_range:
+            team_a_id = request.POST.get(f'team_a_{i}')
+            team_b_id = request.POST.get(f'team_b_{i}')
+
+            if team_a_id and team_b_id and team_a_id != team_b_id:
+                match = Match.objects.create(
+                    team_a_id=team_a_id,
+                    team_b_id=team_b_id,
+                    tournament=tournament,
+                    phase='quarter',
+                    statut='ND'
+                )
+                created_match_ids.append(match.id)
+
+        request.session['created_match_ids'] = created_match_ids
+        return redirect('matchs_choice')
+
+    return render(request, 'matchs_finale.html', {
+        'data': data,
+        'tournament': tournament,
+        'qualified_teams': qualified_teams,
+        'match_range': match_range,
+        'matchs_existent': matchs_existent,  # ← on passe cette info au template
+    })
+
+
+
+from django.shortcuts import render
+from .models import Match
+
+from django.shortcuts import render
+from .models import Match
+
+def liste_matchs_phase_finale(request):
+    tournament_id = request.GET.get('tournament_id')
+
+    if tournament_id:
+        matchs = Match.objects.filter(tournament_id=tournament_id, phase='quarter')
+        message = "Matchs de phase finale pour ce tournoi." if matchs.exists() else "Aucun match n’a été créé pour ce tournoi."
+    else:
+        matchs = Match.objects.none()
+        message = "Aucun tournoi spécifié."
+
+    return render(request, 'liste_matchs_phase_finale.html', {
+        'matchs': matchs,
+        'message': message
+    })
+
