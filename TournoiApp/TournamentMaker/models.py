@@ -122,7 +122,7 @@ class Player(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     birth_date = models.DateField(null=True, blank=True)
-    level = models.CharField(max_length=1, choices=LEVEL_CHOICES)
+    level = models.IntegerField(choices=LEVEL_CHOICES)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     email = models.EmailField(blank=True, null=True)
 
@@ -209,9 +209,10 @@ class Match(models.Model):
     team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b', null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True, verbose_name="Heure de début")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Heure de fin")
+
     bracket_position = models.PositiveIntegerField(null=True, blank=True)  # ✅ Ajout ici
 
-    
+     
 
     STATUT_CHOICES = [
         ('ND', 'Non débuté'),

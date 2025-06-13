@@ -1,6 +1,23 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
+<style>
+.badge-level {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.badge-level-1 { background-color: #6c757d; } /* Débutant → Gris */
+.badge-level-2 { background-color: #007bff; } /* Intermédiaire → Bleu */
+.badge-level-3 { background-color: #28a745; } /* Avancé → Vert */
+.badge-level-4 { background-color: #fd7e14; } /* Expert → Orange */
+.badge-level-5 { background-color: #ccc; color: #333; font-style: italic; } /* Maître (si jamais il y en a un) */
+</style>
+
 <div class="player-detail animate__animated animate__fadeIn">
   <h2 class="section-title"><i class="fas fa-user"></i> Détail du Joueur</h2>
 
@@ -17,7 +34,12 @@
 
     <div class="player-info-detail">
       <h3>{{ player.first_name }} <strong>{{ player.last_name }}</strong></h3>
-      <p><strong>Niveau :</strong> {{ player.get_level_display }}</p>
+      <p>
+        <strong>Niveau :</strong> 
+        <span class="badge-level badge-level-{{ player.level }}">
+          {{ player.get_level_display }}
+        </span>
+      </p>
       <p><strong>Date de naissance :</strong> {{ player.birth_date|date:"d/m/Y" }}</p>
       <p><strong>Email :</strong> {{ player.email|default:"Non renseigné" }}</p>
       <p><strong>Équipe :</strong> 
