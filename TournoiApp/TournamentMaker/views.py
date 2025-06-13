@@ -1258,7 +1258,8 @@ def score_match(request, match_id):
 
     if not authorized:
         return render(request, 'no_team.html', {
-            'error': "Vous n’avez pas le droit de modifier ce match."
+            'error': "Vous n’avez pas le droit de modifier ce match.",
+            'pool_id': match.pool.id if match.pool else None,
         })
 
     # 🔥 On récupère le tournoi
