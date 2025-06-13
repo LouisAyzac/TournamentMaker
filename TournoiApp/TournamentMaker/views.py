@@ -1060,7 +1060,7 @@ L'équipe du tournoi
             request.session['selected_tournament_id'] = tournoi.id
 
             messages.success(request, f"Tournoi '{tournoi.name}' créé avec succès et sélectionné.")
-            return redirect('home')
+            return redirect(f"{reverse('home')}?tournament_id={tournoi.id}")
 
         
         except Exception as e:
