@@ -1,6 +1,7 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
+<<<<<<< HEAD
   <div class="container mt-1 text-center">
 
     {% if tournoi.teams.count >= tournoi.max_teams %}
@@ -16,6 +17,12 @@
 
     <!-- Adresse -->
     <p class="text-muted fst-italic small fs-6">{{ tournoi.address }}</p>
+=======
+  <div class="container mt-5 text-center">
+
+    <!-- Nom du tournoi en gros -->
+    <h1 class="display-3 fw-bold mb-3" style="color: black;">{{ tournoi.name }}</h1>
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
 
     <!-- Statut -->
     <p>
@@ -30,6 +37,7 @@
 
     <hr class="my-4">
 
+<<<<<<< HEAD
     <!-- Informations générales -->
     <div class="row justify-content-center text-dark mb-4">
       <div class="col-md-10 rounded p-4 shadow-sm" style="background-color: #f1f1f1;">
@@ -74,5 +82,8 @@
     </div>
 
     <hr class="my-5">
+=======
+    <h4 class="text-muted">Vous pouvez naviguer avec les boutons ci-dessus.</h4>
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
   </div>
 {% endblock %}

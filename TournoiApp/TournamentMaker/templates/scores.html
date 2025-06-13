@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% load static %}
 {% load match_extras %}
 
@@ -37,3 +38,262 @@
     </form>
 </body>
 </html>
+=======
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saisie des Résultats de Football</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 50px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+  {% if tournoi.get_sport_display == "Football" %}
+    <h1>Saisie des Résultats de Football</h1>
+    <form action="/submit_scores/" method="post">
+        <div class="form-group">
+            <label for="teamA">Équipe A :</label>
+            <input type="text" id="teamA" name="teamA" required>
+        </div>
+        <div class="form-group">
+            <label for="teamB">Équipe B :</label>
+            <input type="text" id="teamB" name="teamB" required>
+        </div>
+        <div class="form-group">
+            <label for="halfTimeScoreA">Score à la mi-temps - Équipe A :</label>
+            <input type="number" id="halfTimeScoreA" name="halfTimeScoreA" min="0" required>
+        </div>
+        <div class="form-group">
+            <label for="halfTimeScoreB">Score à la mi-temps - Équipe B :</label>
+            <input type="number" id="halfTimeScoreB" name="halfTimeScoreB" min="0" required>
+        </div>
+        <div class="form-group">
+            <label for="fullTimeScoreA">Score final - Équipe A :</label>
+            <input type="number" id="fullTimeScoreA" name="fullTimeScoreA" min="0" required>
+        </div>
+        <div class="form-group">
+            <label for="fullTimeScoreB">Score final - Équipe B :</label>
+            <input type="number" id="fullTimeScoreB" name="fullTimeScoreB" min="0" required>
+        </div>
+
+        {% for match in matches %}
+    <form method="post" action="{% url 'submit_scores' match.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="match_id" value="{{ match.id }}">
+
+        <!-- Ajoutez ici les champs pour les scores -->
+        <div class="form-group">
+            <label>Set 1 - Équipe A</label>
+            <input type="number" name="set1_team_a" value="{{ match.set1_team_a|default:0 }}" min="0" required>
+        </div>
+        <div class="form-group">
+            <label>Set 1 - Équipe B</label>
+            <input type="number" name="set1_team_b" value="{{ match.set1_team_b|default:0 }}" min="0" required>
+        </div>
+    </form>
+{% endfor %}
+{% elif tournoi.get_sport_display == "Basketball" %}
+
+    <div class="form-group">
+        <label for="teamA">Équipe A :</label>
+        <input type="text" id="teamA" name="teamA" required>
+    </div>
+
+    <div class="form-group">
+        <label for="teamB">Équipe B :</label>
+        <input type="text" id="teamB" name="teamB" required>
+    </div>
+
+    <div class="form-group">
+        <label for="quarter1ScoreA">Score Quart-temps 1 - Équipe A :</label>
+        <input type="number" id="quarter1ScoreA" name="quarter1ScoreA" min="0" required>
+    </div>
+
+    <div class="form-group">
+        <label for="quarter1ScoreB">Score Quart-temps 1 - Équipe B :</label>
+        <input type="number" id="quarter1ScoreB" name="quarter1ScoreB" min="0" required>
+    </div>
+
+    <div class="form-group">
+        <label for="quarter2ScoreA">Score Quart-temps 2 - Équipe A :</label>
+        <input type="number" id="quarter2ScoreA" name="quarter2ScoreA" min="0" required>
+    </div>
+
+    <div class="form-group">
+        <label for="quarter2ScoreB">Score Quart-temps 2 - Équipe B :</label>
+        <input type="number" id="quarter2ScoreB" name="quarter2ScoreB" min="0" required>
+    </div>
+
+    <div class="form-group">
+        <label for="quarter3ScoreA">Score Quart-temps 3 - Équipe A :</label>
+        <input type="number" id="quarter3ScoreA" name="quarter3ScoreA" min="0" required>
+    </div>
+
+    <div class="form-group">
+        <label for="quarter3ScoreB">Score Quart-temps 3 - Équipe B :</label>
+        <input type="number" id="quarter3ScoreB" name="quarter3ScoreB" min="0" required>
+    </div>
+
+    <div class="form-group">
+        <label for="quarter4ScoreA">Score Quart-temps 4 - Équipe A :</label>
+        <input type="number" id="quarter4ScoreA" name="quarter4ScoreA" min="0" required>
+    </div>
+
+    <div class="form-group">
+        <label for="quarter4ScoreB">Score Quart-temps 4 - Équipe B :</label>
+        <input type="number" id="quarter4ScoreB" name="quarter4ScoreB" min="0" required>
+    </div>
+
+    <div class="form-group">
+        <label for="fullTimeScoreA">Score final - Équipe A :</label>
+        <input type="number" id="fullTimeScoreA" name="fullTimeScoreA" min="0" required>
+    </div>
+    <div class="form-group">
+        <label for="fullTimeScoreB">Score final - Équipe B :</label>
+        <input type="number" id="fullTimeScoreB" name="fullTimeScoreB" min="0" required>
+    </div>
+
+{% elif tournoi.get_sport_display == "Volleyball" %}
+<div class="form-group">
+    <label for="teamA">Équipe A :</label>
+    <input type="text" id="teamA" name="teamA" required>
+</div>
+
+<div class="form-group">
+    <label for="teamB">Équipe B :</label>
+    <input type="text" id="teamB" name="teamB" required>
+</div>
+
+<div class="form-group">
+    <label for="set1ScoreA">Score Set 1 - Équipe A :</label>
+    <input type="number" id="set1ScoreA" name="set1ScoreA" min="0" required>
+</div>
+
+<div class="form-group">
+    <label for="set1ScoreB">Score Set 1 - Équipe B :</label>
+    <input type="number" id="set1ScoreB" name="set1ScoreB" min="0" required>
+</div>
+
+<div class="form-group">
+    <label for="set2ScoreA">Score Set 2 - Équipe A :</label>
+    <input type="number" id="set2ScoreA" name="set2ScoreA" min="0" required>
+</div>
+
+<div class="form-group">
+    <label for="set2ScoreB">Score Set 2 - Équipe B :</label>
+    <input type="number" id="set2ScoreB" name="set2ScoreB" min="0" required>
+</div>
+
+<div class="form-group">
+    <label for="set3ScoreA">Score Set 3 - Équipe A :</label>
+    <input type="number" id="set3ScoreA" name="set3ScoreA" min="0" required>
+</div>
+
+<div class="form-group">
+    <label for="set3ScoreB">Score Set 3 - Équipe B :</label>
+    <input type="number" id="set3ScoreB" name="set3ScoreB" min="0" required>
+</div>
+
+<div class="form-group">
+    <label for="set4ScoreA">Score Set 4 - Équipe A :</label>
+    <input type="number" id="set4ScoreA" name="set4ScoreA" min="0">
+</div>
+
+<div class="form-group">
+    <label for="set4ScoreB">Score Set 4 - Équipe B :</label>
+    <input type="number" id="set4ScoreB" name="set4ScoreB" min="0">
+</div>
+
+<div class="form-group">
+    <label for="set5ScoreA">Score Set 5 - Équipe A :</label>
+    <input type="number" id="set5ScoreA" name="set5ScoreA" min="0">
+</div>
+
+<div class="form-group">
+    <label for="set5ScoreB">Score Set 5 - Équipe B :</label>
+    <input type="number" id="set5ScoreB" name="set5ScoreB" min="0">
+</div>
+
+<div class="form-group">
+    <label for="fullTimeScoreA">Score final - Équipe A :</label>
+    <input type="number" id="fullTimeScoreA" name="fullTimeScoreA" min="0" required>
+</div>
+<div class="form-group">
+    <label for="fullTimeScoreB">Score final - Équipe B :</label>
+    <input type="number" id="fullTimeScoreB" name="fullTimeScoreB" min="0" required>
+</div>
+
+{% elif tournoi.get_sport_display == "Rugby" %}
+
+<div class="form-group">
+    <label for="teamA">Équipe A :</label>
+    <input type="text" id="teamA" name="teamA" required>
+</div>
+
+<div class="form-group">
+    <label for="teamB">Équipe B :</label>
+    <input type="text" id="teamB" name="teamB" required>
+</div>
+
+<div class="form-group">
+    <label for="halfTimeScoreA">Score à la mi-temps - Équipe A :</label>
+    <input type="number" id="halfTimeScoreA" name="halfTimeScoreA" min="0" required>
+</div>
+
+<div class="form-group">
+    <label for="halfTimeScoreB">Score à la mi-temps - Équipe B :</label>
+    <input type="number" id="halfTimeScoreB" name="halfTimeScoreB" min="0" required>
+</div>
+
+<div class="form-group">
+    <label for="fullTimeScoreA">Score final - Équipe A :</label>
+    <input type="number" id="fullTimeScoreA" name="fullTimeScoreA" min="0" required>
+</div>
+
+<div class="form-group">
+    <label for="fullTimeScoreB">Score final - Équipe B :</label>
+    <input type="number" id="fullTimeScoreB" name="fullTimeScoreB" min="0" required>
+</div>
+
+{% else %}
+    <p>Vous n'êtes pas connecté</p>
+{% endif %}
+<button type="submit" class="btn btn-success mt-4 w-100">Mettre à jour les scores</button>
+</body>
+</html>
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938

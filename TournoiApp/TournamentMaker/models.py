@@ -33,6 +33,7 @@ class Tournament(models.Model):
     is_indoor = models.BooleanField(default=True)
     start_date = models.DateField(default=date.today)
     end_date = models.DateField(default=date.today)
+<<<<<<< HEAD
     sport = models.CharField(max_length=50, choices=SPORT_CHOICES, default='football')
     max_teams = models.PositiveIntegerField(default=8)
     players_per_team = models.PositiveIntegerField(default=5)
@@ -57,8 +58,19 @@ class Tournament(models.Model):
 
     
 
+=======
+    sport = models.CharField(max_length=50,choices=SPORT_CHOICES, default='Football')
+    max_teams = models.PositiveIntegerField(default=8)  # 🔸 Nombre max d’équipes
+    players_per_team = models.PositiveIntegerField(default=5)  # 🔸 Joueurs max par équipe
+    number_of_pools = models.IntegerField(default=0)  # champ sélectionné à la création
+    nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
+    points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
+    
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
     def __str__(self):
         return self.name
+    
+    
 
 
 class Team(models.Model):
@@ -386,6 +398,7 @@ def create_pools_for_tournament(sender, instance, created, **kwargs):
             pool_name = f"Pool {i}"
             pool = Pool.objects.create(name=pool_name, tournament=instance)
             print(f"Pool créée : {pool.name} pour le tournoi {instance.name}")
+<<<<<<< HEAD
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -420,3 +433,5 @@ def auto_generate_pool_matches(sender, instance, **kwargs):
                 phase='pool',
             )
             print(f"Match créé : {team_a.name} vs {team_b.name} dans {pool.name}")
+=======
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938

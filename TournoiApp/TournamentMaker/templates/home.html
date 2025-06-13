@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 
 <style>
   /* Masquer tous les boutons de navigation sauf le bouton Accueil */
@@ -27,6 +28,17 @@
     </a> 
 
   -->  
+=======
+<div class="container mt-5">
+
+  <h1 class="text-center mb-4" style="color: black;">Bienvenue sur la plateforme des tournois</h1>
+
+  <!-- BOUTONS de filtre par catégorie -->
+  <div class="text-center mb-4">
+    <a href="{% url 'create_tournament' %}" class="btn btn-lg btn-outline-primary me-3">
+        ➕ Créer un tournoi
+    </a>
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
 
     <a href="?category=all" class="btn btn-outline-dark {% if category == 'all' %}active{% endif %}">Tous les tournois</a>
     <a href="?category=ongoing" class="btn btn-outline-success {% if category == 'ongoing' %}active{% endif %}">Tournois en cours</a>
@@ -37,34 +49,31 @@
   </a> 
 </div>
 
-<!-- FORMULAIRE de filtre sport + département -->
-<div class="card mb-4">
-  <div class="card-body">
-    <h5 class="card-title">Filtrer les tournois</h5>
-    <form method="get" class="form-inline row g-3">
-      <input type="hidden" name="category" value="{{ category }}">
-      <div class="col-md-4"> 
-        <label for="sport">Sport :</label>
-        <select name="sport" id="sport" class="form-control">
-          <option value="">Tous les sports</option>
-          {% for sport in sports %}
-            <option value="{{ sport.0 }}" {% if selected_sport == sport.0 %}selected{% endif %}>{{ sport.1 }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label for="department">Département :</label>
-        <input type="number" name="department" id="department" class="form-control" 
-               placeholder="Numéro de département" 
-               value="{% if selected_department and selected_department != 'None' and selected_department != 'none' and selected_department != 'null' %}{{ selected_department }}{% endif %}">
-      </div>
-      <div class="col-md-4 align-self-end">
-        <button type="submit" class="btn btn-primary">Filtrer</button>
-      </div>
-    </form>
+  <!-- FORMULAIRE de filtre sport + département -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Filtrer les tournois</h5>
+      <form method="get" class="form-inline row g-3">
+        <input type="hidden" name="category" value="{{ category }}">
+        <div class="col-md-4">
+          <label for="sport">Sport :</label>
+          <select name="sport" id="sport" class="form-control">
+            <option value="">Tous les sports</option>
+            {% for sport in sports %}
+              <option value="{{ sport.0 }}" {% if selected_sport == sport.0 %}selected{% endif %}>{{ sport.1 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="city">Ville :</label>
+          <input type="text" name="city" id="city" class="form-control" placeholder="ville" value="{{ selected_city }}">
+        </div>
+        <div class="col-md-4 align-self-end">
+          <button type="submit" class="btn btn-primary">Filtrer</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
-
 
   <!-- TOURNOIS affichés en cartes -->
   <div class="row">
@@ -84,7 +93,7 @@
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
-              <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }} ({{ tournoi.departement }})</p>
+              <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }} ({{ tournoi.city }})</p>
               <p class="card-text"><strong>📅 Dates :</strong><br>Du {{ tournoi.start_date|date:"d/m/Y" }} au {{ tournoi.end_date|date:"d/m/Y" }}</p>
             </div>
             <div class="col-md-6">
@@ -122,19 +131,31 @@
     <ul class="pagination justify-content-center">
       {% if page_obj.has_previous %}
       <li class="page-item">
+<<<<<<< HEAD
         <a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_city %}&city={{ selected_city }}{% endif %}">&laquo;</a>
+=======
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department and selected_department != 'None' and selected_department != 'none' %}&department={{ selected_department }}{% endif %}">&laquo;</a>
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
       </li>
       {% endif %}
 
       {% for num in page_obj.paginator.page_range %}
       <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+<<<<<<< HEAD
         <a class="page-link" href="?page={{ num }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_city %}&city={{ selected_city }}{% endif %}">{{ num }}</a>
+=======
+        <a class="page-link" href="?page={{ num }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department and selected_department != 'None' and selected_department != 'none' %}&department={{ selected_department }}{% endif %}">{{ num }}</a>
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
       </li>
       {% endfor %}
 
       {% if page_obj.has_next %}
       <li class="page-item">
+<<<<<<< HEAD
         <a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_city %}&city={{ selected_city }}{% endif %}">&raquo;</a>
+=======
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department and selected_department != 'None' and selected_department != 'none' %}&department={{ selected_department }}{% endif %}">&raquo;</a>
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
       </li>
       {% endif %}
     </ul>
@@ -142,5 +163,9 @@
   {% endif %}
 
 </div>
+<<<<<<< HEAD
 {% endblock %}
 
+=======
+{% endblock %}
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938

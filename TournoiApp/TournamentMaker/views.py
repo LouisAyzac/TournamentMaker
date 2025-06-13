@@ -20,11 +20,14 @@ from django.utils.timezone import now
 from django.core.paginator import Paginator
 from .models import Tournament
 
+<<<<<<< HEAD
 from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 from .models import Tournament
 
+=======
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
 def home(request):
     # Gestion sélection tournoi → stocker en session
     if 'tournament_id' in request.GET:
@@ -32,7 +35,14 @@ def home(request):
         tournoi = get_object_or_404(Tournament, id=selected_id)
         request.session['selected_tournament_id'] = tournoi.id
         request.session['selected_tournament_name'] = tournoi.name
+<<<<<<< HEAD
         request.session['type_tournament'] = tournoi.type_tournament
+=======
+<<<<<<< HEAD
+        request.session['type_tournament'] = tournoi.type_tournament  # Ajoutez cette ligne
+=======
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
+>>>>>>> c192c3a331ca166f1e2430c82f8468072aa0c197
         return redirect('dashboard')
 
     if request.method == 'POST':
@@ -41,7 +51,14 @@ def home(request):
             tournoi = get_object_or_404(Tournament, id=selected_id)
             request.session['selected_tournament_id'] = tournoi.id
             request.session['selected_tournament_name'] = tournoi.name
+<<<<<<< HEAD
             request.session['type_tournament'] = tournoi.type_tournament
+=======
+<<<<<<< HEAD
+            request.session['type_tournament'] = tournoi.type_tournament  # Ajoutez cette ligne
+=======
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
+>>>>>>> c192c3a331ca166f1e2430c82f8468072aa0c197
             return redirect('dashboard')
 
     # Gestion affichage
@@ -54,7 +71,11 @@ def home(request):
         tournois = Tournament.objects.filter(start_date__gt=today)
     elif category == 'past':
         tournois = Tournament.objects.filter(end_date__lt=today)
+<<<<<<< HEAD
     elif category == 'all':
+=======
+    elif category == 'all':  # 🆕 ici → pour afficher tous les tournois
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
         tournois = Tournament.objects.all()
     else:
         tournois = Tournament.objects.all()
@@ -85,12 +106,23 @@ def home(request):
         'category': category,
         'sports': sports,
         'selected_sport': selected_sport,
+<<<<<<< HEAD
         'department': selected_department,
+=======
+        'selected_department': selected_department,
+<<<<<<< HEAD
+=======
+        'hide_navbar': True,
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
+>>>>>>> c192c3a331ca166f1e2430c82f8468072aa0c197
     }
 
     return render(request, 'home.html', context)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
 
 
 def index(request):
@@ -330,9 +362,22 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect
 from .models import Match, UserProfile
-
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from .models import Tournament
 @login_required
 def scores(request):
+    tournament_id = request.session.get('selected_tournament_id')
+    if not tournament_id:
+        messages.error(request, "Aucun tournoi sélectionné.")
+        return redirect('tournament_list')
+
+    tournoi = get_object_or_404(Tournament, pk=tournament_id)
+    return render(request, 'scores.html', {'tournoi': tournoi})
+
+    model = Tournament
+    template_name = 'scores.html'
+
     try:
         team = request.user.userprofile.team
     except UserProfile.DoesNotExist:
@@ -351,6 +396,13 @@ def scores(request):
                 setattr(match, f'set{i}_team_b', int(request.POST.get(f'match_{match.id}_set{i}_team_b', 0)))
             match.save()
         return redirect('scores')  # évite les resoumissions de formulaire
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sports'] = Tournament.SPORT_CHOICES
+        context['selected_sport'] = self.request.GET.get('sport', '')
+        context['selected_department'] = self.request.GET.get('department', '')
+        return context
 
     return render(request, 'scores.html', {'matches': matches})
 
@@ -407,9 +459,24 @@ def signup(request):
                 'total_players': total_players
             })
 
+<<<<<<< HEAD
         team_score = 0
+=======
+
+        # Répartir l'équipe dans les pools disponibles du tournoi → avec têtes de séries
+        pools = Pool.objects.filter(tournament=tournament)
+
+        # 1️⃣ Calcul du "score" de l'équipe en cours d'inscription (somme des niveaux des joueurs)
+        team_score = 0
+
+        # On initialise l'équipe (vide) pour pouvoir lui affecter des joueurs ensuite
+        team = Team.objects.create(name=team_name, tournament=tournament)
+
+        # Pour savoir combien de joueurs vont être inscrits (on le passe à la boucle après)
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
         players_data = []
 
+        # On lit les données du POST et on prépare les joueurs + score
         for i in total_players:
             index = i + 1
             first_name = request.POST.get(f'first_name_{index}')
@@ -422,6 +489,10 @@ def signup(request):
                 birthdate = parse_date(birthdate_str) if birthdate_str else None
                 level = int(LEVEL_MAP.get(level_str.lower(), 1)) if level_str else 1
 
+<<<<<<< HEAD
+=======
+                # On stocke les infos pour créer les joueurs plus tard
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
                 players_data.append({
                     'first_name': first_name,
                     'last_name': last_name,
@@ -429,6 +500,7 @@ def signup(request):
                     'email': email,
                     'level': level
                 })
+<<<<<<< HEAD
 
                 team_score += level
 
@@ -493,33 +565,125 @@ def signup(request):
                 subject = f"Bienvenue capitaine de l'équipe {team.name} !"
                 message = f"""
 Bonjour {player_data['first_name']},
+=======
 
-Vous avez été inscrit comme capitaine de l'équipe {team.name}.
-Veuillez cliquer sur le lien suivant pour définir ou modifier votre mot de passe :
+                # On incrémente le score de l'équipe
+                team_score += level
 
-{link}
+        # 2️⃣ On calcule les forces actuelles des Pools
+        pool_strength = []
 
+        for pool in pools:
+            teams_in_pool = pool.teams.all()
+            total_score = 0
+            team_count = teams_in_pool.count()
+
+            # On calcule le score total des équipes de la Pool
+            for t in teams_in_pool:
+                team_players = t.players.all()
+                score = sum(int(player.level) for player in team_players)
+                total_score += score
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
+
+            # On stocke le score moyen actuel de la Pool
+            avg_score = total_score / team_count if team_count > 0 else 0
+            pool_strength.append((pool, avg_score, team_count))
+
+        # 3️⃣ On trie les Pools :
+        # - on privilégie les Pools ayant le moins d'équipes
+        # - en cas d'égalité, on choisit celle avec la force moyenne la plus adaptée
+
+<<<<<<< HEAD
 Merci,
 L'équipe du tournoi
 """
                 send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
                 capitaine_valide = True
+=======
+        # On trie par : (nb d'équipes, écart entre force moyenne et score de l'équipe)
+        pool_strength.sort(key=lambda x: (x[2], abs(x[1] - team_score)))
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
 
+        # 4️⃣ On choisit la Pool optimale
+        if not pool_strength:
+            return render(request, 'signup.html', {
+                'error': 'Aucune poule disponible pour ce tournoi. Veuillez contacter l\'organisateur.',
+                'players_per_team': players_per_team,
+                'total_players': total_players
+            })
+        pool_to_assign = pool_strength[0][0]
+
+        # 5️⃣ On assigne l'équipe à la Pool
+        team.pool = pool_to_assign
+        team.save()
+
+        # 6️⃣ On crée les joueurs
+        capitaine_valide = False
+
+        for i, player_data in enumerate(players_data):
+            player = Player.objects.create(
+                first_name=player_data['first_name'],
+                last_name=player_data['last_name'],
+                birth_date=player_data['birth_date'],
+                level=player_data['level'],
+                email=player_data['email'] if player_data['email'] else '',
+                team=team,
+            )
+
+            if i == 0:
+                # Création du User pour le capitaine
+                email = player_data['email']
+                username = f"{email}_{team.id}"
+                user = User.objects.create_user(username=username, email=email)
+                user_profile = UserProfile.objects.create(user=user, level=player_data['level'], team=team)
+
+                team.captain = user_profile
+                team.save()
+
+                # Générer le lien pour la réinitialisation du mot de passe
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                domain = '127.0.0.1:8000'
+                link = f"http://{domain}/accounts/reset/{uid}/{token}/"
+
+                subject = f"Bienvenue capitaine de l'équipe {team.name} !"
+                message = f"""
+        Bonjour {player_data['first_name']},
+
+        Vous avez été inscrit comme capitaine de l'équipe {team.name}.
+        Veuillez cliquer sur le lien suivant pour définir ou modifier votre mot de passe :
+
+        {link}
+
+        Merci,
+        L'équipe du tournoi
+        """
+                send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
+
+                capitaine_valide = True
+
+        # 7️⃣ En cas de problème → rollback de l'équipe
         if not capitaine_valide:
-            team.delete()
+            team.delete()  # Supprimer l'équipe si pas de capitaine valide
             return render(request, 'signup.html', {
                 'error': 'Le capitaine est obligatoire (joueur 1 avec une adresse email).',
                 'players_per_team': players_per_team,
                 'total_players': total_players
             })
-
+        
+        # ✅ Si tout s'est bien passé, rediriger vers la page de succès
         return redirect('signup_success')
-
+    
+        # Si on arrive ici (GET), afficher le formulaire
     return render(request, 'signup.html', {
         'players_per_team': players_per_team,
         'total_players': total_players
     })
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
  
 def signup_success(request):
     print("Page de succès atteinte.")
@@ -532,6 +696,7 @@ def signup_success(request):
 from django.shortcuts import render
 from .models import Tournament
 
+<<<<<<< HEAD
 from django.shortcuts import render, get_object_or_404
 from .models import Tournament
 
@@ -554,6 +719,22 @@ def match_choice(request):
         # En cas d'erreur, afficher un message d'erreur
         return render(request, 'matchs_choice.html', {'error': f'Erreur: {str(e)}'})
 
+=======
+def match_choice(request):
+    # Exemple : récupérer l'ID tournoi dans l'URL ou session
+    tournament_id = request.GET.get('tournament_id') or request.session.get('selected_tournament_id')
+
+    if not tournament_id:
+        # Pas d'ID tournoi, rediriger ou erreur
+        return render(request, 'matchs_choice.html', {'error': 'Aucun tournoi sélectionné'})
+
+    try:
+        tournament = Tournament.objects.get(id=tournament_id)
+    except Tournament.DoesNotExist:
+        return render(request, 'matchs_choice.html', {'error': 'Tournoi introuvable'})
+
+    return render(request, 'matchs_choice.html', {'tournament': tournament})
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
 
 
 # Matchs en cours
@@ -582,7 +763,16 @@ def matchs_poules(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     pools_data = []
 
+<<<<<<< HEAD
     pools = Pool.objects.filter(tournament=tournament)
+=======
+    # 🔥 On filtre les pools du tournoi en question
+    pools = Pool.objects.filter(tournament=tournament)
+    print("Pools récupérées :", pools)  # Debugging, vérifier si on récupère bien des pools
+
+    if not pools:
+        print("Aucune pool trouvée pour ce tournoi.")  # Si aucune pool n'est trouvée
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
 
     for pool in pools.prefetch_related('teams'):
         stats = []
@@ -595,6 +785,7 @@ def matchs_poules(request, tournament_id):
             total_joues = matchs_joues.count()
             victoires = sum(1 for match in matchs_joues if match.winner_team == team)
             defaites = total_joues - victoires
+<<<<<<< HEAD
 
             sets_gagnes = 0
             sets_perdus = 0
@@ -625,12 +816,16 @@ def matchs_poules(request, tournament_id):
             # ➜ On calcule les différences ici
             diff_sets = sets_gagnes - sets_perdus
             diff_points = points_gagnes - points_perdus
+=======
+            points = victoires * 3  # 3 points par victoire
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
 
             stats.append({
                 'team': team,
                 'matchs_joues': total_joues,
                 'victoires': victoires,
                 'defaites': defaites,
+<<<<<<< HEAD
                 'diff_sets': diff_sets,
                 'diff_points': diff_points,
             })
@@ -646,11 +841,23 @@ def matchs_poules(request, tournament_id):
         )
 
         # Attribution du rang
+=======
+                'points': points
+            })
+
+        # Classement selon les points
+        stats.sort(key=lambda x: x['points'], reverse=True)
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
         for index, team_data in enumerate(stats, start=1):
             team_data['rank'] = index
 
         pools_data.append({'pool': pool, 'stats': stats})
 
+<<<<<<< HEAD
+=======
+    print("Pools data envoyées :", pools_data)  # Vérifier si les données sont bien envoyées
+
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
     return render(request, 'matchs_poules.html', {
         'pools_data': pools_data,
         'tournament': tournament
@@ -659,6 +866,7 @@ def matchs_poules(request, tournament_id):
 
 
 # Détail d'une poule
+<<<<<<< HEAD
 from django.shortcuts import render, get_object_or_404
 from .models import Pool, Match
 
@@ -670,12 +878,24 @@ def detail_poule(request, pool_id):
     matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
 
     # On prépare les scores par sets (comme tu le fais déjà)
+=======
+def detail_poule(request, pool_id):
+    pool = get_object_or_404(Pool, pk=pool_id)
+    tournament = pool.tournament  # assuming your Pool model has a ForeignKey to Tournament
+
+    matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
+
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
     for match in matchs:
         match.score_sets = []
         for i in range(1, 6):
             sa = getattr(match, f"set{i}_team_a", None)
             sb = getattr(match, f"set{i}_team_b", None)
+<<<<<<< HEAD
             if sa is not None and sb is not None and (sa != 0 or sb != 0):
+=======
+            if sa is not None and sb is not None:
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
                 match.score_sets.append({
                     'set_number': i,
                     'team_a_score': sa,
@@ -685,7 +905,11 @@ def detail_poule(request, pool_id):
     return render(request, 'detail_poule.html', {
         'pool': pool,
         'matchs': matchs,
+<<<<<<< HEAD
         'tournament': tournament,
+=======
+        'tournament': tournament,  # <-- Ajoute ça !
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
     })
 
 
@@ -783,6 +1007,7 @@ from django.contrib import messages
 from .models import Tournament, Pool
 from django.utils.dateparse import parse_date
 
+<<<<<<< HEAD
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from datetime import datetime
@@ -863,6 +1088,9 @@ def create_tournament_step2(request):
 
 """"
 def create_tournament(request):
+=======
+def create_tournament(request): 
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
     if request.method == 'POST':
         # Retrieve form data
         name = request.POST.get('name')
@@ -874,6 +1102,7 @@ def create_tournament(request):
         sport = request.POST.get('sport')
         type_tournament = request.POST.get('type_tournament')
 
+<<<<<<< HEAD
         # Additional fields
         nb_teams = request.POST.get('nb_teams')
         players_per_team = request.POST.get('players_per_team')
@@ -882,6 +1111,16 @@ def create_tournament(request):
         points_per_set = request.POST.get('points_per_set')
 
         # Basic validation
+=======
+        # Champs supplémentaires
+        nb_teams = request.POST.get('nb_teams')
+        players_per_team = request.POST.get('players_per_team')
+        nb_pools = request.POST.get('nb_pools')
+        nb_sets_to_win = request.POST.get('nb_sets_to_win')  # Nouveau champ
+        points_per_set = request.POST.get('points_per_set')  # Nouveau champ
+
+        # Validation basique
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
         if not all([name, department, start_date, end_date, sport, nb_teams, players_per_team, nb_sets_to_win, points_per_set]):
             messages.error(request, "Tous les champs requis ne sont pas remplis.")
             return redirect('create_tournament')
@@ -890,6 +1129,7 @@ def create_tournament(request):
         try:
             nb_teams = int(nb_teams)
             players_per_team = int(players_per_team)
+<<<<<<< HEAD
             nb_sets_to_win = int(nb_sets_to_win)
             points_per_set = int(points_per_set)
 
@@ -904,6 +1144,21 @@ def create_tournament(request):
             return redirect('create_tournament')
 
         # Create the tournament
+=======
+            
+            nb_pools = int(nb_pools)  # Assure-toi que nb_pools est un entier
+        except ValueError:
+            messages.error(request, "Le nombre d'équipes, de joueurs par équipe et de pools doivent être des entiers.")
+            
+            nb_sets_to_win = int(nb_sets_to_win)  # Conversion
+            points_per_set = int(points_per_set)  # Conversion
+        except ValueError:
+            messages.error(request, "Veuillez saisir des valeurs numériques valides.")
+            
+            return redirect('create_tournament')
+
+        # Création du tournoi avec les nouveaux champs
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
         tournoi = Tournament.objects.create(
             name=name,
             department=department,
@@ -914,6 +1169,7 @@ def create_tournament(request):
             sport=sport,
             max_teams=nb_teams,
             players_per_team=players_per_team,
+<<<<<<< HEAD
             number_of_pools=nb_pools,
             type_tournament=type_tournament,
             nb_sets_to_win=nb_sets_to_win,
@@ -929,17 +1185,36 @@ def create_tournament(request):
                     Pool.objects.create(name=pool_name, tournament=tournoi)
 
         # Save tournament details in session
+=======
+            nb_sets_to_win=nb_sets_to_win,  # Nouveau champ
+            points_per_set=points_per_set,  # Nouveau champ
+        )
+
+        # Créer les pools pour ce tournoi
+        for i in range(1, nb_pools + 1):
+            pool_name = f"Pool {i}"
+            Pool.objects.create(name=pool_name, tournament=tournoi)
+
+        # Sauvegarde optionnelle en session
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
         request.session['tournament_created_id'] = tournoi.id
         request.session['type_tournament'] = type_tournament  # Store the tournament type in session
         request.session['nb_teams'] = nb_teams
         request.session['players_per_team'] = players_per_team
         request.session['nb_pools'] = nb_pools
+<<<<<<< HEAD
+=======
+        request.session['sport'] = sport
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
 
         messages.success(request, f"Tournoi '{name}' créé avec succès.")
         return redirect('home')
 
     return render(request, 'create_tournament.html')
+<<<<<<< HEAD
 """
+=======
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
@@ -1000,6 +1275,7 @@ class TournamentDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['hide_navbar'] = True  # ✅ cacher la navbar sur cette page
+<<<<<<< HEAD
         return context
     
 
@@ -1202,6 +1478,7 @@ def score_match(request, match_id):
 
 def home_landing(request):
     return render(request, 'home_landing.html', {'hide_navbar': True})
+<<<<<<< HEAD
 
 from django.db.models import Count
 from django.shortcuts import render
@@ -1365,3 +1642,8 @@ def france_map_view(request):
         'departments_with_tournaments': departments_with_tournaments
     })
 
+=======
+=======
+        return context
+>>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
+>>>>>>> c192c3a331ca166f1e2430c82f8468072aa0c197
