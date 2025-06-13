@@ -3,7 +3,6 @@
 {% block content %}
 <div class="phase-final-wrapper">
   <h1 class="title">Matchs de la phase finale</h1>
-  <p class="subtitle">Matchs de phase finale pour ce tournoi.</p>
 
   {% if match_groups %}
     <style>
@@ -19,12 +18,6 @@
         font-weight: bold;
         margin-bottom: 10px;
         color: #111;
-      }
-
-      .subtitle {
-        font-size: 1rem;
-        color: #444;
-        margin-bottom: 25px;
       }
 
       .phase-title {
@@ -86,48 +79,21 @@
         font-style: italic;
         color: #aaa;
       }
-
-      ::before,
-      ::after {
-        margin: 0;
-        padding: 0;
-        border-left: none !important;
-      }
     </style>
 
     {% for group in match_groups %}
-      <div class="phase-title">
-        {% if group.matchs|length == 1 %}
-          Finale
-        {% elif group.matchs|length == 2 %}
-          Demi-finales
-        {% elif group.matchs|length == 4 %}
-          Quarts de finale
-        {% elif group.matchs|length == 8 %}
-          Huitièmes de finale
-        {% else %}
-          Phase finale ({{ group.matchs|length }} matchs)
-        {% endif %}
-      </div>
+      <div class="phase-title">{{ group.label }}</div>
 
       <div class="match-list">
         {% for match in group.matchs %}
           <a href="{% url 'score_match' match.id %}?tournament_id={{ match.tournament.id }}" class="match-link">
             <div class="match-card">
               <span class="team-name {% if match.winner_team == match.team_a %}winner{% endif %}">
-                {% if match.team_a %}
-                  {{ match.team_a.name }}
-                {% else %}
-                  <span class="pending">En attente</span>
-                {% endif %}
+                {{ match.team_a.name|default:"En attente" }}
               </span>
               <span class="vs">vs</span>
               <span class="team-name {% if match.winner_team == match.team_b %}winner{% endif %}">
-                {% if match.team_b %}
-                  {{ match.team_b.name }}
-                {% else %}
-                  <span class="pending">En attente</span>
-                {% endif %}
+                {{ match.team_b.name|default:"En attente" }}
               </span>
             </div>
           </a>
@@ -135,7 +101,7 @@
       </div>
     {% endfor %}
   {% else %}
-    <p class="info-message">Aucun match à afficher pour cette phase finale.</p>
+    <p class="info-message">Aucun match à afficher pour cette phase finale pour le moment.</p>
   {% endif %}
 </div>
 {% endblock %}

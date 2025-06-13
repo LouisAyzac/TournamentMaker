@@ -1426,11 +1426,8 @@ def liste_matchs_phase_finale(request):
 
     tournament = get_object_or_404(Tournament, id=tournament_id)
 
-    # Toutes les phases dans l’ordre logique
     phase_order = ['eighth', 'quarter', 'semi', 'final', 'third_place']
-
-    # Libellés dynamiques si besoin
-    phase_labels_default = {
+    phase_labels = {
         'eighth': "Huitièmes de finale",
         'quarter': "Quarts de finale",
         'semi': "Demi-finales",
@@ -1440,37 +1437,34 @@ def liste_matchs_phase_finale(request):
 
     match_groups = []
 
+    # Trouver la première phase existante (ex: quarter avec 4 matchs)
+    first_phase = None
     for phase in phase_order:
+        if Match.objects.filter(tournament=tournament, phase=phase).exists():
+            first_phase = phase
+            break
+
+    if not first_phase:
+        return render(request, 'liste_matchs_phase_finale.html', {
+            'match_groups': [],
+            'message': "Aucun match de phase finale pour ce tournoi."
+        })
+
+    # Afficher cette phase + toutes les suivantes
+    phase_start_index = phase_order.index(first_phase)
+    for phase in phase_order[phase_start_index:]:
         matchs = Match.objects.filter(
             tournament=tournament,
-            phase=phase,
-            team_a__isnull=False,
-            team_b__isnull=False
-        ).order_by('id')
+            phase=phase
+        ).order_by('bracket_position', 'id')
 
         if matchs.exists():
-            count = matchs.count()
-            # Adapter dynamiquement le nom pour la première phase si besoin
-            if phase == 'quarter' and count == 2:
-                label = "Demi-finales"
-            elif phase == 'quarter' and count == 1:
-                label = "Finale"
-            elif phase == 'quarter' and count == 4:
-                label = "Quarts de finale"
-            elif phase == 'quarter' and count == 8:
-                label = "Huitièmes de finale"
-            else:
-                label = phase_labels_default.get(phase, phase)
-
             match_groups.append({
-                'label': label,
+                'label': phase_labels[phase],
                 'matchs': matchs
             })
 
-    message = (
-        "Matchs de phase finale pour ce tournoi." if match_groups
-        else "Aucun match n’a été créé pour ce tournoi."
-    )
+    message = "Matchs de phase finale pour ce tournoi."
 
     return render(request, 'liste_matchs_phase_finale.html', {
         'match_groups': match_groups,
