@@ -1235,7 +1235,7 @@ def advance_elimination_bracket(match):
     tournament = match.tournament
     next_position = match.bracket_position // 2
 
-    # Crée ou récupère le match de la phase suivante à la bonne position
+    # Crée ou récupère le match de la phase suivante
     next_match, created = Match.objects.get_or_create(
         tournament=tournament,
         phase=next_phase,
@@ -1243,7 +1243,7 @@ def advance_elimination_bracket(match):
         defaults={'team_a': None, 'team_b': None}
     )
 
-    # Affecte le vainqueur à la bonne place dans le match suivant
+    # Place le vainqueur dans team_a ou team_b selon pair/impair
     if match.bracket_position % 2 == 0:
         if not next_match.team_a:
             next_match.team_a = winner
@@ -1253,21 +1253,22 @@ def advance_elimination_bracket(match):
 
     next_match.save()
 
-    # Cas spécial : si l'autre match n’existe pas (adversaire manquant), auto-passage
-    expected_opponent_bracket_pos = match.bracket_position ^ 1  # pair/impair
-    opponent_exists = Match.objects.filter(
+    # ⚠️ Ne PAS avancer automatiquement tant que l’autre match (adversaire) n’a pas été joué
+    expected_opponent_pos = match.bracket_position ^ 1
+    opponent_match = Match.objects.filter(
         tournament=tournament,
         phase=current_phase,
-        bracket_position=expected_opponent_bracket_pos
-    ).exists()
+        bracket_position=expected_opponent_pos
+    ).first()
 
-    if not opponent_exists:
-        # L'équipe passe seule → victoire automatique
+    # Seulement avancer si l’autre match n’existe PAS du tout
+    if opponent_match is None:
+        # Avancement automatique
         next_match.winner_side = 'A' if next_match.team_a == winner else 'B'
         next_match.statut = 'T'
         next_match.save()
-        # On fait avancer encore ce match vers la suite
         advance_elimination_bracket(next_match)
+
 
 
 @login_required
@@ -1437,12 +1438,17 @@ def liste_matchs_phase_finale(request):
 
     match_groups = []
 
-    # Trouver la première phase existante (ex: quarter avec 4 matchs)
-    first_phase = None
-    for phase in phase_order:
-        if Match.objects.filter(tournament=tournament, phase=phase).exists():
-            first_phase = phase
-            break
+    # Récupération des matchs pour chaque phase
+    phase_to_matches = {
+        phase: list(Match.objects.filter(
+            tournament=tournament,
+            phase=phase
+        ).order_by('bracket_position', 'id'))
+        for phase in phase_order
+    }
+
+    # Trouver la première phase ayant des matchs
+    first_phase = next((p for p in phase_order if phase_to_matches[p]), None)
 
     if not first_phase:
         return render(request, 'liste_matchs_phase_finale.html', {
@@ -1450,23 +1456,56 @@ def liste_matchs_phase_finale(request):
             'message': "Aucun match de phase finale pour ce tournoi."
         })
 
-    # Afficher cette phase + toutes les suivantes
-    phase_start_index = phase_order.index(first_phase)
-    for phase in phase_order[phase_start_index:]:
-        matchs = Match.objects.filter(
-            tournament=tournament,
-            phase=phase
-        ).order_by('bracket_position', 'id')
+    # Cas spécial : phase quarter utilisée pour 5, 6, 7 équipes avec des huitièmes "visuels"
+    if first_phase == 'quarter':
+        quarter_matches = phase_to_matches['quarter']
+        total = len(quarter_matches)
 
-        if matchs.exists():
+        if 5 <= total <= 7:
+            # Déterminer le nombre de "huitièmes visuels"
+            num_eighth = (total - 4) * 2  # 5 → 2, 6 → 4, 7 → 6
+            num_quarter = total - num_eighth
+
+            huitiemes = quarter_matches[:num_eighth]
+            quarts = quarter_matches[num_eighth:]
+
+            if huitiemes:
+                match_groups.append({
+                    'label': phase_labels['eighth'],
+                    'matchs': huitiemes
+                })
+
+            if quarts:
+                match_groups.append({
+                    'label': phase_labels['quarter'],
+                    'matchs': quarts
+                })
+
+        else:
+            # Cas classique 4 ou 8 quarts
             match_groups.append({
-                'label': phase_labels[phase],
-                'matchs': matchs
+                'label': phase_labels['quarter'],
+                'matchs': quarter_matches
             })
 
-    message = "Matchs de phase finale pour ce tournoi."
+        # Ajouter les phases suivantes
+        for phase in phase_order[phase_order.index('semi'):]:
+            if phase_to_matches[phase]:
+                match_groups.append({
+                    'label': phase_labels[phase],
+                    'matchs': phase_to_matches[phase]
+                })
+
+    else:
+        # Cas classique (eighth ou semi ou final directement)
+        for phase in phase_order[phase_order.index(first_phase):]:
+            if phase_to_matches[phase]:
+                match_groups.append({
+                    'label': phase_labels[phase],
+                    'matchs': phase_to_matches[phase]
+                })
 
     return render(request, 'liste_matchs_phase_finale.html', {
         'match_groups': match_groups,
-        'message': message
+        'message': "Matchs de phase finale pour ce tournoi."
     })
