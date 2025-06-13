@@ -23,14 +23,19 @@
       <input type="text" class="form-control" name="name" required>
     </div>
 
-    <div class="col-md-4">
-      <label for="department">Département :</label>
-      <input type="number" name="department" id="department" class="form-control" placeholder="Numéro de département (ex : 75)" value="{{ selected_department|default_if_none:'' }}">
-    </div>    
+    <div class="form-group">
+      <label for="department"><strong>Ville :</strong></label>
+      <input type="text" class="form-control" name="department" required>
+    </div>
 
     <div class="form-group">
       <label for="address"><strong>Adresse :</strong></label>
       <input type="text" class="form-control" name="address" required>
+    </div>
+
+    <div class="form-group mt-3">
+      <label for="email"><strong>Email de l'organisateur :</strong></label>
+      <input type="email" class="form-control" name="email" required>
     </div>
 
     <div class="form-group form-check mt-3">
@@ -125,4 +130,6 @@
 
   window.onload = togglePoolsField;
 </script>
+
 {% endblock %}
+

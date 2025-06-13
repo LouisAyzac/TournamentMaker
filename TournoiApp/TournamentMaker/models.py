@@ -10,6 +10,12 @@ from django.db import models
 from datetime import date
 from django.db import models
 from datetime import date
+class Organisateur(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Organisateur: {self.user.email}"
 
 from django.db import models
 from datetime import date
@@ -33,7 +39,6 @@ class Tournament(models.Model):
     is_indoor = models.BooleanField(default=True)
     start_date = models.DateField(default=date.today)
     end_date = models.DateField(default=date.today)
-<<<<<<< HEAD
     sport = models.CharField(max_length=50, choices=SPORT_CHOICES, default='football')
     max_teams = models.PositiveIntegerField(default=8)
     players_per_team = models.PositiveIntegerField(default=5)
@@ -43,6 +48,7 @@ class Tournament(models.Model):
     
     nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
     points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
+    organizer = models.OneToOneField(Organisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name='organized_tournament')
 
     
     match_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un match (en minutes)")
@@ -58,19 +64,8 @@ class Tournament(models.Model):
 
     
 
-=======
-    sport = models.CharField(max_length=50,choices=SPORT_CHOICES, default='Football')
-    max_teams = models.PositiveIntegerField(default=8)  # 🔸 Nombre max d’équipes
-    players_per_team = models.PositiveIntegerField(default=5)  # 🔸 Joueurs max par équipe
-    number_of_pools = models.IntegerField(default=0)  # champ sélectionné à la création
-    nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
-    points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
-    
->>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
     def __str__(self):
         return self.name
-    
-    
 
 
 class Team(models.Model):
@@ -127,7 +122,7 @@ class Player(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     birth_date = models.DateField(null=True, blank=True)
-    level = models.CharField(max_length=1, choices=LEVEL_CHOICES)
+    level = models.IntegerField(choices=LEVEL_CHOICES)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     email = models.EmailField(blank=True, null=True)
 
@@ -207,11 +202,17 @@ class Pool(models.Model):
             Ranking.objects.update_or_create(team=stat["team"], defaults={"rank": i})
 
 class Match(models.Model):
+    tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
+
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
-    team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a')
-    team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')
+    team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a',null=True, blank=True)
+    team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b', null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True, verbose_name="Heure de début")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Heure de fin")
+
+    bracket_position = models.PositiveIntegerField(null=True, blank=True)  # ✅ Ajout ici
+
+     
 
     STATUT_CHOICES = [
         ('ND', 'Non débuté'),
@@ -398,7 +399,6 @@ def create_pools_for_tournament(sender, instance, created, **kwargs):
             pool_name = f"Pool {i}"
             pool = Pool.objects.create(name=pool_name, tournament=instance)
             print(f"Pool créée : {pool.name} pour le tournoi {instance.name}")
-<<<<<<< HEAD
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -433,5 +433,6 @@ def auto_generate_pool_matches(sender, instance, **kwargs):
                 phase='pool',
             )
             print(f"Match créé : {team_a.name} vs {team_b.name} dans {pool.name}")
-=======
->>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
+ 
+
+ 

@@ -1,25 +1,22 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<<<<<<< HEAD
+<style>
+  .winner-red {
+    color: red;
+  }
+
+  .winner-blue {
+    color: blue;
+  }
+</style>
 <div class="container mt-5">
 
     <h2 class="text-center mb-5">Détails de la poule : {{ pool.name }}</h2>
 
-    <!-- Liste des équipes -->
-    <div class="mb-4">
-        <h4>Équipes dans cette poule :</h4>
-        <ul>
-            {% for team in pool.teams.all %}
-                <li><a href="{% url 'team_detail' team.id %}">{{ team.name }}</a></li>
-            {% empty %}
-                <li>Aucune équipe dans cette poule.</li>
-            {% endfor %}
-        </ul>
-    </div>
-
+    
     <!-- Matchs joués -->
-    <div class="mb-4">
+    <div class="mb-4">  
         <h4 style="color: black;">Matchs joués :</h4>
         {% if matchs %}
             <table class="table table-bordered table-sm text-center align-middle">
@@ -54,7 +51,7 @@
                         </td>
                         <td>
                             {% if match.winner_team %}
-                                <strong style="color: {% if match.winner_team == match.team_a %}red{% else %}blue{% endif %};">
+                                <strong class="{% if match.winner_team == match.team_a %}winner-red{% else %}winner-blue{% endif %}">
                                     {{ match.winner_team.name }}
                                 </strong>
                             {% else %}
@@ -71,13 +68,14 @@
                 </tbody>
             </table>
         {% else %}
-            <p>Aucun match joué pour cette poule.</p>
+            <p style="color: black;">Aucun match possible identifié.</p>
+
         {% endif %}
     </div>
 
     <!-- Matchs possibles -->
     <div class="mb-4">
-        <h4>Matchs possibles :</h4>
+        
         {% if matchs_possibles %}
             <ul>
                 {% for m in matchs_possibles %}
@@ -89,7 +87,7 @@
                 {% endfor %}
             </ul>
         {% else %}
-            <p>Aucun match possible identifié.</p>
+            
         {% endif %}
     </div>
 
@@ -97,76 +95,3 @@
 
 </div>
 {% endblock %}
-=======
-<h2 class="mt-4"> Détails de la Poule : {{ pool.name }}</h2>
-
-<style>
-    thead th {
-        background-color: #f2f2f2 !important;
-        border: 1px solid #ddd;
-    }
-    tbody td {
-        border: 1px solid #ddd;
-    }
-</style>
-
-<h5>Équipes de cette poule :</h5>
-<ul>
-    {% for team in pool.teams.all %}
-        <li>
-            <a href="{% url 'team_detail' team.id %}">{{ team.name }}</a>
-        </li>
-    {% empty %}
-        <li>Aucune équipe dans cette poule.</li>
-    {% endfor %}
-</ul>
-
-<hr>
-
-<h5>Matchs de la poule :</h5>
-{% if matchs %}
-<table class="table table-bordered table-sm text-center align-middle mt-3">
-    <thead>
-        <tr>
-            <th>Équipes</th>
-            <th>Scores</th>
-            <th>Vainqueur</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for match in matchs %}
-        <tr>
-            <td>
-                <a href="{% url 'team_detail' match.team_a.id %}" style="color: red;">{{ match.team_a }}</a>
-                <b>vs</b>
-                <a href="{% url 'team_detail' match.team_b.id %}" style="color: blue;">{{ match.team_b }}</a>
-            </td>
-            <td>
-                {% for set in match.score_sets %}
-                    <div>
-                        Set {{ set.set_number }} :
-                        <span style="color: red;">{{ set.team_a_score }}</span> -
-                        <span style="color: blue;">{{ set.team_b_score }}</span>
-                    </div>
-                {% endfor %}
-            </td>
-            <td>
-                {% if match.winner_team %}
-                    <span style="color: {% if match.winner_team == match.team_a %}red{% else %}blue{% endif %}; font-weight: bold;">
-                        {{ match.winner_team }}
-                    </span>
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-    <p>Aucun match trouvé pour cette poule.</p>
-{% endif %}
-
-<a href="{% url 'matchs_poules' pool.tournament.id %}">Retour aux poules</a>
-{% endblock %}
->>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938

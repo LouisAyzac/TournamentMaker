@@ -1299,3 +1299,39 @@ button:hover {
   background-color: #388e3c;
 }
 
+.nav-button.btn-home {
+  background: linear-gradient(135deg, #1b1f3b, #2b5876); 
+  box-shadow: 0 0 10px rgba(27, 31, 59, 0.5); 
+  border: 2px solid #ffffff22; 
+}
+
+.nav-button.btn-home:hover {
+  background: linear-gradient(135deg, #2c3e50, #00bcd4); 
+  box-shadow: 0 0 15px rgba(44, 62, 80, 0.7);
+}
+
+
+.btn-simple-return {
+  background-color: #4b5563;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  display: inline-block;
+}
+
+.btn-simple-return i {
+  margin-right: 6px;
+}
+
+.btn-simple-return:hover {
+  background-color: #374151;
+  color: white;
+}
+
+
+
+
+

@@ -1,51 +1,105 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<div class="ranking-container animate__animated animate__fadeIn">
-  <h2 class="section-title"><i class="fas fa-trophy"></i> Classement des Équipes</h2>
-  
-  <div class="table-responsive">
-    <table class="ranking-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Équipe</th>
-          <th><i class="fas fa-check-circle"></i> Matchs Gagnés</th>
-          <th><i class="fas fa-times-circle"></i> Matchs Perdus</th>
-          <th><i class="fas fa-volleyball-ball"></i> Sets +/-</th>
-          <th><i class="fas fa-star"></i> Points</th>
-          <th>Forme</th> <!-- Derniers résultats -->
-        </tr>
-      </thead>
-      <tbody>
-        {% for team in teams %}
-        <tr class="{% if forloop.first %}gold-row{% elif forloop.counter == 2 %}silver-row{% elif forloop.counter == 3 %}bronze-row{% endif %}">
-          <td>{{ forloop.counter }}</td>
-          <td class="team-cell">
-            <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="team-logo">
-            <span>{{ team.name }}</span>
-          </td>
-          <td>{{ team.wins }}</td>
-          <td>{{ team.losses }}</td>
-          <td class="{% if team.set_difference > 0 %}positive{% else %}negative{% endif %}">
-            {{ team.set_difference|stringformat:"+d" }}
-          </td>
-          <td class="points">{{ team.points }}</td>
-          <td class="team-form">
-            {% for result in team.last_results %}
-              <span class="form-badge {{ result }}">{{ result|slice:1 }}</span>
-            {% endfor %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  
-  <div class="ranking-legend">
-    <div><span class="legend-color gold"></span> 1ère Place</div>
-    <div><span class="legend-color silver"></span> 2ème Place</div>
-    <div><span class="legend-color bronze"></span> 3ème Place</div>
-  </div>
+<div class="ranking-container animate__animated animate__fadeIn text-center">
+  <h2 class="section-title mb-4"><i class="fas fa-trophy"></i> Podium du Tournoi</h2>
+
+  {% if winner and finalist %}
+    <div class="podium d-flex justify-content-center align-items-end mb-5">
+
+      <!-- 2ème place -->
+      <div class="podium-place second mx-3">
+        <div class="podium-team-name mb-2">
+          <i class="fas fa-medal silver"></i> 
+          <a href="{% url 'team_detail' finalist.id %}" class="team-link">{{ finalist.name }}</a>
+        </div>
+        <div class="podium-box silver">
+          <div class="podium-rank">2</div>
+        </div>
+      </div>
+
+      <!-- 1ère place -->
+      <div class="podium-place first mx-3">
+        <div class="podium-team-name mb-2">
+          <i class="fas fa-trophy gold"></i> 
+          <a href="{% url 'team_detail' winner.id %}" class="team-link">{{ winner.name }}</a>
+        </div>
+        <div class="podium-box gold">
+          <div class="podium-rank">1</div>
+        </div>
+      </div>
+
+      <!-- 3ème place (préparé pour plus tard) -->
+      {# <div class="podium-place third mx-3">
+        <div class="podium-team-name mb-2">
+          <i class="fas fa-award bronze"></i> 
+          <span class="team-link">À venir...</span>
+        </div>
+        <div class="podium-box bronze">
+          <div class="podium-rank">3</div>
+        </div>
+      </div> #}
+
+    </div>
+  {% else %}
+    <p class="text-muted">Le podium sera affiché une fois la finale terminée.</p>
+  {% endif %}
 </div>
+
+<!-- Style podium -->
+<style>
+.podium { gap: 30px; }
+.podium-place { flex: 0 0 auto; }
+.podium-box {
+  position: relative;
+  padding: 20px;
+  width: 120px;
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  color: white;
+  font-weight: bold;
+  font-size: 2em;
+  transition: transform 0.3s ease;
+}
+.podium-box:hover {
+  transform: translateY(-5px);
+}
+.podium-rank {
+  font-size: 3em;
+}
+.podium-team-name {
+  font-size: 1.6em;
+  font-weight: bold;
+}
+.podium-team-name i {
+  margin-right: 5px;
+}
+.team-link {
+  color: #333;
+  text-decoration: none;
+}
+.team-link:hover {
+  text-decoration: underline;
+  color: #000;
+}
+
+.gold {
+  background: linear-gradient(45deg, #FFD700, #FFC107);
+}
+.silver {
+  background: linear-gradient(45deg, #C0C0C0, #B0B0B0);
+}
+.bronze {
+  background: linear-gradient(45deg, #cd7f32, #c17c2e);
+}
+
+.first { height: 220px; }
+.second { height: 180px; }
+.third { height: 160px; }
+</style>
 {% endblock %}

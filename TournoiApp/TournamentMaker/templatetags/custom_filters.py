@@ -12,3 +12,14 @@ def get_set_score(match, set_number):
     if set_team_a is not None and set_team_b is not None:
         return f'{set_team_a}-{set_team_b}'
     return 'N/A'
+
+
+from django import template
+register = template.Library()
+
+@register.filter
+def make_range(value):
+    try:
+        return range(int(value))
+    except (TypeError, ValueError):
+        return range(0)

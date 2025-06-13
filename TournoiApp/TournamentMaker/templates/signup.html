@@ -61,7 +61,6 @@
 <div class="form-container">
   <form method="post">
     {% csrf_token %}
-<<<<<<< HEAD
     
 
 
@@ -99,71 +98,6 @@
     </div>
     {% endfor %}
 
-=======
-
-    {% if error %}
-  <div class="error-message" style="
-
-    color: #b00020;
-    background-color: #fddede;
-    border: 1.5px solid #b00020;
-    border-radius: 8px;
-    padding: 15px 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-weight: 600;
-      font-size: 1.2rem; /* 👈 Ajouté ici */
-
-    box-shadow: 0 2px 8px rgba(176, 0, 32, 0.25);
-    width: 100%;
-    margin: 10px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  ">
-    <div>
-      Le nombre maximal d’équipes a été atteint pour ce tournoi.<br>
-      Tu ne peux plus inscrire de nouvelle équipe.<br>
-      {{ error }}
-    </div>
-  </div>
-{% endif %}
-
-
-    <label for="team_name">Nom de l’équipe :</label>
-    <input type="text" id="team_name" name="team_name" required />
-
-    {% for i in total_players %}
-    <div class="joueur">
-      {% if i < players_per_team %}
-        <h2>Joueur {{ i|add:1 }} {% if i == 0 %}<span style="color:red">*</span> (Capitaine){% endif %}</h2>
-      {% else %}
-        <h2>Remplaçant {{ i|add:1 }}</h2>
-      {% endif %}
-
-      <label for="first_name_{{ i|add:1 }}">Prénom :</label>
-      <input type="text" id="first_name_{{ i|add:1 }}" name="first_name_{{ i|add:1 }}" {% if i == 0 %}required{% endif %} />
-
-      <label for="last_name_{{ i|add:1 }}">Nom :</label>
-      <input type="text" id="last_name_{{ i|add:1 }}" name="last_name_{{ i|add:1 }}" {% if i == 0 %}required{% endif %} />
-
-      <label for="birthdate_{{ i|add:1 }}">Date de naissance :</label>
-      <input type="date" id="birthdate_{{ i|add:1 }}" name="birthdate_{{ i|add:1 }}" {% if i == 0 %}required{% endif %} />
-
-      <label for="email_{{ i|add:1 }}">Email :</label>
-      <input type="email" id="email_{{ i|add:1 }}" name="email_{{ i|add:1 }}" {% if i == 0 %}required{% endif %} />
-
-      <label for="level_{{ i|add:1 }}">Niveau :</label>
-      <select id="level_{{ i|add:1 }}" name="level_{{ i|add:1 }}" {% if i == 0 %}required{% endif %}>
-        <option value="">-- Sélectionnez --</option>
-        <option value="debutant">Débutant</option>
-        <option value="intermediaire">Intermédiaire</option>
-        <option value="avance">Avancé</option>
-        <option value="expert">Expert</option>
-      </select>
-    </div>
-    {% endfor %}
-
->>>>>>> 3221afa099d43d35c1d2caf1ae35ab690d0f7938
     <button type="submit">S’inscrire</button>
   </form>
 </div>
