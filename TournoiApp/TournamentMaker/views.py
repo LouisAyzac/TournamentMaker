@@ -236,7 +236,31 @@ def rankings_list(request):
         teams = pool.teams.all()
         rankings = Ranking.objects.filter(team__in=teams).select_related('team').order_by('rank')
         pool_rankings.append({'pool': pool, 'rankings': rankings})
-    return render(request, 'rankings.html', {'pool_rankings': pool_rankings})
+
+    # === Ajout pour récupérer vainqueur et finaliste ===
+    winner = None
+    finalist = None
+    try:
+        final_match = Match.objects.filter(
+            tournament_id=tournament_id,
+            phase='final',
+            team_a__isnull=False,
+            team_b__isnull=False
+        ).first()
+
+        if final_match and final_match.winner_side:
+            winner = final_match.team_a if final_match.winner_side == 'A' else final_match.team_b
+            finalist = final_match.team_b if final_match.winner_side == 'A' else final_match.team_a
+
+    except Exception as e:
+        print(f"[ERROR] rankings_list winner/finalist: {str(e)}")
+
+    return render(request, 'rankings.html', {
+        'pool_rankings': pool_rankings,
+        'winner': winner,
+        'finalist': finalist,
+    })
+
 
 
 # === Scores (par joueur connecté) ===
@@ -1206,6 +1230,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
 from django.urls import reverse
+from django.http import HttpResponseRedirect
+from urllib.parse import urlencode
+
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -1291,10 +1318,21 @@ def score_match(request, match_id):
         except UserProfile.DoesNotExist:
             authorized = False
 
+    # 🔥 On regarde si on a été appelé avec ?from=phase_finale
+    from_param = request.GET.get('from')
+
     if not authorized:
+        tournament_id = None
+        if match.pool:
+            tournament_id = match.pool.tournament.id
+        elif match.team_a and match.team_a.tournament:
+            tournament_id = match.team_a.tournament.id
+
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match.",
             'pool_id': match.pool.id if match.pool else None,
+            'from_param': from_param,
+            'tournament_id': tournament_id,
         })
 
     tournament = match.pool.tournament if match.pool else match.team_a.tournament
@@ -1333,17 +1371,32 @@ def score_match(request, match_id):
         else:
             advance_elimination_bracket(match)
 
-        return redirect('score_match', match_id=match.id)
+        # 🔥 Après POST → redirection adaptée
+        if match.phase == 'pool' and match.pool:
+            return redirect('detail_poule', pool_id=match.pool.id)
+        elif from_param == 'phase_finale':
+            url = reverse('liste_matchs_phase_finale')
+            params = urlencode({'tournament_id': match.tournament.id})
+            full_url = f"{url}?{params}"
+            return HttpResponseRedirect(full_url)
+        else:
+            return redirect('direct_elimination')
 
-    back_url = reverse('detail_poule', args=[match.pool.id]) if match.phase == 'pool' and match.pool else reverse('direct_elimination')
+    # 🔥 Back url pour le bouton "Retour"
+    if match.phase == 'pool' and match.pool:
+        back_url = reverse('detail_poule', args=[match.pool.id])
+    elif from_param == 'phase_finale':
+        back_url = reverse('liste_matchs_phase_finale') + f'?tournament_id={match.tournament.id}'
+    else:
+        back_url = reverse('direct_elimination')
 
     return render(request, 'score_match.html', {
         'match': match,
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
-
     })
+
 
 def home_landing(request):
     return render(request, 'home_landing.html', {'hide_navbar': True})
