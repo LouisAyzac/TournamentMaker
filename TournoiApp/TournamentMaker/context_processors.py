@@ -1,4 +1,5 @@
 from .models import Tournament
+from datetime import date
 
 def selected_tournament(request):
     selected_id = request.session.get('selected_tournament_id')
@@ -9,5 +10,6 @@ def selected_tournament(request):
         except Tournament.DoesNotExist:
             pass
     return {
-        'tournoi': tournoi
+        'tournoi': tournoi,
+        'today': date.today()  # 👈 ajoute cette ligne
     }

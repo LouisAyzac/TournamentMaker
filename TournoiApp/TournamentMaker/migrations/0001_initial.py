@@ -73,12 +73,36 @@ class Migration(migrations.Migration):
             bases=('TournamentMaker.ranking',),
         ),
         migrations.CreateModel(
-            name='Team',
+            name="Team",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('pool', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='teams', to='TournamentMaker.pool')),
-                ('tournament', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='teams', to='TournamentMaker.tournament')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                (
+                    "pool",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="teams",
+                        to="TournamentMaker.pool",
+                    ),
+                ),
+                (
+                    "tournament",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="teams",
+                        to="TournamentMaker.tournament",
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
@@ -89,52 +113,205 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Player',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('first_name', models.CharField(max_length=100)),
-                ('last_name', models.CharField(max_length=100)),
-                ('birth_date', models.DateField(blank=True, null=True)),
-                ('level', models.CharField(choices=[(1, 'Débutant'), (2, 'Intermédiaire'), (3, 'Avancé'), (4, 'Expert'), (5, 'Maître')], max_length=1)),
-                ('email', models.EmailField(blank=True, max_length=254, null=True)),
-                ('team', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='players', to='TournamentMaker.team')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("first_name", models.CharField(max_length=100)),
+                ("last_name", models.CharField(max_length=100)),
+                ("birth_date", models.DateField(blank=True, null=True)),
+                (
+                    "level",
+                    models.CharField(
+                        choices=[
+                            (1, "Débutant"),
+                            (2, "Intermédiaire"),
+                            (3, "Avancé"),
+                            (4, "Expert"),
+                            (5, "Maître"),
+                        ],
+                        max_length=1,
+                    ),
+                ),
+                ("email", models.EmailField(blank=True, max_length=254, null=True)),
+                (
+                    "team",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="players",
+                        to="TournamentMaker.team",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Match',
+            name="Match",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('start_time', models.TimeField(blank=True, null=True, verbose_name='Heure de début')),
-                ('end_time', models.TimeField(blank=True, null=True, verbose_name='Heure de fin')),
-                ('statut', models.CharField(choices=[('ND', 'Non débuté'), ('EC', 'En cours'), ('T', 'Terminé')], default='ND', max_length=2)),
-                ('terrain_number', models.CharField(blank=True, choices=[('1', 'Terrain 1'), ('2', 'Terrain 2'), ('3', 'Terrain 3'), ('4', 'Terrain 4'), ('5', 'Terrain 5'), ('6', 'Terrain 6')], max_length=1, null=True, verbose_name='Terrain')),
-                ('winner_side', models.CharField(blank=True, choices=[('A', 'Team A'), ('B', 'Team B')], max_length=1, null=True, verbose_name='Vainqueur')),
-                ('set1_team_a', models.PositiveIntegerField(default=0)),
-                ('set1_team_b', models.PositiveIntegerField(default=0)),
-                ('set2_team_a', models.PositiveIntegerField(default=0)),
-                ('set2_team_b', models.PositiveIntegerField(default=0)),
-                ('set3_team_a', models.PositiveIntegerField(default=0)),
-                ('set3_team_b', models.PositiveIntegerField(default=0)),
-                ('set4_team_a', models.PositiveIntegerField(blank=True, null=True)),
-                ('set4_team_b', models.PositiveIntegerField(blank=True, null=True)),
-                ('set5_team_a', models.PositiveIntegerField(blank=True, null=True)),
-                ('set5_team_b', models.PositiveIntegerField(blank=True, null=True)),
-                ('phase', models.CharField(choices=[('pool', 'Phase de poule'), ('quarter', 'Quart de finale'), ('semi', 'Demi-finale'), ('final', 'Finale'), ('third_place', 'Petite finale')], default='pool', max_length=20)),
-                ('pool', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='matches', to='TournamentMaker.pool')),
-                ('team_a', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='matches_as_team_a', to='TournamentMaker.team')),
-                ('team_b', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='matches_as_team_b', to='TournamentMaker.team')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "start_time",
+                    models.TimeField(
+                        blank=True, null=True, verbose_name="Heure de début"
+                    ),
+                ),
+                (
+                    "end_time",
+                    models.TimeField(
+                        blank=True, null=True, verbose_name="Heure de fin"
+                    ),
+                ),
+                (
+                    "statut",
+                    models.CharField(
+                        choices=[
+                            ("ND", "Non débuté"),
+                            ("EC", "En cours"),
+                            ("T", "Terminé"),
+                        ],
+                        default="ND",
+                        max_length=2,
+                    ),
+                ),
+                (
+                    "terrain_number",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("1", "Terrain 1"),
+                            ("2", "Terrain 2"),
+                            ("3", "Terrain 3"),
+                            ("4", "Terrain 4"),
+                            ("5", "Terrain 5"),
+                            ("6", "Terrain 6"),
+                        ],
+                        max_length=1,
+                        null=True,
+                        verbose_name="Terrain",
+                    ),
+                ),
+                (
+                    "winner_side",
+                    models.CharField(
+                        blank=True,
+                        choices=[("A", "Team A"), ("B", "Team B")],
+                        max_length=1,
+                        null=True,
+                        verbose_name="Vainqueur",
+                    ),
+                ),
+                ("set1_team_a", models.PositiveIntegerField(default=0)),
+                ("set1_team_b", models.PositiveIntegerField(default=0)),
+                ("set2_team_a", models.PositiveIntegerField(default=0)),
+                ("set2_team_b", models.PositiveIntegerField(default=0)),
+                ("set3_team_a", models.PositiveIntegerField(default=0)),
+                ("set3_team_b", models.PositiveIntegerField(default=0)),
+                ("set4_team_a", models.PositiveIntegerField(blank=True, null=True)),
+                ("set4_team_b", models.PositiveIntegerField(blank=True, null=True)),
+                ("set5_team_a", models.PositiveIntegerField(blank=True, null=True)),
+                ("set5_team_b", models.PositiveIntegerField(blank=True, null=True)),
+                (
+                    "phase",
+                    models.CharField(
+                        choices=[
+                            ("pool", "Phase de poule"),
+                            ("quarter", "Quart de finale"),
+                            ("semi", "Demi-finale"),
+                            ("final", "Finale"),
+                            ("third_place", "Petite finale"),
+                        ],
+                        default="pool",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "pool",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="matches",
+                        to="TournamentMaker.pool",
+                    ),
+                ),
+                (
+                    "team_a",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="matches_as_team_a",
+                        to="TournamentMaker.team",
+                    ),
+                ),
+                (
+                    "team_b",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="matches_as_team_b",
+                        to="TournamentMaker.team",
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='pool',
-            name='tournament',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='pools', to='TournamentMaker.tournament'),
+            model_name="pool",
+            name="tournament",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="pools",
+                to="TournamentMaker.tournament",
+            ),
         ),
         migrations.CreateModel(
             name='UserProfile',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('level', models.IntegerField(choices=[(1, 'Débutant'), (2, 'Intermédiaire'), (3, 'Avancé'), (4, 'Expert'), (5, 'Maître')])),
-                ('team', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='members', to='TournamentMaker.team')),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "level",
+                    models.IntegerField(
+                        choices=[
+                            (1, "Débutant"),
+                            (2, "Intermédiaire"),
+                            (3, "Avancé"),
+                            (4, "Expert"),
+                            (5, "Maître"),
+                        ]
+                    ),
+                ),
+                (
+                    "team",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="members",
+                        to="TournamentMaker.team",
+                    ),
+                ),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.AddField(

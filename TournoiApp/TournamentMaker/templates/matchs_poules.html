@@ -1,13 +1,16 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
+
 <h2 class="text-center mt-4">Phase de Poule - {{ tournament.name }}</h2>
 
 {% if pools_data %}
     {% for pool_data in pools_data %}
         <h4 class="mt-4 text-primary fw-bold">
             Poule {{ pool_data.pool.name }}
-            <a href="{% url 'detail_poule' pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">Voir les matchs</a>
+            <a href="{% url 'detail_poule' pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">
+                Voir les matchs
+            </a>
         </h4>
 
         <table class="table table-bordered table-sm text-center align-middle">
@@ -15,10 +18,18 @@
                 <tr>
                     <th style="background-color: yellow; color: black;">ÉQUIPE</th>
                     <th style="background-color: #4caf50; color: white;">V</th>
+<<<<<<< HEAD
 
+=======
+<<<<<<< HEAD
+=======
+
+>>>>>>> louis
+>>>>>>> dev
                     <th style="background-color: #f44336; color: white;">D</th>
                     <th style="background-color: #ffeb99; color: black;">MJ</th>
-                    <th style="background-color: #f59e0b; color: white;">PTS</th>
+                    <th style="background-color: #ff9800; color: white;">Diff. Sets</th>
+                    <th style="background-color: #03a9f4; color: white;">Diff. Points</th>
                     <th style="background-color: #9c27b0; color: white;">Classement</th>
                 </tr>
             </thead>
@@ -26,25 +37,48 @@
                 {% if pool_data.stats %}
                     {% for team_data in pool_data.stats %}
                     <tr>
-                        <td><a href="{% url 'team_detail' team_data.team.id %}">{{ team_data.team.name }}</a></td>
+                        <td>
+                            <a href="{% url 'team_detail' team_data.team.id %}">
+                                {{ team_data.team.name }}
+                            </a>
+                        </td>
                         <td>{{ team_data.victoires }}</td>
+<<<<<<< HEAD
 
+=======
+<<<<<<< HEAD
+=======
+
+>>>>>>> louis
+>>>>>>> dev
                         <td>{{ team_data.defaites }}</td>
                         <td>{{ team_data.matchs_joues }}</td>
-                        <td>{{ team_data.points }}</td>
+                        <td>{{ team_data.diff_sets }}</td>
+                        <td>{{ team_data.diff_points }}</td>
                         <td><strong>{{ team_data.rank }}</strong></td>
                     </tr>
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="7" class="text-muted">Aucune équipe dans cette poule.</td>
+<<<<<<< HEAD
+                        <td colspan="8" class="text-muted">Aucune équipe dans cette poule.</td>
+=======
+                        <td colspan="6" class="text-muted">
+                            Aucune équipe dans cette poule.
+                        </td>
+>>>>>>> antoine
                     </tr>
                 {% endif %}
             </tbody>
         </table>
+
     {% endfor %}
 {% else %}
     <p class="text-center mt-4 text-dark" style="font-size: 1.4em;">Aucune poule trouvée.</p>
+<<<<<<< HEAD
+=======
+
+>>>>>>> dev
 {% endif %}
 
 {% endblock %}
