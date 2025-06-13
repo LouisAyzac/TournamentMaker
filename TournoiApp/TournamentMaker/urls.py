@@ -67,5 +67,8 @@ urlpatterns = [
     path('select_tournament/', views.home, name='select_tournament'),
     path('tournois/', views.home, name='home'),
 
+    # Carte de France
+    path('carte-france/', views.france_map_view, name='france_map'),
+    path('departement/<str:department>/tournois/', views.tournaments_by_department, name='tournaments_by_department'),
 
 ]

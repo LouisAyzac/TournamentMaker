@@ -1,3 +1,4 @@
+
 {% extends 'base_generic.html' %}
 
 {% block content %}
@@ -6,7 +7,7 @@
   <!-- Section héros -->
   <div class="bg-primary text-white rounded-4 shadow-sm p-4 mb-4 text-center">
     <h1 class="display-5 fw-bold"><i class="fas fa-trophy me-2"></i>{{ tournoi.name }}</h1>
-    <p class="lead mb-0">{{ tournoi.get_sport_display }} - {{ tournoi.city }}</p>
+    <p class="lead mb-0">{{ tournoi.get_sport_display }} - {{ tournoi.departement }}</p>
   </div>
 
   <!-- Détails du tournoi -->
