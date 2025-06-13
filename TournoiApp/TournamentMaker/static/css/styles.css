@@ -1311,6 +1311,27 @@ button:hover {
 }
 
 
+.btn-simple-return {
+  background-color: #4b5563;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  display: inline-block;
+}
+
+.btn-simple-return i {
+  margin-right: 6px;
+}
+
+.btn-simple-return:hover {
+  background-color: #374151;
+  color: white;
+}
+
+
 
 
 
