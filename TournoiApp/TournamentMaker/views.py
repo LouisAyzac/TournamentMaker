@@ -236,7 +236,31 @@ def rankings_list(request):
         teams = pool.teams.all()
         rankings = Ranking.objects.filter(team__in=teams).select_related('team').order_by('rank')
         pool_rankings.append({'pool': pool, 'rankings': rankings})
-    return render(request, 'rankings.html', {'pool_rankings': pool_rankings})
+
+    # === Ajout pour récupérer vainqueur et finaliste ===
+    winner = None
+    finalist = None
+    try:
+        final_match = Match.objects.filter(
+            tournament_id=tournament_id,
+            phase='final',
+            team_a__isnull=False,
+            team_b__isnull=False
+        ).first()
+
+        if final_match and final_match.winner_side:
+            winner = final_match.team_a if final_match.winner_side == 'A' else final_match.team_b
+            finalist = final_match.team_b if final_match.winner_side == 'A' else final_match.team_a
+
+    except Exception as e:
+        print(f"[ERROR] rankings_list winner/finalist: {str(e)}")
+
+    return render(request, 'rankings.html', {
+        'pool_rankings': pool_rankings,
+        'winner': winner,
+        'finalist': finalist,
+    })
+
 
 
 # === Scores (par joueur connecté) ===
@@ -1206,6 +1230,72 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
 from django.urls import reverse
+from django.http import HttpResponseRedirect
+from urllib.parse import urlencode
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from .models import Match, UserProfile
+
+
+def get_next_phase(current_phase):
+    return {
+        'eighth': 'quarter',
+        'quarter': 'semi',
+        'semi': 'final',
+        'final': None,
+    }.get(current_phase)
+
+
+def advance_elimination_bracket(match):
+    winner = match.winner_team
+    if not winner or match.bracket_position is None:
+        return
+
+    current_phase = match.phase
+    next_phase = get_next_phase(current_phase)
+    if not next_phase:
+        return
+
+    tournament = match.tournament
+    next_position = match.bracket_position // 2
+
+    # Crée ou récupère le match de la phase suivante à la bonne position
+    next_match, created = Match.objects.get_or_create(
+        tournament=tournament,
+        phase=next_phase,
+        bracket_position=next_position,
+        defaults={'team_a': None, 'team_b': None}
+    )
+
+    # Affecte le vainqueur à la bonne place dans le match suivant
+    if match.bracket_position % 2 == 0:
+        if not next_match.team_a:
+            next_match.team_a = winner
+    else:
+        if not next_match.team_b:
+            next_match.team_b = winner
+
+    next_match.save()
+
+    # Cas spécial : si l'autre match n’existe pas (adversaire manquant), auto-passage
+    expected_opponent_bracket_pos = match.bracket_position ^ 1  # pair/impair
+    opponent_exists = Match.objects.filter(
+        tournament=tournament,
+        phase=current_phase,
+        bracket_position=expected_opponent_bracket_pos
+    ).exists()
+
+    if not opponent_exists:
+        # L'équipe passe seule → victoire automatique
+        next_match.winner_side = 'A' if next_match.team_a == winner else 'B'
+        next_match.statut = 'T'
+        next_match.save()
+        # On fait avancer encore ce match vers la suite
+        advance_elimination_bracket(next_match)
+
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -1291,10 +1381,21 @@ def score_match(request, match_id):
         except UserProfile.DoesNotExist:
             authorized = False
 
+    # 🔥 On regarde si on a été appelé avec ?from=phase_finale
+    from_param = request.GET.get('from')
+
     if not authorized:
+        tournament_id = None
+        if match.pool:
+            tournament_id = match.pool.tournament.id
+        elif match.team_a and match.team_a.tournament:
+            tournament_id = match.team_a.tournament.id
+
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match.",
             'pool_id': match.pool.id if match.pool else None,
+            'from_param': from_param,
+            'tournament_id': tournament_id,
         })
 
     tournament = match.pool.tournament if match.pool else match.team_a.tournament
@@ -1333,17 +1434,32 @@ def score_match(request, match_id):
         else:
             advance_elimination_bracket(match)
 
-        return redirect('score_match', match_id=match.id)
+        # 🔥 Après POST → redirection adaptée
+        if match.phase == 'pool' and match.pool:
+            return redirect('detail_poule', pool_id=match.pool.id)
+        elif from_param == 'phase_finale':
+            url = reverse('liste_matchs_phase_finale')
+            params = urlencode({'tournament_id': match.tournament.id})
+            full_url = f"{url}?{params}"
+            return HttpResponseRedirect(full_url)
+        else:
+            return redirect('direct_elimination')
 
-    back_url = reverse('detail_poule', args=[match.pool.id]) if match.phase == 'pool' and match.pool else reverse('direct_elimination')
+    # 🔥 Back url pour le bouton "Retour"
+    if match.phase == 'pool' and match.pool:
+        back_url = reverse('detail_poule', args=[match.pool.id])
+    elif from_param == 'phase_finale':
+        back_url = reverse('liste_matchs_phase_finale') + f'?tournament_id={match.tournament.id}'
+    else:
+        back_url = reverse('direct_elimination')
 
     return render(request, 'score_match.html', {
         'match': match,
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
-
     })
+
 
 def home_landing(request):
     return render(request, 'home_landing.html', {'hide_navbar': True})
