@@ -1,6 +1,17 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
+
+<style>
+  .winner-red {
+    color: red;
+  }
+
+  .winner-blue {
+    color: blue;
+  }
+</style>
+
 <div class="container mt-5">
 
     <h2 class="text-center mb-5">Détails de la poule : {{ pool.name }}</h2>
@@ -42,7 +53,7 @@
                         </td>
                         <td>
                             {% if match.winner_team %}
-                                <strong style="color: {% if match.winner_team == match.team_a %}red{% else %}blue{% endif %};">
+                                <strong class="{% if match.winner_team == match.team_a %}winner-red{% else %}winner-blue{% endif %}">
                                     {{ match.winner_team.name }}
                                 </strong>
                             {% else %}
