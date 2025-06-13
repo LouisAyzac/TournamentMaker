@@ -68,11 +68,11 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-<<<<<<< HEAD
+
                 'TournamentMaker.context_processors.hide_inscription_button',
-=======
+
                 'TournamentMaker.context_processors.selected_tournament'
->>>>>>> Remy
+                
             ],
         },
     },

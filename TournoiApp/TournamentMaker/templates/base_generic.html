@@ -59,15 +59,6 @@
                 <a href="{% url 'rankings_list' %}?tournament_id={{ tournoi.id }}" class="nav-button">
                     <i class="fas fa-medal"></i> Classements
                 </a>
-<<<<<<< HEAD
-                {% if not hide_inscription %}
-                <a href="{% url 'signup' %}" class="nav-button">
-                    <i class="fas fa-file-alt"></i> Inscription
-                </a>
-                {% endif %}
-                {% if request.session.type_tournament == 'RR' %}
-                    <a href="{% url 'matchs_choice' %}" class="nav-button">
-=======
 
                 {% if tournoi.end_date >= today and tournoi.teams.count < tournoi.max_teams %}
                     <a href="{% url 'signup' %}?tournament_id={{ tournoi.id }}" class="nav-button">
@@ -77,7 +68,6 @@
 
                 {% if tournoi.type_tournament == 'RR' %}
                     <a href="{% url 'matchs_choice' %}?tournament_id={{ tournoi.id }}" class="nav-button">
->>>>>>> Remy
                         <i class="fas fa-clock"></i> Matchs
                     </a>
                 {% else %}
