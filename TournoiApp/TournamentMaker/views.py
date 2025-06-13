@@ -1230,8 +1230,6 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
 from django.urls import reverse
-
-@login_required
 @login_required
 def score_match(request, match_id):
     match = get_object_or_404(Match, id=match_id)
@@ -1241,20 +1239,29 @@ def score_match(request, match_id):
     if user.is_superuser:
         authorized = True
     else:
-        try:
-            user_profile = user.userprofile
-            user_team = user_profile.team
+        authorized = False
 
-            # Vérifier que c'est bien le CAPITAINE de son équipe
-            if user_team == match.team_a and match.team_a.captain == user_profile:
-                authorized = True
-            elif user_team == match.team_b and match.team_b.captain == user_profile:
-                authorized = True
-            else:
-                authorized = False
+        # Cas organisateur
+        if hasattr(user, 'organisateur') and (
+            (match.pool and match.pool.tournament.organizer == user.organisateur) or
+            (not match.pool and match.team_a.tournament.organizer == user.organisateur)
+        ):
+            authorized = True
 
-        except UserProfile.DoesNotExist:
-            authorized = False
+        # Cas capitaine
+        else:
+            try:
+                user_profile = user.userprofile
+                user_team = user_profile.team
+
+                # Vérifier que c'est bien le CAPITAINE de son équipe
+                if user_team == match.team_a and match.team_a.captain == user_profile:
+                    authorized = True
+                elif user_team == match.team_b and match.team_b.captain == user_profile:
+                    authorized = True
+
+            except UserProfile.DoesNotExist:
+                pass  # authorized reste False
 
     if not authorized:
         return render(request, 'no_team.html', {
@@ -1262,12 +1269,10 @@ def score_match(request, match_id):
         })
 
     # 🔥 On récupère le tournoi
-    # 🔥 On récupère le tournoi
     if match.pool:
         tournament = match.pool.tournament
     else:
         tournament = match.team_a.tournament  # 🔥 C'est sûr ici
-
 
     # 🔥 Règle : 1 set gagnant → 1 set affiché / 2 → 3 sets / 3 → 5 sets
     nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
@@ -1278,6 +1283,12 @@ def score_match(request, match_id):
     for set_number in set_numbers:
         score_fields[f'set{set_number}_team_a'] = getattr(match, f'set{set_number}_team_a')
         score_fields[f'set{set_number}_team_b'] = getattr(match, f'set{set_number}_team_b')
+
+    # 🔄 Préparer back_url AVANT le POST
+    if match.phase == 'pool' and match.pool:
+        back_url = reverse('detail_poule', args=[match.pool.id])
+    else:
+        back_url = reverse('direct_elimination')
 
     # 🔥 Traitement du POST
     if request.method == 'POST':
@@ -1317,13 +1328,9 @@ def score_match(request, match_id):
         # 🟢 Force le recalcul du classement de la pool si on est en phase de poule
         if match.phase == 'pool' and match.pool:
             match.pool.calculate_rankings()
-        return redirect('score_match', match_id=match.id)
 
-    # Préparer le back_url intelligent
-    if match.phase == 'pool' and match.pool:
-        back_url = reverse('detail_poule', args=[match.pool.id])
-    else:
-        back_url = reverse('direct_elimination')
+        # ✅ Retour vers la page précédente
+        return redirect(back_url)
 
     # 🔥 On passe les infos au template
     return render(request, 'score_match.html', {
@@ -1331,7 +1338,6 @@ def score_match(request, match_id):
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
-
     })
 
 def home_landing(request):
