@@ -137,6 +137,24 @@ def teams(request):
         return redirect('home')
 
     all_teams = Team.objects.filter(tournament_id=tournament_id)
+
+    # 🔥 On enrichit chaque team avec ses wins / losses
+    for team in all_teams:
+        team.wins = Match.objects.filter(
+            Q(team_a=team, winner_side='A') | Q(team_b=team, winner_side='B')
+        ).count()
+
+        team.losses = Match.objects.filter(
+            Q(team_a=team, winner_side='B') | Q(team_b=team, winner_side='A')
+        ).count()
+
+        # 🔥 On peut aussi passer le player_count facilement
+        team.player_count = team.players.count()
+
+         # 🔥 On va chercher le Ranking si dispo
+        ranking = Ranking.objects.filter(team=team).first()
+        team.rank = ranking.rank if ranking else None  # None si pas de classement
+
     return render(request, 'teams.html', {'teams': all_teams})
 
 from django.shortcuts import render, get_object_or_404
@@ -165,70 +183,27 @@ def team_detail(request, pk):
     if not tournament_id:
         return redirect('home')
 
+    # Récupérer l'équipe et son tournoi
     team = get_object_or_404(Team, pk=pk, tournament_id=tournament_id)
     tournament = get_object_or_404(Tournament, id=tournament_id)
+
+    # Récupérer le classement de cette équipe (Ranking)
     ranking = Ranking.objects.filter(team=team).first()
 
-    teams = Team.objects.filter(tournament_id=tournament_id)
-    matches = Match.objects.filter(team_a__tournament_id=tournament_id)
+    # Calcul des victoires
+    team.wins = Match.objects.filter(
+        Q(team_a=team, winner_side='A') | Q(team_b=team, winner_side='B')
+    ).count()
 
-    points = {t.id: 0 for t in teams}
-    pool_wins = {t.id: 0 for t in teams}
+    # Calcul des défaites
+    team.losses = Match.objects.filter(
+        Q(team_a=team, winner_side='B') | Q(team_b=team, winner_side='A')
+    ).count()
 
-    def get_winner(match, sets_to_win):
-        score_a, score_b = 0, 0
-        max_sets = sets_to_win * 2 - 1  # nombre max de sets possibles dans le match (ex: 3 sets gagnants => max 5 sets)
-
-        for i in range(1, max_sets + 1):
-            set_team_a = getattr(match, f'set{i}_team_a', None)
-            set_team_b = getattr(match, f'set{i}_team_b', None)
-            if set_team_a is None or set_team_b is None:
-                # Si un set n'a pas été joué (score manquant), on arrête la lecture
-                break
-            if set_team_a > set_team_b:
-                score_a += 1
-            elif set_team_b > set_team_a:
-                score_b += 1
-            
-            # Dès qu’une équipe atteint le nombre de sets gagnants nécessaires, on peut arrêter
-            if score_a == sets_to_win:
-                return match.team_a
-            if score_b == sets_to_win:
-                return match.team_b
-
-        # Si aucun n'a atteint le seuil, match nul ou non terminé
-        return None
-    
-    sets_to_win = tournament.nb_sets_to_win
-    for match in matches:
-        winner = get_winner(match, sets_to_win)
-        if winner:
-            if match.phase == 'final':
-                points[winner.id] += 100
-            elif match.phase == 'third_place':
-                points[winner.id] += 80
-            elif match.phase == 'semi':
-                points[winner.id] += 60
-            elif match.phase == 'quarter':
-                points[winner.id] += 40
-            elif match.phase == 'pool':
-                points[winner.id] += 3
-                pool_wins[winner.id] += 1
-
-    sorted_teams = sorted(teams, key=lambda t: points[t.id], reverse=True)
-
-    final_ranking = {}
-    rank = 1
-    for t in sorted_teams:
-        final_ranking[t.id] = rank
-        rank += 1
-
-    final_rank = final_ranking.get(team.id)
-
+    # On passe tout au template
     return render(request, 'teams_detail.html', {
         'team': team,
         'ranking': ranking,
-        'final_rank': final_rank,
     })
 
 
