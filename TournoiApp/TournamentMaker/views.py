@@ -32,8 +32,9 @@ def home(request):
         tournoi = get_object_or_404(Tournament, id=selected_id)
         request.session['selected_tournament_id'] = tournoi.id
         request.session['selected_tournament_name'] = tournoi.name
-        request.session['type_tournament'] = tournoi.type_tournament  # Ajoutez cette ligne
-        return redirect('dashboard')
+        request.session['type_tournament'] = tournoi.type_tournament
+        request.session['selected_tournament_end'] = str(tournoi.end_date)  # 👈 ajoute ceci
+        return redirect('dashboard', tournament_id=selected_id)  # ✅ redirection avec ID
 
     if request.method == 'POST':
         selected_id = request.POST.get('tournament_id')
@@ -41,8 +42,8 @@ def home(request):
             tournoi = get_object_or_404(Tournament, id=selected_id)
             request.session['selected_tournament_id'] = tournoi.id
             request.session['selected_tournament_name'] = tournoi.name
-            request.session['type_tournament'] = tournoi.type_tournament  # Ajoutez cette ligne
-            return redirect('dashboard')
+            request.session['type_tournament'] = tournoi.type_tournament
+            return redirect('dashboard', tournament_id=selected_id)  # ✅ redirection avec ID
 
     # Gestion affichage
     today = now().date()
@@ -98,15 +99,11 @@ def landing(request):
     return render(request, 'landing.html')
 
 from django.utils.timezone import now
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from .models import Tournament
 
-def dashboard(request):
-    selected_id = request.session.get('selected_tournament_id')
-    if not selected_id:
-        return redirect('home')
-
-    tournoi = get_object_or_404(Tournament, id=selected_id)
-
+def dashboard(request, tournament_id):
+    tournoi = get_object_or_404(Tournament, id=tournament_id)
     today = now().date()
 
     if tournoi.start_date > today:
@@ -116,10 +113,19 @@ def dashboard(request):
     else:
         statut = "En cours"
 
+    # 🔁 Stocker les infos nécessaires en session pour la barre de navigation
+    request.session['selected_tournament_id'] = tournoi.id
+    request.session['selected_tournament_name'] = tournoi.name
+    request.session['type_tournament'] = tournoi.type_tournament
+    request.session['teams_count'] = tournoi.teams.count()
+    request.session['max_teams'] = tournoi.max_teams
+    request.session['tournament_statut'] = statut
+
     return render(request, 'dashboard.html', {
         'tournoi': tournoi,
         'statut': statut
     })
+
 
 
 # === Joueurs, équipes, tournois ===
