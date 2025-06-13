@@ -32,7 +32,7 @@ def home(request):
         tournoi = get_object_or_404(Tournament, id=selected_id)
         request.session['selected_tournament_id'] = tournoi.id
         request.session['selected_tournament_name'] = tournoi.name
-        request.session['type_tournament'] = tournoi.type_tournament  # Ajoutez cette ligne
+        request.session['type_tournament'] = tournoi.type_tournament
         return redirect('dashboard')
 
     if request.method == 'POST':
@@ -41,7 +41,7 @@ def home(request):
             tournoi = get_object_or_404(Tournament, id=selected_id)
             request.session['selected_tournament_id'] = tournoi.id
             request.session['selected_tournament_name'] = tournoi.name
-            request.session['type_tournament'] = tournoi.type_tournament  # Ajoutez cette ligne
+            request.session['type_tournament'] = tournoi.type_tournament
             return redirect('dashboard')
 
     # Gestion affichage
@@ -66,8 +66,11 @@ def home(request):
 
     if selected_sport:
         tournois = tournois.filter(sport=selected_sport)
+
     if selected_department:
-        tournois = tournois.filter(department__icontains=selected_department)
+        # On force le département en string et on strippe les espaces
+        selected_department = str(selected_department).strip()
+        tournois = tournois.filter(department=selected_department)
 
     # Pagination
     paginator = Paginator(tournois, 6)  # 6 tournois par page
@@ -82,10 +85,11 @@ def home(request):
         'category': category,
         'sports': sports,
         'selected_sport': selected_sport,
-        'selected_department': selected_department,
+        'department': selected_department,
     }
 
     return render(request, 'home.html', context)
+
 
 
 
@@ -1198,3 +1202,166 @@ def score_match(request, match_id):
 
 def home_landing(request):
     return render(request, 'home_landing.html', {'hide_navbar': True})
+
+from django.db.models import Count
+from django.shortcuts import render
+from .models import Tournament
+
+# Coordonées simplifiées pour démonstration
+DEPARTMENT_COORDS = {
+    '75': {'x': 300, 'y': 200},
+    '33': {'x': 150, 'y': 400},
+    '69': {'x': 350, 'y': 350},
+    '13': {'x': 400, 'y': 500},
+    '59': {'x': 250, 'y': 100},
+    # Tu ajoutes ici les départements que tu veux
+}
+
+def france_map_view(request):
+    tournaments_by_dep = Tournament.objects.values('department').annotate(tournament_count=Count('id'))
+
+    departments_with_tournaments = []
+    for item in tournaments_by_dep:
+        dep_code = item['department']
+        if dep_code in DEPARTMENT_COORDS:
+            departments_with_tournaments.append({
+                'department': dep_code,
+                'tournament_count': item['tournament_count'],
+                'coord_x': DEPARTMENT_COORDS[dep_code]['x'],
+                'coord_y': DEPARTMENT_COORDS[dep_code]['y'],
+            })
+
+    return render(request, 'france_map.html', {
+        'departments_with_tournaments': departments_with_tournaments
+    })
+
+def tournaments_by_department(request, department):
+    tournois = Tournament.objects.filter(department=department)
+    return render(request, 'tournament_list.html', {
+        'tournois': tournois,
+        'selected_department': department,
+    })
+
+
+from django.db.models import Count
+from django.shortcuts import render
+from .models import Tournament
+
+DEPARTMENT_COORDS = {
+    '01': {'lat': 46.25, 'lon': 5.65},
+    '02': {'lat': 49.50, 'lon': 3.40},
+    '03': {'lat': 46.33, 'lon': 3.00},
+    '04': {'lat': 44.00, 'lon': 6.25},
+    '05': {'lat': 44.75, 'lon': 6.35},
+    '06': {'lat': 43.85, 'lon': 7.10},
+    '07': {'lat': 44.75, 'lon': 4.50},
+    '08': {'lat': 49.75, 'lon': 4.75},
+    '09': {'lat': 42.88, 'lon': 1.63},
+    '10': {'lat': 48.30, 'lon': 4.05},
+    '11': {'lat': 43.10, 'lon': 2.35},
+    '12': {'lat': 44.40, 'lon': 2.60},
+    '13': {'lat': 43.40, 'lon': 5.40},
+    '14': {'lat': 49.00, 'lon': -0.40},
+    '15': {'lat': 45.05, 'lon': 2.70},
+    '16': {'lat': 45.65, 'lon': 0.25},
+    '17': {'lat': 45.95, 'lon': -0.75},
+    '18': {'lat': 47.00, 'lon': 2.45},
+    '19': {'lat': 45.40, 'lon': 1.75},
+    '21': {'lat': 47.30, 'lon': 4.95},
+    '22': {'lat': 48.45, 'lon': -2.85},
+    '23': {'lat': 46.05, 'lon': 2.05},
+    '24': {'lat': 45.15, 'lon': 0.85},
+    '25': {'lat': 47.10, 'lon': 6.15},
+    '26': {'lat': 44.75, 'lon': 5.15},
+    '27': {'lat': 49.10, 'lon': 1.10},
+    '28': {'lat': 48.45, 'lon': 1.35},
+    '29': {'lat': 48.20, 'lon': -4.10},
+    '2A': {'lat': 41.95, 'lon': 8.75},
+    '2B': {'lat': 42.50, 'lon': 9.35},
+    '30': {'lat': 43.90, 'lon': 4.40},
+    '31': {'lat': 43.40, 'lon': 1.50},
+    '32': {'lat': 43.65, 'lon': 0.60},
+    '33': {'lat': 44.85, 'lon': -0.60},
+    '34': {'lat': 43.65, 'lon': 3.40},
+    '35': {'lat': 48.15, 'lon': -1.65},
+    '36': {'lat': 46.80, 'lon': 1.65},
+    '37': {'lat': 47.30, 'lon': 0.65},
+    '38': {'lat': 45.25, 'lon': 5.75},
+    '39': {'lat': 46.75, 'lon': 5.75},
+    '40': {'lat': 44.00, 'lon': -0.85},
+    '41': {'lat': 47.65, 'lon': 1.35},
+    '42': {'lat': 45.60, 'lon': 4.15},
+    '43': {'lat': 45.05, 'lon': 3.85},
+    '44': {'lat': 47.30, 'lon': -1.55},
+    '45': {'lat': 47.95, 'lon': 2.05},
+    '46': {'lat': 44.65, 'lon': 1.65},
+    '47': {'lat': 44.35, 'lon': 0.40},
+    '48': {'lat': 44.50, 'lon': 3.50},
+    '49': {'lat': 47.35, 'lon': -0.55},
+    '50': {'lat': 49.15, 'lon': -1.40},
+    '51': {'lat': 49.05, 'lon': 4.25},
+    '52': {'lat': 48.05, 'lon': 5.15},
+    '53': {'lat': 48.10, 'lon': -0.65},
+    '54': {'lat': 48.85, 'lon': 6.20},
+    '55': {'lat': 49.05, 'lon': 5.35},
+    '56': {'lat': 47.90, 'lon': -2.95},
+    '57': {'lat': 49.00, 'lon': 6.70},
+    '58': {'lat': 47.00, 'lon': 3.45},
+    '59': {'lat': 50.50, 'lon': 3.10},
+    '60': {'lat': 49.40, 'lon': 2.45},
+    '61': {'lat': 48.50, 'lon': 0.55},
+    '62': {'lat': 50.50, 'lon': 2.50},
+    '63': {'lat': 45.75, 'lon': 3.10},
+    '64': {'lat': 43.25, 'lon': -0.35},
+    '65': {'lat': 43.05, 'lon': 0.10},
+    '66': {'lat': 42.65, 'lon': 2.75},
+    '67': {'lat': 48.55, 'lon': 7.50},
+    '68': {'lat': 47.80, 'lon': 7.25},
+    '69': {'lat': 45.75, 'lon': 4.85},
+    '70': {'lat': 47.65, 'lon': 6.15},
+    '71': {'lat': 46.75, 'lon': 4.65},
+    '72': {'lat': 48.00, 'lon': 0.25},
+    '73': {'lat': 45.50, 'lon': 6.35},
+    '74': {'lat': 46.05, 'lon': 6.35},
+    '75': {'lat': 48.8566, 'lon': 2.3522},
+    '76': {'lat': 49.55, 'lon': 0.95},
+    '77': {'lat': 48.65, 'lon': 2.85},
+    '78': {'lat': 48.80, 'lon': 1.95},
+    '79': {'lat': 46.45, 'lon': -0.35},
+    '80': {'lat': 49.95, 'lon': 2.30},
+    '81': {'lat': 43.85, 'lon': 2.15},
+    '82': {'lat': 44.05, 'lon': 1.35},
+    '83': {'lat': 43.30, 'lon': 6.60},
+    '84': {'lat': 44.05, 'lon': 4.85},
+    '85': {'lat': 46.65, 'lon': -1.15},
+    '86': {'lat': 46.65, 'lon': 0.40},
+    '87': {'lat': 45.85, 'lon': 1.25},
+    '88': {'lat': 48.15, 'lon': 6.65},
+    '89': {'lat': 47.80, 'lon': 3.60},
+    '90': {'lat': 47.65, 'lon': 6.85},
+    '91': {'lat': 48.55, 'lon': 2.25},
+    '92': {'lat': 48.90, 'lon': 2.25},
+    '93': {'lat': 48.90, 'lon': 2.45},
+    '94': {'lat': 48.80, 'lon': 2.45},
+    '95': {'lat': 49.05, 'lon': 2.25},
+}
+
+
+def france_map_view(request):
+    tournaments_by_dep = Tournament.objects.values('department').annotate(tournament_count=Count('id'))
+
+    departments_with_tournaments = []
+    for item in tournaments_by_dep:
+        dep_code = item['department']
+        if dep_code in DEPARTMENT_COORDS:
+            departments_with_tournaments.append({
+                'department': dep_code,
+                'tournament_count': item['tournament_count'],
+                'lat': DEPARTMENT_COORDS[dep_code]['lat'],
+                'lon': DEPARTMENT_COORDS[dep_code]['lon'],
+            })
+
+    return render(request, 'france_map.html', {
+        'departments_with_tournaments': departments_with_tournaments
+    })
+

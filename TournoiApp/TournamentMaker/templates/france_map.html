@@ -1,0 +1,67 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<style>
+    /* Masquer tous les boutons de navigation sauf le bouton Accueil */
+    .nav-buttons-container .nav-button:not(:first-child) {
+      display: none !important;
+    }
+</style>
+
+<div class="text-center my-4">
+    <a href="/TournamentMaker/tournois/" class="btn btn-secondary">
+        ⬅️ Retour à la liste des tournois
+    </a>
+</div>
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Carte des départements avec tournois</h2>
+
+    <div id="map" style="height: 600px; border: 1px solid #ccc;"></div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    var map = L.map('map').setView([46.8, 2.5], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    var departmentsWithTournaments = [
+        {% for dep in departments_with_tournaments %}
+            {
+                dep: "{{ dep.department }}",
+                lat: {{ dep.lat|floatformat:"6" }},
+                lon: {{ dep.lon|floatformat:"6" }},
+                count: {{ dep.tournament_count }}
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    console.log(departmentsWithTournaments); // Debug → voir si OK
+
+    departmentsWithTournaments.forEach(function(item) {
+        var marker = L.marker([item.lat, item.lon]).addTo(map);
+
+        marker.bindPopup(
+            'Département ' + item.dep +
+            '<br>' + item.count + (item.count > 1 ? ' tournois' : ' tournoi') +
+            '<br><a href="' + tournamentsUrl(item.dep) + '">Voir les tournois</a>'
+        );
+
+        marker.on('click', function() {
+            window.location.href = tournamentsUrl(item.dep);
+        });
+    });
+
+function tournamentsUrl(depCode) {
+    return '/TournamentMaker/tournois/?category=all&sport=&department=' + encodeURIComponent(depCode);
+}
+
+
+</script>
+
+{% endblock %}
