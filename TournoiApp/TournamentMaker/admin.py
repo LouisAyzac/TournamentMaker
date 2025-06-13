@@ -516,3 +516,11 @@ class TournamentAdmin(admin.ModelAdmin):
     list_display = ('name', 'department', 'address', 'is_indoor', 'start_date', 'end_date', 'sport')
     list_filter = ('sport', 'is_indoor', 'start_date', 'end_date')
     search_fields = ('name', 'department', 'address')
+
+from django.contrib import admin
+from .models import Organisateur
+
+@admin.register(Organisateur)
+class OrganisateurAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at')
+    search_fields = ('user__email', 'user__username')
