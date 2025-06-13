@@ -205,10 +205,16 @@ class Match(models.Model):
     tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
 
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
-    team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a')
-    team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')
+    team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a',null=True, blank=True)
+    team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b', null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True, verbose_name="Heure de début")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Heure de fin")
+<<<<<<< HEAD
+=======
+    bracket_position = models.PositiveIntegerField(null=True, blank=True)  # ✅ Ajout ici
+
+    
+>>>>>>> louis
 
     STATUT_CHOICES = [
         ('ND', 'Non débuté'),

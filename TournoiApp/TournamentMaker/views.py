@@ -1206,13 +1206,74 @@ from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
 from django.urls import reverse
 
-@login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from .models import Match, UserProfile
+
+
+def get_next_phase(current_phase):
+    return {
+        'eighth': 'quarter',
+        'quarter': 'semi',
+        'semi': 'final',
+        'final': None,
+    }.get(current_phase)
+
+
+def advance_elimination_bracket(match):
+    winner = match.winner_team
+    if not winner or match.bracket_position is None:
+        return
+
+    current_phase = match.phase
+    next_phase = get_next_phase(current_phase)
+    if not next_phase:
+        return
+
+    tournament = match.tournament
+    next_position = match.bracket_position // 2
+
+    # Crée ou récupère le match de la phase suivante à la bonne position
+    next_match, created = Match.objects.get_or_create(
+        tournament=tournament,
+        phase=next_phase,
+        bracket_position=next_position,
+        defaults={'team_a': None, 'team_b': None}
+    )
+
+    # Affecte le vainqueur à la bonne place dans le match suivant
+    if match.bracket_position % 2 == 0:
+        if not next_match.team_a:
+            next_match.team_a = winner
+    else:
+        if not next_match.team_b:
+            next_match.team_b = winner
+
+    next_match.save()
+
+    # Cas spécial : si l'autre match n’existe pas (adversaire manquant), auto-passage
+    expected_opponent_bracket_pos = match.bracket_position ^ 1  # pair/impair
+    opponent_exists = Match.objects.filter(
+        tournament=tournament,
+        phase=current_phase,
+        bracket_position=expected_opponent_bracket_pos
+    ).exists()
+
+    if not opponent_exists:
+        # L'équipe passe seule → victoire automatique
+        next_match.winner_side = 'A' if next_match.team_a == winner else 'B'
+        next_match.statut = 'T'
+        next_match.save()
+        # On fait avancer encore ce match vers la suite
+        advance_elimination_bracket(next_match)
+
+
 @login_required
 def score_match(request, match_id):
     match = get_object_or_404(Match, id=match_id)
     user = request.user
 
-    # Cas admin : autorisé partout
     if user.is_superuser:
         authorized = True
     else:
@@ -1220,14 +1281,12 @@ def score_match(request, match_id):
             user_profile = user.userprofile
             user_team = user_profile.team
 
-            # Vérifier que c'est bien le CAPITAINE de son équipe
             if user_team == match.team_a and match.team_a.captain == user_profile:
                 authorized = True
             elif user_team == match.team_b and match.team_b.captain == user_profile:
                 authorized = True
             else:
                 authorized = False
-
         except UserProfile.DoesNotExist:
             authorized = False
 
@@ -1237,71 +1296,46 @@ def score_match(request, match_id):
             'pool_id': match.pool.id if match.pool else None,
         })
 
-    # 🔥 On récupère le tournoi
-    # 🔥 On récupère le tournoi
-    if match.pool:
-        tournament = match.pool.tournament
-    else:
-        tournament = match.team_a.tournament  # 🔥 C'est sûr ici
+    tournament = match.pool.tournament if match.pool else match.team_a.tournament
 
-
-    # 🔥 Règle : 1 set gagnant → 1 set affiché / 2 → 3 sets / 3 → 5 sets
     nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
     set_numbers = list(range(1, nb_sets_display + 1))
 
-    # 🔥 On prépare un dict pour le template
     score_fields = {}
     for set_number in set_numbers:
         score_fields[f'set{set_number}_team_a'] = getattr(match, f'set{set_number}_team_a')
         score_fields[f'set{set_number}_team_b'] = getattr(match, f'set{set_number}_team_b')
 
-    # 🔥 Traitement du POST
     if request.method == 'POST':
         for set_number in set_numbers:
-            team_a_field = f'set{set_number}_team_a'
-            team_b_field = f'set{set_number}_team_b'
+            a_field = f'set{set_number}_team_a'
+            b_field = f'set{set_number}_team_b'
+            value_a = request.POST.get(a_field, '')
+            value_b = request.POST.get(b_field, '')
+            setattr(match, a_field, int(value_a) if value_a.isdigit() else 0)
+            setattr(match, b_field, int(value_b) if value_b.isdigit() else 0)
 
-            value_a = request.POST.get(team_a_field, '')
-            value_b = request.POST.get(team_b_field, '')
-
-            # Si vide ou non numérique → mettre 0
-            value_a = int(value_a) if value_a.isdigit() else 0
-            value_b = int(value_b) if value_b.isdigit() else 0
-
-            setattr(match, team_a_field, value_a)
-            setattr(match, team_b_field, value_b)
-
-        # Met à jour auto winner
         winner = match.get_auto_winner(tournament.nb_sets_to_win)
-        if winner == match.team_a:
-            match.winner_side = 'A'
-        elif winner == match.team_b:
-            match.winner_side = 'B'
-        else:
-            match.winner_side = None
+        match.winner_side = 'A' if winner == match.team_a else 'B' if winner == match.team_b else None
 
-        # 🔥 Met à jour le statut du match
-        if winner is not None:
-            match.statut = 'T'  # Terminé
+        if winner:
+            match.statut = 'T'
         elif any(getattr(match, f'set{i}_team_a', 0) != 0 or getattr(match, f'set{i}_team_b', 0) != 0 for i in set_numbers):
-            match.statut = 'EC'  # En cours
+            match.statut = 'EC'
         else:
-            match.statut = 'ND'  # Non débuté
+            match.statut = 'ND'
 
         match.save()
 
-        # 🟢 Force le recalcul du classement de la pool si on est en phase de poule
         if match.phase == 'pool' and match.pool:
             match.pool.calculate_rankings()
+        else:
+            advance_elimination_bracket(match)
+
         return redirect('score_match', match_id=match.id)
 
-    # Préparer le back_url intelligent
-    if match.phase == 'pool' and match.pool:
-        back_url = reverse('detail_poule', args=[match.pool.id])
-    else:
-        back_url = reverse('direct_elimination')
+    back_url = reverse('detail_poule', args=[match.pool.id]) if match.phase == 'pool' and match.pool else reverse('direct_elimination')
 
-    # 🔥 On passe les infos au template
     return render(request, 'score_match.html', {
         'match': match,
         'back_url': back_url,
@@ -1353,7 +1387,9 @@ def afficher_deux_premiers(request, tournament_id):
                     team_b_id=team_b_id,
                     tournament=tournament,
                     phase='quarter',
-                    statut='ND'
+                    statut='ND',
+                    bracket_position=i  # 🔥 ceci est la clé pour enchaîner les phases
+
                 )
                 created_match_ids.append(match.id)
 
@@ -1376,18 +1412,66 @@ from .models import Match
 from django.shortcuts import render
 from .models import Match
 
+from django.shortcuts import render, get_object_or_404
+from .models import Match, Tournament
+
 def liste_matchs_phase_finale(request):
     tournament_id = request.GET.get('tournament_id')
+    if not tournament_id:
+        return render(request, 'liste_matchs_phase_finale.html', {
+            'match_groups': [],
+            'message': "Aucun tournoi spécifié."
+        })
 
-    if tournament_id:
-        matchs = Match.objects.filter(tournament_id=tournament_id, phase='quarter')
-        message = "Matchs de phase finale pour ce tournoi." if matchs.exists() else "Aucun match n’a été créé pour ce tournoi."
-    else:
-        matchs = Match.objects.none()
-        message = "Aucun tournoi spécifié."
+    tournament = get_object_or_404(Tournament, id=tournament_id)
+
+    # Toutes les phases dans l’ordre logique
+    phase_order = ['eighth', 'quarter', 'semi', 'final', 'third_place']
+
+    # Libellés dynamiques si besoin
+    phase_labels_default = {
+        'eighth': "Huitièmes de finale",
+        'quarter': "Quarts de finale",
+        'semi': "Demi-finales",
+        'final': "Finale",
+        'third_place': "Petite finale"
+    }
+
+    match_groups = []
+
+    for phase in phase_order:
+        matchs = Match.objects.filter(
+            tournament=tournament,
+            phase=phase,
+            team_a__isnull=False,
+            team_b__isnull=False
+        ).order_by('id')
+
+        if matchs.exists():
+            count = matchs.count()
+            # Adapter dynamiquement le nom pour la première phase si besoin
+            if phase == 'quarter' and count == 2:
+                label = "Demi-finales"
+            elif phase == 'quarter' and count == 1:
+                label = "Finale"
+            elif phase == 'quarter' and count == 4:
+                label = "Quarts de finale"
+            elif phase == 'quarter' and count == 8:
+                label = "Huitièmes de finale"
+            else:
+                label = phase_labels_default.get(phase, phase)
+
+            match_groups.append({
+                'label': label,
+                'matchs': matchs
+            })
+
+    message = (
+        "Matchs de phase finale pour ce tournoi." if match_groups
+        else "Aucun match n’a été créé pour ce tournoi."
+    )
 
     return render(request, 'liste_matchs_phase_finale.html', {
-        'matchs': matchs,
+        'match_groups': match_groups,
         'message': message
     })
-
