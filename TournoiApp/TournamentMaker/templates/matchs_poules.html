@@ -8,9 +8,10 @@
     {% for pool_data in pools_data %}
         <h4 class="mt-4 text-primary fw-bold">
             Poule {{ pool_data.pool.name }}
-            <a href="{% url 'detail_poule' pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">
+            <a href="{% url 'detail_poule' tournament.slug pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">
                 Voir les matchs
             </a>
+
         </h4>
 
         <table class="table table-bordered table-sm text-center align-middle">

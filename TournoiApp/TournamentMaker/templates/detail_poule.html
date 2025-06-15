@@ -59,9 +59,10 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'score_match' match.id %}" class="btn btn-sm btn-primary">
+                            <a href="{% url 'score_match' tournament.slug match.id %}" class="btn btn-sm btn-primary">
                                 Modifier score
                             </a>
+
                         </td>
                     </tr>
                     {% endfor %}
@@ -91,7 +92,7 @@
         {% endif %}
     </div>
 
-    <a href="{% url 'matchs_poules' pool.tournament.id %}" class="btn btn-secondary mt-3">Retour aux poules</a>
+    <a href="{% url 'matchs_poules' pool.tournament.slug %}" class="btn btn-secondary mt-3">Retour aux poules</a>
 
 </div>
 {% endblock %}

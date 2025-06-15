@@ -19,14 +19,10 @@ def hide_inscription_button(request):
     
 def selected_tournament(request):
     selected_id = request.session.get('selected_tournament_id')
-    tournoi = None
     if selected_id:
         try:
             tournoi = Tournament.objects.get(id=selected_id)
+            return {'selected_tournament_slug': tournoi.slug}
         except Tournament.DoesNotExist:
             pass
-    return {
-        'tournoi': tournoi,
-        'today': date.today()  # 👈 ajoute cette ligne
-    }
-
+    return {'selected_tournament_slug': None}
