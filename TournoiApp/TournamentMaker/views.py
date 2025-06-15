@@ -522,10 +522,17 @@ L'équipe du tournoi
     })
 
  
-def signup_success(request):
-    print("Page de succès atteinte.")
-    return render(request, 'signup_success.html')
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Tournament   # adapte le chemin si besoin
 
+def signup_success(request):
+    # Exemple : le tournoi qui vient d’être créé / attribué
+    tournament = Tournament.objects.latest('id')   # ou ta logique à toi
+    return render(
+        request,
+        'signup_success.html',
+        {'tournament_id': tournament.id}
+    )
 
 # === 🆕 Matchs ===
 

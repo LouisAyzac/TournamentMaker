@@ -45,7 +45,7 @@
 <div class="success-container">
   <h1>🎉 Inscription réussie !</h1>
   <p>Votre équipe a bien été enregistrée.</p>
-  <form action="{% url 'dashboard' %}" method="get">
+  <form action="{% url 'dashboard' tournament_id=tournoi.id %}" method="get">
     <button type="submit">Retour au menu</button>
   </form>
 </div>
