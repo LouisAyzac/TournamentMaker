@@ -16,6 +16,7 @@ def hide_inscription_button(request):
         return {'hide_inscription': is_full or is_over}
     except:
         return {'hide_inscription': False}
+<<<<<<< HEAD
 def selected_tournament(request):
     selected_id = request.session.get('selected_tournament_id')
     tournoi = None
@@ -28,3 +29,5 @@ def selected_tournament(request):
         'tournoi': tournoi,
         'today': date.today()  # 👈 ajoute cette ligne
     }
+=======
+>>>>>>> louis
