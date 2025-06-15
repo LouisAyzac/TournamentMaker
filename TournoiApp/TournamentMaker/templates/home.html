@@ -1,3 +1,4 @@
+
 {% extends 'base_generic.html' %}
 
 {% block title %}
@@ -32,33 +33,39 @@
     <a href="?category=ongoing" class="btn btn-outline-success {% if category == 'ongoing' %}active{% endif %}">Tournois en cours</a>
     <a href="?category=upcoming" class="btn btn-outline-primary {% if category == 'upcoming' %}active{% endif %}">Tournois à venir</a>
     <a href="?category=past" class="btn btn-outline-secondary {% if category == 'past' %}active{% endif %}">Tournois passés</a>
+    <a href="{% url 'france_map' %}" class="btn btn-lg btn-outline-primary me-3">
+      🗺️ Carte de France
+  </a> 
 </div>
 
-  <!-- FORMULAIRE de filtre sport + département -->
-  <div class="card mb-4">
-    <div class="card-body">
-      <h5 class="card-title">Filtrer les tournois</h5>
-      <form method="get" class="form-inline row g-3">
-        <input type="hidden" name="category" value="{{ category }}">
-        <div class="col-md-4">
-          <label for="sport">Sport :</label>
-          <select name="sport" id="sport" class="form-control">
-            <option value="">Tous les sports</option>
-            {% for sport in sports %}
-              <option value="{{ sport.0 }}" {% if selected_sport == sport.0 %}selected{% endif %}>{{ sport.1 }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label for="city">Ville :</label>
-          <input type="text" name="city" id="city" class="form-control" placeholder="ville" value="{{ selected_city }}">
-        </div>
-        <div class="col-md-4 align-self-end">
-          <button type="submit" class="btn btn-primary">Filtrer</button>
-        </div>
-      </form>
-    </div>
+<!-- FORMULAIRE de filtre sport + département -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Filtrer les tournois</h5>
+    <form method="get" class="form-inline row g-3">
+      <input type="hidden" name="category" value="{{ category }}">
+      <div class="col-md-4"> 
+        <label for="sport">Sport :</label>
+        <select name="sport" id="sport" class="form-control">
+          <option value="">Tous les sports</option>
+          {% for sport in sports %}
+            <option value="{{ sport.0 }}" {% if selected_sport == sport.0 %}selected{% endif %}>{{ sport.1 }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="department">Département :</label>
+        <input type="number" name="department" id="department" class="form-control" 
+               placeholder="Numéro de département" 
+               value="{% if selected_department and selected_department != 'None' and selected_department != 'none' and selected_department != 'null' %}{{ selected_department }}{% endif %}">
+      </div>
+      <div class="col-md-4 align-self-end">
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+      </div>
+    </form>
   </div>
+</div>
+
 
   <!-- TOURNOIS affichés en cartes -->
   <div class="row">
@@ -78,7 +85,7 @@
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
-              <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }} ({{ tournoi.city }})</p>
+              <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }} ({{ tournoi.departement }})</p>
               <p class="card-text"><strong>📅 Dates :</strong><br>Du {{ tournoi.start_date|date:"d/m/Y" }} au {{ tournoi.end_date|date:"d/m/Y" }}</p>
             </div>
             <div class="col-md-6">
