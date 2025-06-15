@@ -1,13 +1,11 @@
-from .models import Tournament
+from TournamentMaker.models import Tournament
 
-def selected_tournament(request):
+def selected_tournament_slug(request):
     selected_id = request.session.get('selected_tournament_id')
-    tournoi = None
     if selected_id:
         try:
             tournoi = Tournament.objects.get(id=selected_id)
+            return {'selected_tournament_slug': tournoi.slug}
         except Tournament.DoesNotExist:
             pass
-    return {
-        'tournoi': tournoi
-    }
+    return {'selected_tournament_slug': None}

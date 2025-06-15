@@ -45,32 +45,41 @@
     {% if not hide_navbar %}
     <nav class="nav-buttons-container">
         <div class="nav-buttons">
+            <!-- Lien vers l'accueil -->
             <a href="{% url 'home_landing' %}" class="nav-button">
                 <i class="fas fa-home"></i> Accueil
             </a>
 
             {% if request.session.selected_tournament_id %}
-                <a href="{% url 'teams' %}" class="nav-button">
-                    <i class="fas fa-tshirt"></i> Équipes
-                </a>
+                {% if selected_tournament_slug %}
+                    <!-- Voir les équipes -->
+                    <a href="{% url 'teams' selected_tournament_slug %}" class="nav-button">
+                        <i class="fas fa-users"></i> Voir les équipes
+                    </a>
 
-                <a href="{% url 'rankings_list' %}" class="nav-button">
-                    <i class="fas fa-medal"></i> Classements
-                </a>
-                <a href="{% url 'signup' %}" class="nav-button">
-                    <i class="fas fa-file-alt"></i> Inscription
-                </a>
-                {% if request.session.type_tournament == 'RR' %}
-                    <a href="{% url 'matchs_choice' %}" class="nav-button">
-                        <i class="fas fa-clock"></i> Matchs
+                    <!-- Voir le classement -->
+                    <a href="{% url 'rankings_list' selected_tournament_slug %}" class="nav-button">
+                        <i class="fas fa-trophy"></i> Voir le classement
                     </a>
-                {% else %}
-                    <a href="{% url 'direct_elimination' %}" class="nav-button">
-                        <i class="fas fa-clock"></i> Matchs
+
+                    <!-- Inscription -->
+                    <a href="{% url 'signup' selected_tournament_slug %}" class="nav-button">
+                        <i class="fas fa-user-plus"></i> Inscription
                     </a>
+
+                    <!-- Matchs (RR ou DE) -->
+                    {% if request.session.type_tournament == 'RR' %}
+                        <a href="{% url 'matchs_choice' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-clock"></i> Matchs
+                        </a>
+                    {% else %}
+                        <a href="{% url 'direct_elimination' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-clock"></i> Matchs
+                        </a>
+                    {% endif %}
                 {% endif %}
             {% endif %}
-        </div>
+        </div> <!-- fermeture du nav-buttons -->
     </nav>
     {% endif %}
 

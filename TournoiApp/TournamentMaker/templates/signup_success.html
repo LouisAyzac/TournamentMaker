@@ -27,7 +27,8 @@
     color: #388e3c;
     margin-bottom: 30px;
   }
-  .success-container button {
+  .success-container a.button-link {
+    display: inline-block;
     background-color: #4caf50;
     border: none;
     color: white;
@@ -35,9 +36,10 @@
     font-size: 1rem;
     border-radius: 6px;
     cursor: pointer;
+    text-decoration: none;
     transition: background-color 0.3s ease;
   }
-  .success-container button:hover {
+  .success-container a.button-link:hover {
     background-color: #388e3c;
   }
 </style>
@@ -45,8 +47,10 @@
 <div class="success-container">
   <h1>🎉 Inscription réussie !</h1>
   <p>Votre équipe a bien été enregistrée.</p>
-  <form action="{% url 'dashboard' %}" method="get">
-    <button type="submit">Retour au menu</button>
-  </form>
+
+  <!-- On force vers le dashboard du tournoi, car on est sûr qu'on a le slug -->
+  <a href="{% url 'dashboard' selected_tournament_slug %}" class="button-link">
+    Retour au menu du tournoi
+  </a>
 </div>
 {% endblock %}

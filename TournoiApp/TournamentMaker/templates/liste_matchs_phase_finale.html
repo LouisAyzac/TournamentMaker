@@ -48,19 +48,20 @@
     }
   </style>
 
-  {% for match in matchs %}
-    <a href="{% url 'score_match' match.id %}?tournament_id={{ match.tournament.id }}" class="match-link">
-      <div class="match-card">
-        <span class="team-name {% if match.winner_team == match.team_a %}winner{% endif %}">
-          {{ match.team_a.name }}
-        </span>
-        <span class="vs">vs</span>
-        <span class="team-name {% if match.winner_team == match.team_b %}winner{% endif %}">
-          {{ match.team_b.name }}
-        </span>
-      </div>
-    </a>
-  {% endfor %}
+{% for match in matchs %}
+  <a href="{% url 'score_match' tournament_slug=match.tournament.slug match_id=match.id %}" class="match-link">
+    <div class="match-card">
+      <span class="team-name {% if match.winner_team == match.team_a %}winner{% endif %}">
+        {{ match.team_a.name }}
+      </span>
+      <span class="vs">vs</span>
+      <span class="team-name {% if match.winner_team == match.team_b %}winner{% endif %}">
+        {{ match.team_b.name }}
+      </span>
+    </div>
+  </a>
+{% endfor %}
+
 
 {% else %}
   <p style="color: black;">Aucun match à afficher.</p>

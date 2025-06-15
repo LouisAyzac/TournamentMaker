@@ -17,7 +17,8 @@ urlpatterns = [
     # Joueurs / équipes
     path('players/', views.players, name='players'),
     path('players/<int:pk>/', views.player_detail, name='player_detail'),
-    path('teams/', views.teams, name='teams'),
+    path('<slug:tournament_slug>/teams/', views.teams, name='teams'),
+
     path('teams/<int:pk>/', views.team_detail, name='team_detail'),
 
     # Scores & matchs
@@ -27,13 +28,14 @@ urlpatterns = [
     path('create_elimination_match/', views.create_elimination_match, name='create_elimination_match'),
 
     # Matchs (choix, poules, finale)
-    path('matchs/', views.match_choice, name='matchs_choice'),
-    path('matchs/poule/<int:pool_id>/', views.detail_poule, name='detail_poule'),
-    path('tournoi/<int:tournament_id>/poules/', views.matchs_poules, name='matchs_poules'),
-    path('matchs-finale/<int:tournament_id>/', views.afficher_deux_premiers, name='matchs_finale'),
-    path('matchs-finale/liste/', views.liste_matchs_phase_finale, name='liste_matchs_phase_finale'),  # ← ajout ici
+    path('<slug:tournament_slug>/matchs/', views.match_choice, name='matchs_choice'),
+    path('<slug:tournament_slug>/matchs/poule/<int:pool_id>/', views.detail_poule, name='detail_poule'),
+    path('<slug:tournament_slug>/poules/', views.matchs_poules, name='matchs_poules'),
+    path('<slug:tournament_slug>/matchs-finale/', views.afficher_deux_premiers, name='matchs_finale'),
+    path('<slug:tournament_slug>/matchs-finale/liste/', views.liste_matchs_phase_finale, name='liste_matchs_phase_finale'), # ← ajout ici
     path('matchs-en-cours/', views.matchs_en_cours, name='matchs_en_cours'),
-    path('match/<int:match_id>/score/', views.score_match, name='score_match'),
+    path('<slug:tournament_slug>/match/<int:match_id>/score/', views.score_match, name='score_match'),
+
 
     
 
@@ -45,18 +47,23 @@ urlpatterns = [
     # Tournois
     path('creer_tournoi/etape1/', views.create_tournament_step1, name='create_tournament'),
     path('creer_tournoi/etape2/', views.create_tournament_step2, name='create_tournament_step2'),
-    path('tournaments/', TournamentListView.as_view(), name='tournament_list'),
-    path('tournament/<int:pk>/', TournamentDetailView.as_view(), name='tournament_detail'),
+    path('<slug:tournament_slug>/ranking/', views.rankings_list, name='rankings_list'),
+    path('<slug:slug>/detail', TournamentDetailView.as_view(), name='tournament_detail'),
+
+
+
     path('tournament/full/', views.tournament_full, name='tournament_full'),
 
     # Élimination directe
-    path('direct-elimination/', views.direct_elimination, name='direct_elimination'),
+    path('<slug:tournament_slug>/direct-elimination/', views.direct_elimination, name='direct_elimination'),
+
 
     # Divers
-    path('signup/', views.signup, name='signup'),
-    path('signup/success/', views.signup_success, name='signup_success'),
-    path('dashboard/', views.dashboard, name='dashboard'),
-    path('match/<int:match_id>/score/', views.score_match, name='score_match'),
+    path('<slug:tournament_slug>/signup/', views.signup, name='signup'),
+    path('<slug:tournament_slug>/signup/success/', views.signup_success, name='signup_success'),
+
+    path('<slug:tournament_slug>/dashboard/', views.dashboard, name='dashboard'),
+    path('<slug:tournament_slug>/match/<int:match_id>/score/', views.score_match, name='score_match'),
     path('select_tournament/', views.home, name='select_tournament'),
     path('tournois/', views.home, name='home'),
 

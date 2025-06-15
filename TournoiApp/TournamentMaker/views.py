@@ -32,8 +32,8 @@ def home(request):
         tournoi = get_object_or_404(Tournament, id=selected_id)
         request.session['selected_tournament_id'] = tournoi.id
         request.session['selected_tournament_name'] = tournoi.name
-        request.session['type_tournament'] = tournoi.type_tournament  # Ajoutez cette ligne
-        return redirect('dashboard')
+        request.session['type_tournament'] = tournoi.type_tournament
+        return redirect('dashboard', tournament_slug=tournoi.slug)  # Correction ici ✅
 
     if request.method == 'POST':
         selected_id = request.POST.get('tournament_id')
@@ -41,8 +41,8 @@ def home(request):
             tournoi = get_object_or_404(Tournament, id=selected_id)
             request.session['selected_tournament_id'] = tournoi.id
             request.session['selected_tournament_name'] = tournoi.name
-            request.session['type_tournament'] = tournoi.type_tournament  # Ajoutez cette ligne
-            return redirect('dashboard')
+            request.session['type_tournament'] = tournoi.type_tournament
+            return redirect('dashboard', tournament_slug=tournoi.slug)  # Correction ici ✅
 
     # Gestion affichage
     today = now().date()
@@ -88,7 +88,6 @@ def home(request):
     return render(request, 'home.html', context)
 
 
-
 def index(request):
     num_Player = Player.objects.count()
     return render(request, 'index.html', {'num_Player': num_Player})
@@ -100,12 +99,9 @@ def landing(request):
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404
 
-def dashboard(request):
-    selected_id = request.session.get('selected_tournament_id')
-    if not selected_id:
-        return redirect('home')
-
-    tournoi = get_object_or_404(Tournament, id=selected_id)
+def dashboard(request, tournament_slug):
+    # On ne prend plus selected_id depuis la session → on utilise tournament_slug
+    tournoi = get_object_or_404(Tournament, slug=tournament_slug)
 
     today = now().date()
 
@@ -131,13 +127,16 @@ def players(request):
     all_players = Player.objects.filter(team__tournament_id=tournament_id)
     return render(request, 'players.html', {'players': all_players})
 
-def teams(request):
-    tournament_id = request.session.get('selected_tournament_id')
-    if not tournament_id:
-        return redirect('home')
+def teams(request, tournament_slug):
+    tournoi = get_object_or_404(Tournament, slug=tournament_slug)
 
-    all_teams = Team.objects.filter(tournament_id=tournament_id)
-    return render(request, 'teams.html', {'teams': all_teams})
+    all_teams = tournoi.teams.all()
+
+    return render(request, 'teams.html', {
+        'tournoi': tournoi,
+        'teams': all_teams,
+    })
+
 
 from django.shortcuts import render, get_object_or_404
 from TournamentMaker.models import Player, Team
@@ -251,18 +250,24 @@ def pool_detail(request, pk):
     pool = get_object_or_404(Pool, pk=pk)
     return render(request, 'pools_detail.html', {'pool': pool})
 
-def rankings_list(request):
-    tournament_id = request.session.get('selected_tournament_id')
-    if not tournament_id:
-        return redirect('home')
+def rankings_list(request, tournament_slug):
+    # On récupère le tournoi correspondant au slug
+    tournoi = get_object_or_404(Tournament, slug=tournament_slug)
 
     pool_rankings = []
-    for pool in Pool.objects.all():
+
+    # On filtre les pools du tournoi courant :
+    pools = Pool.objects.filter(tournament=tournoi)
+
+    for pool in pools:
         teams = pool.teams.all()
         rankings = Ranking.objects.filter(team__in=teams).select_related('team').order_by('rank')
         pool_rankings.append({'pool': pool, 'rankings': rankings})
-    return render(request, 'rankings.html', {'pool_rankings': pool_rankings})
 
+    return render(request, 'rankings.html', {
+        'tournoi': tournoi,
+        'pool_rankings': pool_rankings
+    })
 
 # === Scores (par joueur connecté) ===
 @login_required 
@@ -375,15 +380,8 @@ def tournament_full(request):
     return render(request, 'tournament_full.html')
 
 
-def signup(request):
-    tournament_id = request.session.get('selected_tournament_id')
-    if not tournament_id:
-        return redirect('home')
-
-    try:
-        tournament = Tournament.objects.get(pk=tournament_id)
-    except Tournament.DoesNotExist:
-        return redirect('home')
+def signup(request, tournament_slug):
+    tournament = get_object_or_404(Tournament, slug=tournament_slug)
 
     max_teams = tournament.max_teams
     current_teams_count = Team.objects.filter(tournament=tournament).count()
@@ -508,18 +506,20 @@ L'équipe du tournoi
                 'players_per_team': players_per_team,
                 'total_players': total_players
             })
+        return redirect('signup_success', tournament_slug=tournament.slug)
 
-        return redirect('signup_success')
 
     return render(request, 'signup.html', {
         'players_per_team': players_per_team,
         'total_players': total_players
     })
 
- 
-def signup_success(request):
+def signup_success(request, tournament_slug):
     print("Page de succès atteinte.")
-    return render(request, 'signup_success.html')
+    return render(request, 'signup_success.html', {
+        'selected_tournament_slug': tournament_slug
+    })
+
 
 
 # === 🆕 Matchs ===
@@ -531,11 +531,11 @@ from .models import Tournament
 from django.shortcuts import render, get_object_or_404
 from .models import Tournament
 
-def match_choice(request):
-    # Récupérer l'ID du tournoi de l'URL ou de la session
-    tournament_id = request.GET.get('tournament_id') or request.session.get('selected_tournament_id')
+def match_choice(request, tournament_slug):
+    tournament = get_object_or_404(Tournament, slug=tournament_slug)
+    return render(request, 'matchs_choice.html', {'tournament': tournament})
 
-    if not tournament_id:
+    if not tournament:
         # Si aucun ID de tournoi n'est trouvé, afficher une erreur
         return render(request, 'matchs_choice.html', {'error': 'Aucun tournoi sélectionné'})
 
@@ -582,31 +582,31 @@ from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
 from .models import Tournament, Pool, Match
 
-def matchs_poules(request, tournament_id):
-    tournament = get_object_or_404(Tournament, id=tournament_id)
+from django.shortcuts import get_object_or_404, render
+from django.db.models import Q
+from .models import Tournament, Pool, Match
+
+def matchs_poules(request, tournament_slug):
+    tournament = get_object_or_404(Tournament, slug=tournament_slug)
     pools_data = []
 
-    # On récupère les pools du tournoi
     pools = Pool.objects.filter(tournament=tournament)
 
     for pool in pools.prefetch_related('teams'):
         stats = []
 
         for team in pool.teams.all():
-            # On récupère les matchs joués de cette équipe dans cette pool
             matchs_joues = Match.objects.filter(pool=pool, phase='pool')\
                 .filter(Q(team_a=team) | Q(team_b=team))\
-                .exclude(statut='ND')  # On ne prend pas les matchs "non débuté"
+                .exclude(statut='ND')
 
             total_joues = matchs_joues.count()
-
             victoires = 0
             defaites = 0
             diff_sets = 0
             diff_points = 0
 
             for match in matchs_joues:
-                # Victoire/défaite
                 if match.winner_side == 'A' and match.team_a == team:
                     victoires += 1
                 elif match.winner_side == 'B' and match.team_b == team:
@@ -614,8 +614,7 @@ def matchs_poules(request, tournament_id):
                 elif match.winner_side is not None:
                     defaites += 1
 
-                # Calculs goal average
-                for i in range(1, 6):  # max 5 sets
+                for i in range(1, 6):
                     score_a = getattr(match, f'set{i}_team_a', None)
                     score_b = getattr(match, f'set{i}_team_b', None)
 
@@ -629,9 +628,6 @@ def matchs_poules(request, tournament_id):
                         diff_sets += score_b - score_a
                         diff_points += score_b - score_a
 
-            # Calcul des points (3 points par victoire en volley)
-            points = victoires * 3
-
             stats.append({
                 'team': team,
                 'matchs_joues': total_joues,
@@ -641,24 +637,16 @@ def matchs_poules(request, tournament_id):
                 'diff_points': diff_points,
             })
 
-        # Tri : victoires -> diff sets -> diff points
         stats.sort(
-            key=lambda x: (
-                x['victoires'],
-                x['diff_sets'],
-                x['diff_points']
-            ),
+            key=lambda x: (x['victoires'], x['diff_sets'], x['diff_points']),
             reverse=True
         )
 
-        # Attribution du rang
         for index, team_data in enumerate(stats, start=1):
             team_data['rank'] = index
 
-        # On ajoute cette pool au résultat
         pools_data.append({'pool': pool, 'stats': stats})
 
-    # On passe les données au template
     return render(request, 'matchs_poules.html', {
         'pools_data': pools_data,
         'tournament': tournament
@@ -669,14 +657,18 @@ def matchs_poules(request, tournament_id):
 from django.shortcuts import render, get_object_or_404
 from .models import Pool, Match
 
-def detail_poule(request, pool_id):
+def detail_poule(request, tournament_slug, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
     tournament = pool.tournament
+
+    # Vérifie que le slug correspond au tournoi
+    if tournament.slug != tournament_slug:
+        return redirect('detail_poule', tournament_slug=tournament.slug, pool_id=pool.id)
 
     # Matchs joués et créés dans la poule (phase 'pool')
     matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
 
-    # On prépare les scores par sets (comme tu le fais déjà)
+    # On prépare les scores par sets
     for match in matchs:
         match.score_sets = []
         for i in range(1, 6):
@@ -694,6 +686,7 @@ def detail_poule(request, pool_id):
         'matchs': matchs,
         'tournament': tournament,
     })
+
 
 
 # Vue phase finale
@@ -923,6 +916,7 @@ from django.core.mail import send_mail
     return render(request, 'create_tournament.html')
  
 '''
+from django.utils.text import slugify
 def create_tournament_step1(request):
     if request.method == 'POST':
         # Enregistre les infos dans la session
@@ -970,6 +964,7 @@ def create_tournament_step2(request):
                 'number_of_pools': int(step1.get('nb_pools') or 0),
                 'max_teams': int(request.POST.get('nb_teams')),
                 'players_per_team': int(request.POST.get('players_per_team')),
+                'slug': slugify(step1['name']),
             }
 
             # Champs spécifiques par sport
@@ -1129,7 +1124,8 @@ class TournamentDetailView(DetailView):
     model = Tournament
     template_name = 'tournament_detail.html'
     context_object_name = 'tournoi'
-
+    slug_field = 'slug'
+    slug_url_kwarg = 'slug'
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['hide_navbar'] = True  # ✅ cacher la navbar sur cette page
@@ -1147,25 +1143,24 @@ from .models import Tournament, Team
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Tournament, Team
 
-def direct_elimination(request):
-    tournament_id = request.session.get('selected_tournament_id')
-    if not tournament_id:
-        return redirect('home')
+def direct_elimination(request, tournament_slug):
+    # On récupère le tournoi à partir du slug
+    tournament = get_object_or_404(Tournament, slug=tournament_slug)
 
-    tournament = get_object_or_404(Tournament, id=tournament_id)
-
+    # On vérifie le type du tournoi
     if tournament.type_tournament != 'DE':
         return redirect('home')
 
+    # On récupère les équipes du tournoi
     teams = list(Team.objects.filter(tournament=tournament).order_by('id'))
 
-    # Récupérer tous les matchs existants
+    # On récupère les matchs existants pour la phase 'quarter'
     matches = Match.objects.filter(team_a__tournament=tournament, phase='quarter')
     match_lookup = {
         (m.team_a.id, m.team_b.id): m for m in matches
     }
 
-    # Construire les paires avec match existant ou non
+    # On construit les paires de matchs
     matchups = []
     for i in range(0, len(teams), 2):
         team1 = teams[i]
@@ -1173,10 +1168,12 @@ def direct_elimination(request):
         match = match_lookup.get((team1.id, team2.id)) if team2 else None
         matchups.append((team1, team2, match))
 
+    # On rend le template
     return render(request, 'direct_elimination.html', {
         'tournament': tournament,
         'matchups': matchups,
     })
+
 
 
 
@@ -1231,11 +1228,26 @@ from django.shortcuts import get_object_or_404, render, redirect
 from .models import Match, UserProfile
 from django.urls import reverse
 @login_required
-def score_match(request, match_id):
+def score_match(request, tournament_slug, match_id):
+    # 🔥 On récupère le tournoi à partir du slug
+    tournament = get_object_or_404(Tournament, slug=tournament_slug)
+
+    # 🔥 On récupère le match et on vérifie qu'il appartient bien à ce tournoi
     match = get_object_or_404(Match, id=match_id)
+
+    if match.pool:
+        match_tournament = match.pool.tournament
+    else:
+        match_tournament = match.team_a.tournament
+
+    if match_tournament != tournament:
+        return render(request, 'no_team.html', {
+            'error': "Ce match ne correspond pas à ce tournoi."
+        })
+
     user = request.user
 
-    # Cas admin : autorisé partout
+    # Cas admin
     if user.is_superuser:
         authorized = True
     else:
@@ -1254,31 +1266,24 @@ def score_match(request, match_id):
                 user_profile = user.userprofile
                 user_team = user_profile.team
 
-                # Vérifier que c'est bien le CAPITAINE de son équipe
                 if user_team == match.team_a and match.team_a.captain == user_profile:
                     authorized = True
                 elif user_team == match.team_b and match.team_b.captain == user_profile:
                     authorized = True
 
             except UserProfile.DoesNotExist:
-                pass  # authorized reste False
+                pass
 
     if not authorized:
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match."
         })
 
-    # 🔥 On récupère le tournoi
-    if match.pool:
-        tournament = match.pool.tournament
-    else:
-        tournament = match.team_a.tournament  # 🔥 C'est sûr ici
-
-    # 🔥 Règle : 1 set gagnant → 1 set affiché / 2 → 3 sets / 3 → 5 sets
+    # 🔥 Nombre de sets à afficher
     nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
     set_numbers = list(range(1, nb_sets_display + 1))
 
-    # 🔥 On prépare un dict pour le template
+    # Préparer les scores
     score_fields = {}
     for set_number in set_numbers:
         score_fields[f'set{set_number}_team_a'] = getattr(match, f'set{set_number}_team_a')
@@ -1286,9 +1291,9 @@ def score_match(request, match_id):
 
     # 🔄 Préparer back_url AVANT le POST
     if match.phase == 'pool' and match.pool:
-        back_url = reverse('detail_poule', args=[match.pool.id])
+        back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
     else:
-        back_url = reverse('direct_elimination')
+        back_url = reverse('direct_elimination', args=[tournament_slug])  # 🔥 correction
 
     # 🔥 Traitement du POST
     if request.method == 'POST':
@@ -1299,7 +1304,6 @@ def score_match(request, match_id):
             value_a = request.POST.get(team_a_field, '')
             value_b = request.POST.get(team_b_field, '')
 
-            # Si vide ou non numérique → mettre 0
             value_a = int(value_a) if value_a.isdigit() else 0
             value_b = int(value_b) if value_b.isdigit() else 0
 
@@ -1315,17 +1319,17 @@ def score_match(request, match_id):
         else:
             match.winner_side = None
 
-        # 🔥 Met à jour le statut du match
+        # Met à jour le statut
         if winner is not None:
-            match.statut = 'T'  # Terminé
+            match.statut = 'T'
         elif any(getattr(match, f'set{i}_team_a', 0) != 0 or getattr(match, f'set{i}_team_b', 0) != 0 for i in set_numbers):
-            match.statut = 'EC'  # En cours
+            match.statut = 'EC'
         else:
-            match.statut = 'ND'  # Non débuté
+            match.statut = 'ND'
 
         match.save()
 
-        # 🟢 Force le recalcul du classement de la pool si on est en phase de poule
+        # Recalcul du classement
         if match.phase == 'pool' and match.pool:
             match.pool.calculate_rankings()
 
@@ -1348,8 +1352,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Pool, Ranking, Tournament, Match, Team
 
-def afficher_deux_premiers(request, tournament_id):
-    tournament = get_object_or_404(Tournament, id=tournament_id)
+def afficher_deux_premiers(request, tournament_slug):
+    tournament = get_object_or_404(Tournament, slug=tournament_slug)
 
     # Vérifie si les matchs ont déjà été créés pour la phase finale
     matchs_existent = Match.objects.filter(tournament=tournament, phase='quarter').exists()
@@ -1388,7 +1392,7 @@ def afficher_deux_premiers(request, tournament_id):
                 created_match_ids.append(match.id)
 
         request.session['created_match_ids'] = created_match_ids
-        return redirect('matchs_choice')
+        return redirect('matchs_choice', tournament_slug=tournament.slug)
 
     return render(request, 'matchs_finale.html', {
         'data': data,
@@ -1405,19 +1409,20 @@ from .models import Match
 
 from django.shortcuts import render
 from .models import Match
+from django.shortcuts import get_object_or_404
 
-def liste_matchs_phase_finale(request):
-    tournament_id = request.GET.get('tournament_id')
+def liste_matchs_phase_finale(request, tournament_slug):
+    # Récupération du tournoi via le slug
+    tournoi = get_object_or_404(Tournament, slug=tournament_slug)
 
-    if tournament_id:
-        matchs = Match.objects.filter(tournament_id=tournament_id, phase='quarter')
-        message = "Matchs de phase finale pour ce tournoi." if matchs.exists() else "Aucun match n’a été créé pour ce tournoi."
-    else:
-        matchs = Match.objects.none()
-        message = "Aucun tournoi spécifié."
+    # Filtrer les matchs de phase finale (par exemple, "quarter")
+    matchs = Match.objects.filter(tournament=tournoi, phase='quarter')
+
+    message = "Matchs de phase finale pour ce tournoi." if matchs.exists() else "Aucun match n’a été créé pour ce tournoi."
 
     return render(request, 'liste_matchs_phase_finale.html', {
         'matchs': matchs,
         'message': message
     })
+
 
