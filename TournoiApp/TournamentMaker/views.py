@@ -1408,11 +1408,10 @@ def score_match(request, match_id):
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match.",
             'pool_id': match.pool.id if match.pool else None,
-<<<<<<< HEAD
+
             'from_param': from_param,
             'tournament_id': tournament_id,
-=======
->>>>>>> louis
+            
         })
 
     tournament = match.pool.tournament if match.pool else match.team_a.tournament
