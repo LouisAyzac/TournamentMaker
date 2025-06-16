@@ -9,7 +9,12 @@
   </div>
 
   <div style="text-align: center; margin-top: 20px;">
-    <a href="{% url 'detail_poule' pool_id %}" class="btn btn-primary">Retour à la poule</a>
-
+    {% if pool_id %}
+      <a href="{% url 'detail_poule' pool_id %}" class="btn btn-primary">Retour à la poule</a>
+    {% elif from_param == 'phase_finale' %}
+      <a href="{% url 'liste_matchs_phase_finale' %}?tournament_id={{ tournament_id }}" class="btn btn-primary">Retour aux phases finales</a>
+    {% else %}
+      <a href="{% url 'direct_elimination' %}" class="btn btn-primary">Retour aux phases finales</a>
+    {% endif %}
   </div>
 {% endblock %}

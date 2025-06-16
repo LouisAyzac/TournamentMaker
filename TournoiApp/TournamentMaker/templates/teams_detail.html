@@ -25,7 +25,7 @@
   <div class="players-grid" id="playersList">
     {% if team.players.count > 0 %}
       {% for player in team.players.all %}
-      <a href="{% url 'player_detail' player.id %}" class="player-card {{ player.level|lower }}">
+<a href="{% url 'player_detail' tournament_slug player.id %}" class="player-card {{ player.level|lower }}">
         <div class="player-image">
           {% if player.photo %}
             <img src="{{ player.photo.url }}" alt="{{ player.first_name }} {{ player.last_name }}">
@@ -53,6 +53,6 @@
     {% endif %}
   </div>
 
-  <p><a href="{% url 'teams' %}">← Retour à la liste des équipes</a></p>
+  <p><a href="{% url 'teams' tournament_slug %}">← Retour à la liste des équipes</a></p>
 </div>
 {% endblock %}

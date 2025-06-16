@@ -44,7 +44,7 @@
       <p><strong>Email :</strong> {{ player.email|default:"Non renseigné" }}</p>
       <p><strong>Équipe :</strong> 
         {% if player.team %}
-          <a href="{% url 'team_detail' player.team.id %}" class="team-link">
+<a href="{% url 'team_detail' tournament_slug player.team.id %}" class="team-link">
             {{ player.team.name }}
           </a>
         {% else %}

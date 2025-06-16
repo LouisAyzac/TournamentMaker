@@ -4,7 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from datetime import date
-
+from django.utils.text import slugify
 
 from django.db import models
 from datetime import date
@@ -61,9 +61,13 @@ class Tournament(models.Model):
     
     quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
     number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
-
+    slug = models.SlugField(max_length=200, unique=False, blank=True)
     
-
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return self.name
 
