@@ -27,6 +27,22 @@
         display: inline-block;
         animation: bounce 2s infinite ease-in-out;
     }
+
+    .nav-button.home-highlight {
+        background: linear-gradient(to right, #4facfe, #00f2fe);
+        color: white;
+        font-weight: bold;
+        border-radius: 25px;
+        padding: 12px 24px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .nav-button.home-highlight:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        text-decoration: none;
+    }
     </style>
 </head>
 
@@ -44,7 +60,7 @@
     <nav class="nav-buttons-container">
         <div class="nav-buttons">
             <!-- Lien vers l'accueil -->
-            <a href="{% url 'home_landing' %}" class="nav-button">
+            <a href="{% url 'home_landing' %}" class="nav-button home-highlight">
                 <i class="fas fa-home"></i> Accueil
             </a>
 
@@ -83,7 +99,7 @@
                     {% endif %}
                 {% endif %}
             {% endif %}
-        </div> <!-- fermeture du nav-buttons -->
+        </div>
     </nav>
     {% endif %}
 
