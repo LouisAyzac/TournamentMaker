@@ -19,6 +19,7 @@
                 <tr>
                     <th style="background-color: yellow; color: black;">ÉQUIPE</th>
                     <th style="background-color: #4caf50; color: white;">V</th>
+
                     <th style="background-color: #f44336; color: white;">D</th>
                     <th style="background-color: #ffeb99; color: black;">MJ</th>
                     <th style="background-color: #ff9800; color: white;">Diff. Sets</th>
@@ -31,11 +32,12 @@
                     {% for team_data in pool_data.stats %}
                     <tr>
                         <td>
-                            <a href="{% url 'team_detail' team_data.team.id %}">
-                                {{ team_data.team.name }}
-                            </a>
+                            <a href="{% url 'team_detail' tournament.slug team_data.team.id %}">
+    {{ team_data.team.name }}
+</a>
                         </td>
                         <td>{{ team_data.victoires }}</td>
+
                         <td>{{ team_data.defaites }}</td>
                         <td>{{ team_data.matchs_joues }}</td>
                         <td>{{ team_data.diff_sets }}</td>
@@ -45,9 +47,7 @@
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="6" class="text-muted">
-                            Aucune équipe dans cette poule.
-                        </td>
+                        <td colspan="8" class="text-muted">Aucune équipe dans cette poule.</td>
                     </tr>
                 {% endif %}
             </tbody>

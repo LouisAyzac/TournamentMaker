@@ -68,7 +68,11 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'TournamentMaker.context_processors.selected_tournament_slug',
+
+                'TournamentMaker.context_processors.hide_inscription_button',
+
+                'TournamentMaker.context_processors.selected_tournament'
+                
             ],
         },
     },

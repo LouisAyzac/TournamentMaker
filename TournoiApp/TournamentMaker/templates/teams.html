@@ -15,7 +15,7 @@
 
   <div class="teams-grid" id="teamsList">
     {% for team in teams %}
-    <a href="{% url 'team_detail' team.id %}" class="team-card">
+  <a href="{% url 'team_detail' tournament_slug team.id %}" class="team-card">
       <div class="team-banner">
         <div class="team-logo-container">
           {% if team.logo %}
@@ -41,8 +41,14 @@
             <span>{{ team.losses|default:"0" }}D</span>
           </div>
           <div class="stat">
-            <i class="fas fa-chart-line"></i>
-
+              <i class="fas fa-chart-line"></i>
+              <span>
+                  {% if team.rank %}
+                      #{{ team.rank }}
+                  {% else %}
+                      -
+                  {% endif %}
+              </span>
           </div>
         </div>
 
