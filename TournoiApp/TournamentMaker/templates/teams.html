@@ -15,7 +15,7 @@
 
   <div class="teams-grid" id="teamsList">
     {% for team in teams %}
-    <a href="{% url 'team_detail' team.id %}" class="team-card">
+  <a href="{% url 'team_detail' tournament_slug team.id %}" class="team-card">
       <div class="team-banner">
         <div class="team-logo-container">
           {% if team.logo %}

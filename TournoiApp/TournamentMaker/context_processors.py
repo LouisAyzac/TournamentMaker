@@ -1,5 +1,6 @@
 from datetime import date
 from .models import Tournament
+from datetime import date
 
 def hide_inscription_button(request):
     try:
@@ -15,3 +16,13 @@ def hide_inscription_button(request):
         return {'hide_inscription': is_full or is_over}
     except:
         return {'hide_inscription': False}
+    
+def selected_tournament(request):
+    selected_id = request.session.get('selected_tournament_id')
+    if selected_id:
+        try:
+            tournoi = Tournament.objects.get(id=selected_id)
+            return {'selected_tournament_slug': tournoi.slug}
+        except Tournament.DoesNotExist:
+            pass
+    return {'selected_tournament_slug': None}
