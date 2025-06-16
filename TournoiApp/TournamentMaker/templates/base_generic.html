@@ -52,8 +52,9 @@
                 {% if selected_tournament_slug %}
                     <!-- Voir les équipes -->
                     <a href="{% url 'dashboard' selected_tournament_slug %}" class="nav-button">
-                    <i class="fas fa-info-circle"></i> Informations
-                    
+                        <i class="fas fa-info-circle"></i> Informations
+                    </a>
+
                     <a href="{% url 'teams' selected_tournament_slug %}" class="nav-button">
                         <i class="fas fa-users"></i> Voir les équipes
                     </a>
@@ -63,10 +64,12 @@
                         <i class="fas fa-trophy"></i> Voir le classement
                     </a>
 
-                    <!-- Inscription -->
+                    <!-- Inscription (affiché seulement si hide_inscription est False) -->
+                    {% if not hide_inscription %}
                     <a href="{% url 'signup' selected_tournament_slug %}" class="nav-button">
                         <i class="fas fa-user-plus"></i> Inscription
                     </a>
+                    {% endif %}
 
                     <!-- Matchs (RR ou DE) -->
                     {% if request.session.type_tournament == 'RR' %}

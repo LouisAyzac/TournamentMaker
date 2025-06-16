@@ -86,7 +86,7 @@
 
       <div class="match-list">
         {% for match in group.matchs %}
-    <a href="{% url 'score_match' tournament_slug=match.tournament.slug match_id=match.id %}" class="match-link">
+<a href="{% url 'score_match' tournament_slug=match.tournament.slug match_id=match.id %}?from=phase_finale" class="match-link">
 
             <div class="match-card">
               <span class="team-name {% if match.winner_team == match.team_a %}winner{% endif %}">

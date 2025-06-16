@@ -1504,7 +1504,7 @@ def score_match(request, tournament_slug, match_id):
             return redirect('detail_poule', tournament_slug=tournament_slug,
                             pool_id=match.pool.id)
         elif from_param == 'phase_finale':
-            url = reverse('liste_matchs_phase_finale')
+            url = reverse('liste_matchs_phase_finale', args=[tournament_slug])  # <-- on ajoute le slug ici
             params = urlencode({'tournament_id': match.tournament.id})
             full_url = f"{url}?{params}"
             return HttpResponseRedirect(full_url)
@@ -1516,7 +1516,7 @@ def score_match(request, tournament_slug, match_id):
     if match.phase == 'pool' and match.pool:
         back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
     elif from_param == 'phase_finale':
-        back_url = reverse('liste_matchs_phase_finale') + f'?tournament_id={match.tournament.id}'
+        back_url = reverse('liste_matchs_phase_finale', args=[tournament_slug]) + f'?tournament_id={match.tournament.id}'
     else:
         back_url = reverse('direct_elimination', args=[tournament_slug])
 
