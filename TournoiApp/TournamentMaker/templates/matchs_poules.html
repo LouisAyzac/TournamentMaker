@@ -32,9 +32,9 @@
                     {% for team_data in pool_data.stats %}
                     <tr>
                         <td>
-                            <a href="{% url 'team_detail' team_data.team.id %}">
-                                {{ team_data.team.name }}
-                            </a>
+                            <a href="{% url 'team_detail' tournament.slug team_data.team.id %}">
+    {{ team_data.team.name }}
+</a>
                         </td>
                         <td>{{ team_data.victoires }}</td>
 

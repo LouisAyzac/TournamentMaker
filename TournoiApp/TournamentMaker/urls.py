@@ -15,16 +15,16 @@ urlpatterns = [
     path('accounts/reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
 
     # Joueurs / équipes
-    path('players/', views.players, name='players'),
-    path('players/<int:pk>/', views.player_detail, name='player_detail'),
+    path('<slug:tournament_slug>/players/', views.players, name='players'),
+    path('<slug:tournament_slug>/players/<int:pk>/', views.player_detail, name='player_detail'),
     path('<slug:tournament_slug>/teams/', views.teams, name='teams'),
 
-    path('teams/<int:pk>/', views.team_detail, name='team_detail'),
+    path('<slug:tournament_slug>/<int:pk>/', views.team_detail, name='team_detail'),
 
     # Scores & matchs
     path('scores/', views.scores, name='scores'),
     path('match/<int:pk>/', views.match_detail, name='match_detail'),
-    path('match/<int:match_id>/score/', views.score_match, name='score_match'),
+    path('<slug:tournament_slug>/match/<int:match_id>/score/', views.score_match, name='score_match'),
     path('create_elimination_match/', views.create_elimination_match, name='create_elimination_match'),
 
     # Matchs (choix, poules, finale)
