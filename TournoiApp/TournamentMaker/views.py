@@ -1272,63 +1272,6 @@ from django.contrib.auth.decorators import login_required
 from .models import Match, UserProfile
 
 
-def get_next_phase(current_phase):
-    return {
-        'eighth': 'quarter',
-        'quarter': 'semi',
-        'semi': 'final',
-        'final': None,
-    }.get(current_phase)
-
-
-def advance_elimination_bracket(match):
-    winner = match.winner_team
-    if not winner or match.bracket_position is None:
-        return
-
-    current_phase = match.phase
-    next_phase = get_next_phase(current_phase)
-    if not next_phase:
-        return
-
-    tournament = match.tournament
-    next_position = match.bracket_position // 2
-
-    # Crée ou récupère le match de la phase suivante à la bonne position
-    next_match, created = Match.objects.get_or_create(
-        tournament=tournament,
-        phase=next_phase,
-        bracket_position=next_position,
-        defaults={'team_a': None, 'team_b': None}
-    )
-
-    # Affecte le vainqueur à la bonne place dans le match suivant
-    if match.bracket_position % 2 == 0:
-        if not next_match.team_a:
-            next_match.team_a = winner
-    else:
-        if not next_match.team_b:
-            next_match.team_b = winner
-
-    next_match.save()
-
-    # Cas spécial : si l'autre match n’existe pas (adversaire manquant), auto-passage
-    expected_opponent_bracket_pos = match.bracket_position ^ 1  # pair/impair
-    opponent_exists = Match.objects.filter(
-        tournament=tournament,
-        phase=current_phase,
-        bracket_position=expected_opponent_bracket_pos
-    ).exists()
-
-    if not opponent_exists:
-        # L'équipe passe seule → victoire automatique
-        next_match.winner_side = 'A' if next_match.team_a == winner else 'B'
-        next_match.statut = 'T'
-        next_match.save()
-        # On fait avancer encore ce match vers la suite
-        advance_elimination_bracket(next_match)
-
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -1343,9 +1286,14 @@ def get_next_phase(current_phase):
         'final': None,
     }.get(current_phase)
 
-
 def advance_elimination_bracket(match):
-    winner = match.winner_team
+    if match.winner_side == 'A':
+        winner = match.team_a
+    elif match.winner_side == 'B':
+        winner = match.team_b
+    else:
+        return  # Pas de vainqueur
+
     if not winner or match.bracket_position is None:
         return
 
@@ -1354,44 +1302,72 @@ def advance_elimination_bracket(match):
     if not next_phase:
         return
 
-    tournament = match.tournament
-    next_position = match.bracket_position // 2
+    tournament = match.tournament or (match.pool.tournament if match.pool else None)
+    if not tournament:
+        return
 
-    # Crée ou récupère le match de la phase suivante
+    # ✅ Détermination de la position de bracket
+    if current_phase == 'eighth':
+        next_position = 100 + (match.bracket_position // 2)
+    elif current_phase == 'quarter' and match.bracket_position >= 100:
+        # ✅ Ce quart spécial va dans la demi-finale 1
+        next_position = 1
+    else:
+        next_position = match.bracket_position // 2
+
+    # ✅ Création ou récupération du match suivant
     next_match, created = Match.objects.get_or_create(
         tournament=tournament,
         phase=next_phase,
         bracket_position=next_position,
-        defaults={'team_a': None, 'team_b': None}
+        defaults={'team_a': None, 'team_b': None, 'statut': 'ND'}
     )
 
-    # Place le vainqueur dans team_a ou team_b selon pair/impair
-    if match.bracket_position % 2 == 0:
-        if not next_match.team_a:
-            next_match.team_a = winner
+    print(f"🏆 Match {match.id} terminé. Phase : {current_phase}, bracket : {match.bracket_position}")
+    print(f"➡️ Vainqueur : {winner}, prochaine phase : {next_phase}, position : {next_position}")
+    print(f"🔍 Match suivant trouvé/créé : ID {next_match.id}, teams : A={next_match.team_a}, B={next_match.team_b}")
+
+    # ✅ Placement correct
+    if current_phase == 'quarter' and match.bracket_position >= 100:
+        # 🔥 Forcer dans team_b (contre le quart 3)
+        if next_match.team_b and next_match.team_b != winner:
+            print("⚠️ Conflit team_b — création d’un NOUVEAU match")
+            next_match = Match.objects.create(
+                tournament=tournament,
+                phase=next_phase,
+                bracket_position=next_position + 1000,
+                statut='ND'
+            )
+            next_match.team_b = winner
+        else:
+            next_match.team_b = winner
     else:
-        if not next_match.team_b:
+        is_even = match.bracket_position % 2 == 0
+        if is_even:
+            if next_match.team_a and next_match.team_a != winner:
+                print("⚠️ Conflit team_a — création d’un NOUVEAU match")
+                next_match = Match.objects.create(
+                    tournament=tournament,
+                    phase=next_phase,
+                    bracket_position=next_position + 1000,
+                    statut='ND'
+                )
+            next_match.team_a = winner
+        else:
+            if next_match.team_b and next_match.team_b != winner:
+                print("⚠️ Conflit team_b — création d’un NOUVEAU match")
+                next_match = Match.objects.create(
+                    tournament=tournament,
+                    phase=next_phase,
+                    bracket_position=next_position + 1000,
+                    statut='ND'
+                )
             next_match.team_b = winner
 
     next_match.save()
 
-    # ⚠️ Ne PAS avancer automatiquement tant que l’autre match (adversaire) n’a pas été joué
-    expected_opponent_pos = match.bracket_position ^ 1
-    opponent_match = Match.objects.filter(
-        tournament=tournament,
-        phase=current_phase,
-        bracket_position=expected_opponent_pos
-    ).first()
-
-    # Seulement avancer si l’autre match n’existe PAS du tout
-    if opponent_match is None:
-        # Avancement automatique
-        next_match.winner_side = 'A' if next_match.team_a == winner else 'B'
-        next_match.statut = 'T'
-        next_match.save()
+    if next_match.statut == 'T' and next_match.winner_side in ['A', 'B']:
         advance_elimination_bracket(next_match)
-
-
 
 @login_required
 def score_match(request, tournament_slug, match_id):
@@ -1494,6 +1470,9 @@ def score_match(request, tournament_slug, match_id):
 
         match.save()
 
+        print(f"🔎 Match enregistré : id={match.id}, phase={match.phase}, bracket={match.bracket_position}, winner={match.winner_side}")
+
+
         if match.phase == 'pool' and match.pool:
             match.pool.calculate_rankings()
         else:
@@ -1538,11 +1517,19 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Pool, Ranking, Tournament, Match, Team
 
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Pool, Ranking, Tournament, Match
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Pool, Ranking, Tournament, Match
+
 def afficher_deux_premiers(request, tournament_slug):
     tournament = get_object_or_404(Tournament, slug=tournament_slug)
 
-    # Vérifie si les matchs ont déjà été créés pour la phase finale
-    matchs_existent = Match.objects.filter(tournament=tournament, phase='quarter').exists()
+    # Vérifie s’il existe déjà des matchs de phases finales
+    matchs_existent = Match.objects.filter(
+        tournament=tournament, phase__in=['eighth', 'quarter', 'semi']
+    ).exists()
 
     pools = Pool.objects.filter(tournament=tournament)
     data = []
@@ -1557,27 +1544,75 @@ def afficher_deux_premiers(request, tournament_slug):
         })
         qualified_teams.extend([ranking.team for ranking in top_rankings])
 
-    nb_matches = len(qualified_teams) // 2
-    match_range = range(nb_matches)
+    total_teams = len(qualified_teams)
+    nb_teams_needed_in_quarter = 8  # pour 4 quarts
+    nb_eighth_matches = max(0, total_teams - nb_teams_needed_in_quarter)
+    nb_teams_in_eighth = nb_eighth_matches * 2
+    teams_for_eighth = qualified_teams[:nb_teams_in_eighth]
+    teams_for_quarter = qualified_teams[nb_teams_in_eighth:]
+
+    match_range_eighth = range(nb_eighth_matches)
+    match_range_quarter = range((len(teams_for_quarter)) // 2)
+
+    # 🆕 Cas spécial : 4 équipes → demi-finales directes
+    teams_for_semi = []
+    match_range_semi = []
+    if total_teams == 4:
+        teams_for_semi = qualified_teams
+        match_range_semi = range(2)
 
     if request.method == 'POST' and not matchs_existent:
         created_match_ids = []
 
-        for i in match_range:
-            team_a_id = request.POST.get(f'team_a_{i}')
-            team_b_id = request.POST.get(f'team_b_{i}')
+        # Matchs de huitièmes (bracket_position espacée pour éviter collision)
+        for i in match_range_eighth:
+            team_a_id = request.POST.get(f'eighth_team_a_{i}')
+            team_b_id = request.POST.get(f'eighth_team_b_{i}')
 
             if team_a_id and team_b_id and team_a_id != team_b_id:
                 match = Match.objects.create(
                     team_a_id=team_a_id,
                     team_b_id=team_b_id,
                     tournament=tournament,
-                    phase='quarter',
+                    phase='eighth',
                     statut='ND',
-                    bracket_position=i  # 🔥 ceci est la clé pour enchaîner les phases
-
+                    bracket_position=i
                 )
                 created_match_ids.append(match.id)
+
+        # ✅ Matchs de quarts uniquement si plus de 4 équipes
+        if total_teams > 4:
+            for i in match_range_quarter:
+                team_a_id = request.POST.get(f'quarter_team_a_{i}')
+                team_b_id = request.POST.get(f'quarter_team_b_{i}')
+
+                if team_a_id and team_b_id and team_a_id != team_b_id:
+                    match = Match.objects.create(
+                        team_a_id=team_a_id,
+                        team_b_id=team_b_id,
+                        tournament=tournament,
+                        phase='quarter',
+                        statut='ND',
+                        bracket_position=i
+                    )
+                    created_match_ids.append(match.id)
+
+        # 🆕 Matchs de demi-finales si 4 équipes (pas de quarts ou huitièmes)
+        if total_teams == 4:
+            for i in range(2):
+                team_a_id = request.POST.get(f'semi_team_a_{i}')
+                team_b_id = request.POST.get(f'semi_team_b_{i}')
+
+                if team_a_id and team_b_id and team_a_id != team_b_id:
+                    match = Match.objects.create(
+                        team_a_id=team_a_id,
+                        team_b_id=team_b_id,
+                        tournament=tournament,
+                        phase='semi',
+                        statut='ND',
+                        bracket_position=i
+                    )
+                    created_match_ids.append(match.id)
 
         request.session['created_match_ids'] = created_match_ids
         return redirect('matchs_choice', tournament_slug=tournament.slug)
@@ -1586,9 +1621,15 @@ def afficher_deux_premiers(request, tournament_slug):
         'data': data,
         'tournament': tournament,
         'qualified_teams': qualified_teams,
-        'match_range': match_range,
-        'matchs_existent': matchs_existent,  # ← on passe cette info au template
+        'teams_for_eighth': teams_for_eighth,
+        'teams_for_quarter': teams_for_quarter,
+        'match_range_eighth': match_range_eighth,
+        'match_range_quarter': match_range_quarter,
+        'matchs_existent': matchs_existent,
+        'teams_for_semi': teams_for_semi,
+        'match_range_semi': match_range_semi,
     })
+
 
 
 
