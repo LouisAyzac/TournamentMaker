@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     {% block title %}
-      <title>VolleyTournoi</title>
+      <title>🏆TournamentMaker🏆</title>
     {% endblock %}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -34,7 +34,7 @@
     <!-- Header -->
     <header class="header-bar">
         <div class="container">
-            <h1 class="header-title">Volleyball</h1>
+            <h1 class="header-title">🏆TournamentMaker🏆</h1>
             <p class="header-subtitle">Organisez. Jouez. Gagnez.</p>
         </div>
     </header>
@@ -43,40 +43,47 @@
     {% if not hide_navbar %}
     <nav class="nav-buttons-container">
         <div class="nav-buttons">
-            <a href="{% url 'home_landing' %}" class="nav-button btn-home">
+            <!-- Lien vers l'accueil -->
+            <a href="{% url 'home_landing' %}" class="nav-button">
                 <i class="fas fa-home"></i> Accueil
             </a>
 
-            {% if tournoi %}
-                <a href="{% url 'dashboard' tournoi.id %}" class="nav-button">
-                    <i class="fas fa-info-circle"></i> Informations
-                </a>
-
-                <a href="{% url 'teams' %}?tournament_id={{ tournoi.id }}" class="nav-button">
-                    <i class="fas fa-tshirt"></i> Équipes
-                </a>
-
-                <a href="{% url 'rankings_list' %}?tournament_id={{ tournoi.id }}" class="nav-button">
-                    <i class="fas fa-medal"></i> Classements
-                </a>
-
-                {% if tournoi.end_date >= today and tournoi.teams.count < tournoi.max_teams %}
-                    <a href="{% url 'signup' %}?tournament_id={{ tournoi.id }}" class="nav-button">
-                        <i class="fas fa-file-alt"></i> Inscription
+            {% if request.session.selected_tournament_id %}
+                {% if selected_tournament_slug %}
+                    <!-- Voir les équipes -->
+                    <a href="{% url 'dashboard' selected_tournament_slug %}" class="nav-button">
+                        <i class="fas fa-info-circle"></i> Informations
                     </a>
-                {% endif %}
 
-                {% if tournoi.type_tournament == 'RR' %}
-                    <a href="{% url 'matchs_choice' %}?tournament_id={{ tournoi.id }}" class="nav-button">
-                        <i class="fas fa-clock"></i> Matchs
+                    <a href="{% url 'teams' selected_tournament_slug %}" class="nav-button">
+                        <i class="fas fa-users"></i> Voir les équipes
                     </a>
-                {% else %}
-                    <a href="{% url 'direct_elimination' %}?tournament_id={{ tournoi.id }}" class="nav-button">
-                        <i class="fas fa-clock"></i> Matchs
+
+                    <!-- Voir le classement -->
+                    <a href="{% url 'rankings_list' selected_tournament_slug %}" class="nav-button">
+                        <i class="fas fa-trophy"></i> Voir le classement
                     </a>
+
+                    <!-- Inscription (affiché seulement si hide_inscription est False) -->
+                    {% if not hide_inscription %}
+                    <a href="{% url 'signup' selected_tournament_slug %}" class="nav-button">
+                        <i class="fas fa-user-plus"></i> Inscription
+                    </a>
+                    {% endif %}
+
+                    <!-- Matchs (RR ou DE) -->
+                    {% if request.session.type_tournament == 'RR' %}
+                        <a href="{% url 'matchs_choice' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-clock"></i> Matchs
+                        </a>
+                    {% else %}
+                        <a href="{% url 'direct_elimination' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-clock"></i> Matchs
+                        </a>
+                    {% endif %}
                 {% endif %}
             {% endif %}
-        </div>
+        </div> <!-- fermeture du nav-buttons -->
     </nav>
     {% endif %}
 
@@ -99,7 +106,7 @@
                 <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-twitter"></i></a>
                 <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-instagram"></i></a>
             </div>
-            <p class="copyright">©2025 VolleyTournoi. Tous droits réservés.</p>
+            <p class="copyright">©2025TournamentMaker. Tous droits réservés.</p>
         </div>
     </footer>
 </body>

@@ -4,7 +4,7 @@ from faker import Faker
 import random
 
 class Command(BaseCommand):
-    help = 'Génère des tournois, équipes et joueurs avec choix entre élimination directe ou tournois avec pools'
+    help = 'Génère 10 tournois avec 5 pools manuelles, chacune contenant 2 équipes nommées 1.1, 1.2, etc.'
 
     def handle(self, *args, **kwargs):
         fake = Faker('fr_FR')
@@ -12,62 +12,53 @@ class Command(BaseCommand):
         sports = [choice[0] for choice in Tournament.SPORT_CHOICES]
         levels = [choice[0] for choice in Player.LEVEL_CHOICES]
 
-        for _ in range(20):  # Crée un seul tournoi pour test, tu peux remettre 20 ensuite
-            # Choisir aléatoirement entre élimination directe et tournois avec pools
-            type_tournament = random.choice(['KO', 'RR'])
-            number_of_pools = random.randint(1, 5) if type_tournament == 'RR' else 0
-
+        for t_index in range(1, 11):  # Crée 10 tournois
             tournament = Tournament.objects.create(
-                name=fake.company() + ' Cup',
+                name=f"Tournament {t_index}",
                 department=str(fake.random_int(min=1, max=95)).zfill(2),
                 address=fake.address(),
                 is_indoor=random.choice([True, False]),
                 start_date=fake.date_this_year(),
                 end_date=fake.date_this_year(),
                 sport=random.choice(sports),
-                max_teams=random.randint(5, 10),
-                players_per_team=random.randint(5, 12),
-                number_of_pools=number_of_pools,
-                type_tournament=type_tournament,
-                nb_sets_to_win=random.randint(2, 5),
-                points_per_set=random.randint(15, 25)
+                max_teams=10,
+                players_per_team=6,
+                number_of_pools=6,  # mais on va les créer nous-mêmes
+                type_tournament='RR',
+                nb_sets_to_win=1,
+                points_per_set=25
             )
 
-            if type_tournament == 'KO':
-                self.stdout.write(self.style.SUCCESS(f"Tournoi {tournament.name} est une élimination directe."))
-                continue
+            # Supprime les pools auto si créées par signal
+            Pool.objects.filter(tournament=tournament).delete()
 
-            # Récupérer les pools automatiquement créées
-            pools = list(Pool.objects.filter(tournament=tournament))
-            if not pools:
-                self.stdout.write(self.style.ERROR("❌ Aucune pool trouvée après création du tournoi."))
-                continue
-
-            # Création des équipes réparties équitablement
-            teams = []
-            for i in range(tournament.max_teams):
-                pool = min(pools, key=lambda p: p.teams.count())
-                team = Team.objects.create(
-                    name=fake.company() + f" Team {i + 1}",
+            for p_index in range(1, 7):
+                pool = Pool.objects.create(
+                    name=f"Pool {p_index}",
                     tournament=tournament,
-                    pool=pool,
-                    captain=None
+                    max_size=2
                 )
-                teams.append(team)
 
-            # Génération des joueurs
-            for team in teams:
-                num_players = random.randint(
-                    int(tournament.players_per_team * 0.5), tournament.players_per_team
-                )
-                for _ in range(num_players):
-                    Player.objects.create(
-                        first_name=fake.first_name(),
-                        last_name=fake.last_name(),
-                        birth_date=fake.date_of_birth(minimum_age=10, maximum_age=40),
-                        level=random.choice(levels),
-                        team=team,
-                        email=fake.email()
+                # Créer 2 équipes nommées X.1 et X.2
+                for team_num in range(1, 3):
+                    team_name = f"{p_index}.{team_num}"
+                    team = Team.objects.create(
+                        name=team_name,
+                        tournament=tournament,
+                        pool=pool
                     )
 
-        self.stdout.write(self.style.SUCCESS('✅ Tournois, équipes et joueurs créés.'))
+                    # Ajouter les joueurs
+                    for _ in range(tournament.players_per_team):
+                        Player.objects.create(
+                            first_name=fake.first_name(),
+                            last_name=fake.last_name(),
+                            birth_date=fake.date_of_birth(minimum_age=16, maximum_age=40),
+                            level=random.choice(levels),
+                            team=team,
+                            email=fake.email()
+                        )
+
+            self.stdout.write(self.style.SUCCESS(f"✅ Tournoi {tournament.name} avec 5 pools créées manuellement."))
+
+        self.stdout.write(self.style.SUCCESS("🎯 Tous les tournois ont été générés sans duplication de pools."))

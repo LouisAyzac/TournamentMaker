@@ -8,7 +8,7 @@
     {% for pool_data in pools_data %}
         <h4 class="mt-4 text-primary fw-bold">
             Poule {{ pool_data.pool.name }}
-            <a href="{% url 'detail_poule' pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">
+            <a href="{% url 'detail_poule' tournament.slug pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">
                 Voir les matchs
             </a>
         </h4>
@@ -18,14 +18,6 @@
                 <tr>
                     <th style="background-color: yellow; color: black;">ÉQUIPE</th>
                     <th style="background-color: #4caf50; color: white;">V</th>
-<<<<<<< HEAD
-
-=======
-<<<<<<< HEAD
-=======
-
->>>>>>> louis
->>>>>>> dev
                     <th style="background-color: #f44336; color: white;">D</th>
                     <th style="background-color: #ffeb99; color: black;">MJ</th>
                     <th style="background-color: #ff9800; color: white;">Diff. Sets</th>
@@ -38,19 +30,11 @@
                     {% for team_data in pool_data.stats %}
                     <tr>
                         <td>
-                            <a href="{% url 'team_detail' team_data.team.id %}">
+                            <a href="{% url 'team_detail' tournament.slug team_data.team.id %}">
                                 {{ team_data.team.name }}
                             </a>
                         </td>
                         <td>{{ team_data.victoires }}</td>
-<<<<<<< HEAD
-
-=======
-<<<<<<< HEAD
-=======
-
->>>>>>> louis
->>>>>>> dev
                         <td>{{ team_data.defaites }}</td>
                         <td>{{ team_data.matchs_joues }}</td>
                         <td>{{ team_data.diff_sets }}</td>
@@ -60,25 +44,21 @@
                     {% endfor %}
                 {% else %}
                     <tr>
-<<<<<<< HEAD
                         <td colspan="8" class="text-muted">Aucune équipe dans cette poule.</td>
-=======
-                        <td colspan="6" class="text-muted">
-                            Aucune équipe dans cette poule.
-                        </td>
->>>>>>> antoine
                     </tr>
                 {% endif %}
             </tbody>
         </table>
-
     {% endfor %}
 {% else %}
     <p class="text-center mt-4 text-dark" style="font-size: 1.4em;">Aucune poule trouvée.</p>
-<<<<<<< HEAD
-=======
-
->>>>>>> dev
 {% endif %}
+
+<!-- BOUTON RETOUR -->
+<div class="text-start mt-5 mb-4 ps-3">
+  <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
+    <i class="fas fa-arrow-left me-2"></i>Revenir à la sélection de la phase
+  </a>
+</div>
 
 {% endblock %}

@@ -1,68 +1,114 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
-<h1 style="color: black;">Matchs de la phase finale</h1>
+<div class="phase-final-wrapper">
+  <h1 class="title">Matchs de la phase finale</h1>
 
-{% if message %}
-  <p style="color: black;"><strong>{{ message }}</strong></p>
-{% endif %}
+  {% if match_groups %}
+    <style>
+      .phase-final-wrapper {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: sans-serif;
+      }
 
-{% if matchs %}
-  <style>
-    .match-card {
-        border: 1px solid #ccc;
-        border-radius: 10px;
-        padding: 10px 15px;
-        margin: 10px 0 10px 20px;
-        width: 320px;
-        background-color: #f9f9f9;
-        cursor: pointer;
-        transition: background-color 0.2s, box-shadow 0.2s;
-        text-align: left;
-    }
-
-    .match-card:hover {
-        background-color: #f1f1f1;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .team-name {
+      .title {
+        font-size: 1.8rem;
         font-weight: bold;
-        font-size: 1rem;
-        display: inline-block;
-    }
+        margin-bottom: 10px;
+        color: #111;
+      }
 
-    .vs {
-        margin: 0 8px;
-        font-size: 0.95rem;
-        color: black; /* ← ✅ Le "vs" est maintenant noir */
-    }
+      .phase-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #444;
+        margin-top: 30px;
+        margin-bottom: 10px;
+      }
 
-    .winner {
-        color: green;
-    }
+      .match-list {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
 
-    a.match-link {
+      .match-link {
         text-decoration: none;
         color: inherit;
-    }
-  </style>
+      }
 
-  {% for match in matchs %}
-    <a href="{% url 'score_match' match.id %}?tournament_id={{ match.tournament.id }}" class="match-link">
-      <div class="match-card">
-        <span class="team-name {% if match.winner_team == match.team_a %}winner{% endif %}">
-          {{ match.team_a.name }}
-        </span>
-        <span class="vs">vs</span>
-        <span class="team-name {% if match.winner_team == match.team_b %}winner{% endif %}">
-          {{ match.team_b.name }}
-        </span>
+      .match-card {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 10px 16px;
+        width: 320px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background-color: #fff;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+
+      .match-card:hover {
+        background-color: #eef4ff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      }
+
+      .team-name {
+        font-weight: 500;
+        color: #333;
+      }
+
+      .winner {
+        color: #198754;
+        font-weight: 600;
+      }
+
+      .vs {
+        margin: 0 8px;
+        color: #666;
+        font-size: 0.95rem;
+      }
+
+      .pending {
+        font-style: italic;
+        color: #aaa;
+      }
+    </style>
+
+    {% for group in match_groups %}
+      <div class="phase-title">{{ group.label }}</div>
+
+      <div class="match-list">
+        {% for match in group.matchs %}
+<a href="{% url 'score_match' tournament_slug=match.tournament.slug match_id=match.id %}?from=phase_finale" class="match-link">
+
+            <div class="match-card">
+              <span class="team-name {% if match.winner_team == match.team_a %}winner{% endif %}">
+                {{ match.team_a.name|default:"En attente" }}
+              </span>
+              <span class="vs">vs</span>
+              <span class="team-name {% if match.winner_team == match.team_b %}winner{% endif %}">
+                {{ match.team_b.name|default:"En attente" }}
+              </span>
+            </div>
+          </a>
+        {% endfor %}
       </div>
-    </a>
-  {% endfor %}
+    {% endfor %}
+  {% else %}
+    <p class="info-message">Aucun match à afficher pour cette phase finale pour le moment.</p>
+  {% endif %}
+</div>
 
-{% else %}
-  <p style="color: black;">Aucun match à afficher.</p>
-{% endif %}
+<div class="text-start mt-5 mb-4 ps-3">
+  <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
+    <i class="fas fa-arrow-left me-2"></i>Revenir à la sélection de la phase
+  </a>
+</div>
 {% endblock %}

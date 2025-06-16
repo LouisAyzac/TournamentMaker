@@ -4,7 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from datetime import date
-
+from django.utils.text import slugify
 
 from django.db import models
 from datetime import date
@@ -16,9 +16,6 @@ class Organisateur(models.Model):
 
     def __str__(self):
         return f"Organisateur: {self.user.email}"
-
-from django.db import models
-from datetime import date
 
 from django.db import models
 from datetime import date
@@ -64,23 +61,13 @@ class Tournament(models.Model):
     
     quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
     number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
-
+    slug = models.SlugField(max_length=200, unique=False, blank=True)
     
-
-    
-    match_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un match (en minutes)")
-    extra_time = models.BooleanField(null=True, blank=True, help_text="Prolongations possibles")
-    penalty_shootout = models.BooleanField(null=True, blank=True, help_text="Tirs au but en cas d’égalité")
-
-    
-    half_time_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée de la mi-temps (en minutes)")
-
-    
-    quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
-    number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
-
-    
-
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return self.name
 
@@ -139,7 +126,7 @@ class Player(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     birth_date = models.DateField(null=True, blank=True)
-    level = models.CharField(max_length=1, choices=LEVEL_CHOICES)
+    level = models.IntegerField(choices=LEVEL_CHOICES)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     email = models.EmailField(blank=True, null=True)
 
@@ -222,10 +209,14 @@ class Match(models.Model):
     tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
 
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
-    team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a')
-    team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b')
+    team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a',null=True, blank=True)
+    team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b', null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True, verbose_name="Heure de début")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Heure de fin")
+
+    bracket_position = models.PositiveIntegerField(null=True, blank=True)  # ✅ Ajout ici
+
+     
 
     STATUT_CHOICES = [
         ('ND', 'Non débuté'),
