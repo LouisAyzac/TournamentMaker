@@ -290,6 +290,12 @@ class Match(models.Model):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"
 
     def get_auto_winner(self, nb_sets_to_win):
+        tournament = self.tournament or (self.pool.tournament if self.pool else None)
+        if not tournament:
+            return None
+
+        points_per_set = tournament.points_per_set
+
         sets = [
             (self.set1_team_a, self.set1_team_b),
             (self.set2_team_a, self.set2_team_b),
@@ -300,11 +306,17 @@ class Match(models.Model):
         if self.set5_team_a is not None and self.set5_team_b is not None:
             sets.append((self.set5_team_a, self.set5_team_b))
 
-        # Filtrer les sets non joués (où les deux scores sont à 0)
         sets_played = [(a, b) for a, b in sets if a != 0 or b != 0]
 
-        score_a = sum(1 for a, b in sets_played if a > b)
-        score_b = sum(1 for a, b in sets_played if b > a)
+        score_a = 0
+        score_b = 0
+
+        for a, b in sets_played:
+            if max(a, b) >= points_per_set and abs(a - b) >= 2:
+                if a > b:
+                    score_a += 1
+                elif b > a:
+                    score_b += 1
 
         if score_a >= nb_sets_to_win:
             return self.team_a
@@ -312,6 +324,7 @@ class Match(models.Model):
             return self.team_b
         else:
             return None
+
 
 class Ranking(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)
