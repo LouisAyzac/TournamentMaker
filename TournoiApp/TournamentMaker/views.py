@@ -646,12 +646,24 @@ def matchs_poules(request, tournament_slug):
                     if score_a is None or score_b is None:
                         break
 
+                    # Pour les points : somme directe
                     if match.team_a == team:
-                        diff_sets += score_a - score_b
                         diff_points += score_a - score_b
                     elif match.team_b == team:
-                        diff_sets += score_b - score_a
                         diff_points += score_b - score_a
+
+                    # Pour les sets : on compte le set gagné
+                    if match.team_a == team:
+                        if score_a > score_b:
+                            diff_sets += 1
+                        elif score_a < score_b:
+                            diff_sets -= 1
+                    elif match.team_b == team:
+                        if score_b > score_a:
+                            diff_sets += 1
+                        elif score_b < score_a:
+                            diff_sets -= 1
+
 
             # Calcul des points (3 points par victoire en volley)
             points = victoires * 3
@@ -1375,6 +1387,70 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from .models import Tournament, Match
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from .models import Match, UserProfile
+
+
+def get_next_phase(current_phase):
+    return {
+        'eighth': 'quarter',
+        'quarter': 'semi',
+        'semi': 'final',
+        'final': None,
+    }.get(current_phase)
+
+
+def advance_elimination_bracket(match):
+    winner = match.winner_team
+    if not winner or match.bracket_position is None:
+        return
+
+    current_phase = match.phase
+    next_phase = get_next_phase(current_phase)
+    if not next_phase:
+        return
+
+    tournament = match.tournament
+    next_position = match.bracket_position // 2
+
+    # Crée ou récupère le match de la phase suivante
+    next_match, created = Match.objects.get_or_create(
+        tournament=tournament,
+        phase=next_phase,
+        bracket_position=next_position,
+        defaults={'team_a': None, 'team_b': None}
+    )
+
+    # Place le vainqueur dans team_a ou team_b selon pair/impair
+    if match.bracket_position % 2 == 0:
+        if not next_match.team_a:
+            next_match.team_a = winner
+    else:
+        if not next_match.team_b:
+            next_match.team_b = winner
+
+    next_match.save()
+
+    # ⚠️ Ne PAS avancer automatiquement tant que l’autre match (adversaire) n’a pas été joué
+    expected_opponent_pos = match.bracket_position ^ 1
+    opponent_match = Match.objects.filter(
+        tournament=tournament,
+        phase=current_phase,
+        bracket_position=expected_opponent_pos
+    ).first()
+
+    # Seulement avancer si l’autre match n’existe PAS du tout
+    if opponent_match is None:
+        # Avancement automatique
+        next_match.winner_side = 'A' if next_match.team_a == winner else 'B'
+        next_match.statut = 'T'
+        next_match.save()
+        advance_elimination_bracket(next_match)
+
+
+
 @login_required
 def score_match(request, tournament_slug, match_id):
     from_param = request.GET.get('from')
@@ -1492,6 +1568,7 @@ def score_match(request, tournament_slug, match_id):
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
+
     })
 
 

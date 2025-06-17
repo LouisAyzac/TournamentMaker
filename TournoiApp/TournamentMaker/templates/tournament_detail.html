@@ -7,7 +7,12 @@
   <!-- Section héros -->
   <div class="bg-primary text-white rounded-4 shadow-sm p-4 mb-4 text-center">
     <h1 class="display-5 fw-bold"><i class="fas fa-trophy me-2"></i>{{ tournoi.name }}</h1>
+<<<<<<< HEAD
     <p class="lead mb-0">{{ tournoi.get_sport_display }} - {{ tournoi.departement }}</p>
+=======
+    <p class="lead mb-0">{{ tournoi.get_sport_display }}{% if tournoi.department %} - {{ tournoi.department }}{% endif %}</p>
+
+>>>>>>> ange
   </div>
 
   <!-- Détails du tournoi -->
@@ -16,7 +21,10 @@
       <div class="row g-4">
         <div class="col-md-6">
           {% if tournoi.address %}
-          <p class="mb-2"><i class="fas fa-map-marker-alt text-primary me-2"></i><strong>Adresse :</strong> {{ tournoi.address }}</p>
+          <p class="mb-2">
+            <i class="fas fa-map-marker-alt text-primary me-2"></i>
+            <strong>Adresse :</strong> {{ tournoi.address }}{% if tournoi.department %} ({{ tournoi.department }}){% endif %}
+          </p>
           {% endif %}
           <p class="mb-2"><i class="fas fa-building text-primary me-2"></i><strong>En intérieur :</strong> {{ tournoi.is_indoor|yesno:"Oui,Non" }}</p>
           <p class="mb-2"><i class="fas fa-users text-primary me-2"></i><strong>Équipes max :</strong> {{ tournoi.max_teams }}</p>
