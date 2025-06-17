@@ -15,7 +15,7 @@
 
   <h2 class="text-center mb-4">Étape 2 : Paramètres spécifiques</h2>
 
-  {% if preset %}
+  {% if preset and preset_name != 'non spécifié' %}
     <div class="alert alert-info text-start">
       <h5 class="mb-2"> Paramètres du preset <span class="text-primary">« {{ preset_name }} »</span> appliqués</h5>
       <ul class="mb-0">
@@ -39,41 +39,41 @@
     <div class="form-group">
       <label>Nombre d’équipes :</label>
       <input type="number" class="form-control" name="nb_teams" required
-             value="{% if request.POST.nb_teams %}{{ request.POST.nb_teams }}{% elif preset.nb_teams %}{{ preset.nb_teams }}{% endif %}">
+             value="{% if request.POST.nb_teams %}{{ request.POST.nb_teams }}{% elif preset.nb_teams and preset_name != 'non spécifié' %}{{ preset.nb_teams }}{% endif %}">
     </div>
 
     <div class="form-group">
       <label>Joueurs par équipe :</label>
       <input type="number" class="form-control" name="players_per_team" required
-             value="{% if request.POST.players_per_team %}{{ request.POST.players_per_team }}{% elif preset.players_per_team %}{{ preset.players_per_team }}{% endif %}">
+             value="{% if request.POST.players_per_team %}{{ request.POST.players_per_team }}{% elif preset.players_per_team and preset_name != 'non spécifié' %}{{ preset.players_per_team }}{% endif %}">
     </div>
 
     {% if sport == 'volleyball' %}
       <div class="form-group">
         <label>Nombre de sets pour gagner :</label>
         <input type="number" class="form-control" name="nb_sets_to_win" required
-               value="{% if request.POST.nb_sets_to_win %}{{ request.POST.nb_sets_to_win }}{% elif preset.nb_sets_to_win %}{{ preset.nb_sets_to_win }}{% endif %}">
+               value="{% if request.POST.nb_sets_to_win %}{{ request.POST.nb_sets_to_win }}{% elif preset.nb_sets_to_win and preset_name != 'non spécifié' %}{{ preset.nb_sets_to_win }}{% endif %}">
       </div>
       <div class="form-group">
         <label>Points par set :</label>
         <input type="number" class="form-control" name="points_per_set" required
-               value="{% if request.POST.points_per_set %}{{ request.POST.points_per_set }}{% elif preset.points_per_set %}{{ preset.points_per_set }}{% endif %}">
+               value="{% if request.POST.points_per_set %}{{ request.POST.points_per_set }}{% elif preset.points_per_set and preset_name != 'non spécifié' %}{{ preset.points_per_set }}{% endif %}">
       </div>
 
     {% elif sport == 'football' %}
       <div class="form-group">
         <label>Durée du match (minutes) :</label>
         <input type="number" class="form-control" name="match_duration" required
-               value="{% if request.POST.match_duration %}{{ request.POST.match_duration }}{% elif preset.match_duration %}{{ preset.match_duration }}{% endif %}">
+               value="{% if request.POST.match_duration %}{{ request.POST.match_duration }}{% elif preset.match_duration and preset_name != 'non spécifié' %}{{ preset.match_duration }}{% endif %}">
       </div>
       <div class="form-check mt-2">
         <input type="checkbox" class="form-check-input" name="extra_time" id="extra_time"
-               {% if request.POST.extra_time or preset.extra_time %}checked{% endif %}>
+               {% if request.POST.extra_time %}checked{% elif preset.extra_time and preset_name != 'non spécifié' %}checked{% endif %}>
         <label for="extra_time">Prolongations possibles</label>
       </div>
       <div class="form-check mt-2">
         <input type="checkbox" class="form-check-input" name="penalty_shootout" id="penalty_shootout"
-               {% if request.POST.penalty_shootout or preset.penalty_shootout %}checked{% endif %}>
+               {% if request.POST.penalty_shootout %}checked{% elif preset.penalty_shootout and preset_name != 'non spécifié' %}checked{% endif %}>
         <label for="penalty_shootout">Tirs au but</label>
       </div>
 
@@ -81,24 +81,24 @@
       <div class="form-group">
         <label>Durée du match (minutes) :</label>
         <input type="number" class="form-control" name="match_duration" required
-               value="{% if request.POST.match_duration %}{{ request.POST.match_duration }}{% elif preset.match_duration %}{{ preset.match_duration }}{% endif %}">
+               value="{% if request.POST.match_duration %}{{ request.POST.match_duration }}{% elif preset.match_duration and preset_name != 'non spécifié' %}{{ preset.match_duration }}{% endif %}">
       </div>
       <div class="form-group">
         <label>Durée de la mi-temps (minutes) :</label>
         <input type="number" class="form-control" name="half_time_duration" required
-               value="{% if request.POST.half_time_duration %}{{ request.POST.half_time_duration }}{% elif preset.half_time_duration %}{{ preset.half_time_duration }}{% endif %}">
+               value="{% if request.POST.half_time_duration %}{{ request.POST.half_time_duration }}{% elif preset.half_time_duration and preset_name != 'non spécifié' %}{{ preset.half_time_duration }}{% endif %}">
       </div>
 
     {% elif sport == 'basketball' %}
       <div class="form-group">
         <label>Durée d’un quart-temps (minutes) :</label>
         <input type="number" class="form-control" name="quarter_duration" required
-               value="{% if request.POST.quarter_duration %}{{ request.POST.quarter_duration }}{% elif preset.quarter_duration %}{{ preset.quarter_duration }}{% endif %}">
+               value="{% if request.POST.quarter_duration %}{{ request.POST.quarter_duration }}{% elif preset.quarter_duration and preset_name != 'non spécifié' %}{{ preset.quarter_duration }}{% endif %}">
       </div>
       <div class="form-group">
         <label>Nombre de quart-temps :</label>
         <input type="number" class="form-control" name="number_of_quarters" required
-               value="{% if request.POST.number_of_quarters %}{{ request.POST.number_of_quarters }}{% elif preset.number_of_quarters %}{{ preset.number_of_quarters }}{% endif %}">
+               value="{% if request.POST.number_of_quarters %}{{ request.POST.number_of_quarters }}{% elif preset.number_of_quarters and preset_name != 'non spécifié' %}{{ preset.number_of_quarters }}{% endif %}">
       </div>
     {% endif %}
 

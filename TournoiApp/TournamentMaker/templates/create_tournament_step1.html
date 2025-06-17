@@ -21,10 +21,11 @@
     <div class="form-group">
       <label for="preset"><strong>Optionnel - Choisir un preset :</strong></label>
       <select class="form-control" id="preset" name="preset" onchange="applyPreset(this.value)">
-        <option value="">-- Aucun preset --</option>
+        <option value=""> -- Sans preset -- </option>
         <option value="volley_classique">🏐 Volleyball Classique | 8 équipes | 6 joueurs | 3 sets | 25 pts | Intérieur | À la ronde</option>
         <option value="foot_5v5">⚽ Football 5v5 Indoor | 12 équipes | 11 joueurs | 90 min | Intérieur | Élimination directe</option>
         <option value="basket_standard">🏀 Basketball Standard | 6 équipes | 5 joueurs | 4 x 10 min | Extérieur | À la ronde</option>
+        <option value="rugby_classique">🏉 Rugby Classique | 10 équipes | 15 joueurs | 2 x 40 min | Mi-temps 10 min | Extérieur | À la ronde</option>
       </select>
     </div>
 
@@ -115,13 +116,27 @@
     'basket_standard': {
       sport: 'basketball',
       type_tournament: 'RR',
-      nb_pools: 4,
+      nb_pools: 2,
+      is_indoor: false
+    },
+    'rugby_classique': {
+      sport: 'rugby',
+      type_tournament: 'RR',
+      nb_pools: 2,
       is_indoor: false
     }
   };
 
   function applyPreset(presetKey) {
     const selected = presets[presetKey];
+
+    // Reset all fields before applying a preset
+    document.getElementById('sportSelect').value = "";
+    document.getElementById('roundRobin').checked = true;
+    document.querySelector('[name="nb_pools"]').value = "";
+    document.getElementById('indoorCheck').checked = false;
+    togglePoolsField();
+
     if (!selected) return;
 
     document.getElementById('sportSelect').value = selected.sport;
