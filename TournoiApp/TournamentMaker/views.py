@@ -1369,10 +1369,15 @@ def advance_elimination_bracket(match):
     if next_match.statut == 'T' and next_match.winner_side in ['A', 'B']:
         advance_elimination_bracket(next_match)
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.http import HttpResponseRedirect
+from .models import Tournament, Match
+
 @login_required
 def score_match(request, tournament_slug, match_id):
-    # 🔥 On récupère le tournoi à partir du slug
-    from_param = request.GET.get('from')  # ✅ ici
+    from_param = request.GET.get('from')
 
     tournament = get_object_or_404(Tournament, slug=tournament_slug)
     match = get_object_or_404(Match, id=match_id)
@@ -1383,53 +1388,41 @@ def score_match(request, tournament_slug, match_id):
         match_tournament = match.team_a.tournament
 
     if match_tournament != tournament:
-        return render(request, 'no_team.html', {
-            'error': "Ce match ne correspond pas à ce tournoi."
+        return render(request, 'score_match.html', {
+            'match': match,
+            'tournament_slug': tournament_slug,
+            'back_url': reverse('direct_elimination', args=[tournament_slug]),
+            'set_numbers': [],
+            'score_fields': {},
         })
 
     user = request.user
+    authorized = user.is_superuser  # ✅ admin autorisé partout
 
-    # Cas admin
-    if user.is_superuser:
-        authorized = True
-    else:
-        authorized = False
-
-        # Cas organisateur
+    if not authorized:
         if hasattr(user, 'organisateur') and (
             (match.pool and match.pool.tournament.organizer == user.organisateur) or
             (not match.pool and match.team_a.tournament.organizer == user.organisateur)
         ):
             authorized = True
-
-        # Cas capitaine
         else:
             try:
                 user_profile = user.userprofile
                 user_team = user_profile.team
-
                 if user_team == match.team_a and match.team_a.captain == user_profile:
                     authorized = True
                 elif user_team == match.team_b and match.team_b.captain == user_profile:
                     authorized = True
-
-            except UserProfile.DoesNotExist:
+            except:
                 pass
 
-    if not authorized:
-        tournament_id = None
-        if match.pool:
-            tournament_id = match.pool.tournament.id
-        elif match.team_a and match.team_a.tournament:
-            tournament_id = match.team_a.tournament.id
-
+    if not authorized and from_param != 'phase_finale':
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match.",
-            'pool_id': match.pool.id if match.pool else None,
-
             'from_param': from_param,
-            'tournament_id': tournament_id,
-            
+            'tournament_id': tournament.id,
+            'pool_id': match.pool.id if match.pool else None,
+            'tournament_slug': tournament_slug,
         })
 
     tournament = match.pool.tournament if match.pool else match.team_a.tournament
@@ -1437,75 +1430,61 @@ def score_match(request, tournament_slug, match_id):
     nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
     set_numbers = list(range(1, nb_sets_display + 1))
 
-    score_fields = {}
-    for set_number in set_numbers:
-        score_fields[f'set{set_number}_team_a'] = getattr(match, f'set{set_number}_team_a')
-        score_fields[f'set{set_number}_team_b'] = getattr(match, f'set{set_number}_team_b')
+    score_fields = {
+        f'set{n}_team_a': getattr(match, f'set{n}_team_a')
+        for n in set_numbers
+    }
+    score_fields.update({
+        f'set{n}_team_b': getattr(match, f'set{n}_team_b')
+        for n in set_numbers
+    })
 
-    # 🔄 Préparer back_url AVANT le POST
-    if match.phase == 'pool' and match.pool:
-        back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
-    else:
-        back_url = reverse('direct_elimination', args=[tournament_slug])  # 🔥 correction
-
-    # 🔥 Traitement du POST
     if request.method == 'POST':
-        for set_number in set_numbers:
-            a_field = f'set{set_number}_team_a'
-            b_field = f'set{set_number}_team_b'
-            value_a = request.POST.get(a_field, '')
-            value_b = request.POST.get(b_field, '')
-            setattr(match, a_field, int(value_a) if value_a.isdigit() else 0)
-            setattr(match, b_field, int(value_b) if value_b.isdigit() else 0)
+        for n in set_numbers:
+            a_field = f'set{n}_team_a'
+            b_field = f'set{n}_team_b'
+            a_val = request.POST.get(a_field, '')
+            b_val = request.POST.get(b_field, '')
+            setattr(match, a_field, int(a_val) if a_val.isdigit() else 0)
+            setattr(match, b_field, int(b_val) if b_val.isdigit() else 0)
 
         winner = match.get_auto_winner(tournament.nb_sets_to_win)
         match.winner_side = 'A' if winner == match.team_a else 'B' if winner == match.team_b else None
 
         if winner:
             match.statut = 'T'
-        elif any(getattr(match, f'set{i}_team_a', 0) != 0 or getattr(match, f'set{i}_team_b', 0) != 0 for i in set_numbers):
+        elif any(getattr(match, f'set{i}_team_a') or getattr(match, f'set{i}_team_b') for i in set_numbers):
             match.statut = 'EC'
         else:
             match.statut = 'ND'
 
         match.save()
 
-        print(f"🔎 Match enregistré : id={match.id}, phase={match.phase}, bracket={match.bracket_position}, winner={match.winner_side}")
-
-
         if match.phase == 'pool' and match.pool:
             match.pool.calculate_rankings()
         else:
             advance_elimination_bracket(match)
 
-        # 🔥 Après POST → redirection adaptée
         if match.phase == 'pool' and match.pool:
-            return redirect('detail_poule', tournament_slug=tournament_slug,
-                            pool_id=match.pool.id)
+            return redirect('detail_poule', tournament_slug=tournament_slug, pool_id=match.pool.id)
         elif from_param == 'phase_finale':
-            url = reverse('liste_matchs_phase_finale', args=[tournament_slug])  # <-- on ajoute le slug ici
-            params = urlencode({'tournament_id': match.tournament.id})
-            full_url = f"{url}?{params}"
-            return HttpResponseRedirect(full_url)
+            url = reverse('liste_matchs_phase_finale', args=[tournament_slug])
+            return HttpResponseRedirect(f"{url}?tournament_id={tournament.id}")
         else:
-            return redirect('direct_elimination',                              # ✅ slug ajouté
-                            tournament_slug=tournament_slug)
+            return redirect('direct_elimination', tournament_slug=tournament_slug)
 
-    # 🔥 Back url pour le bouton "Retour"
     if match.phase == 'pool' and match.pool:
         back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
     elif from_param == 'phase_finale':
-        back_url = reverse('liste_matchs_phase_finale', args=[tournament_slug]) + f'?tournament_id={match.tournament.id}'
+        back_url = reverse('liste_matchs_phase_finale', args=[tournament_slug]) + f'?tournament_id={tournament.id}'
     else:
         back_url = reverse('direct_elimination', args=[tournament_slug])
-
 
     return render(request, 'score_match.html', {
         'match': match,
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
-
     })
 
 
