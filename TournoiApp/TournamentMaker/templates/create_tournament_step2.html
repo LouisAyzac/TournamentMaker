@@ -1,72 +1,108 @@
 {% extends 'base_generic.html' %}
 
-{% block title %}<title>Paramètres du tournoi</title>{% endblock %}
+{% block title %}
+<title>Paramètres du tournoi</title>
+{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
+  <!-- Bouton Retour -->
+  <div class="mb-4 text-center">
+    <a href="{% url 'create_tournament_step1' %}" class="btn btn-info px-4 py-2 rounded-pill shadow">
+      🔙 Revenir à l’étape 1
+    </a>
+  </div>
+
   <h2 class="text-center mb-4">Étape 2 : Paramètres spécifiques</h2>
+
+  {% if preset %}
+    <div class="alert alert-info text-start">
+      <h5 class="mb-2">🎯 Paramètres du preset <span class="text-primary">« {{ preset_name }} »</span> appliqués</h5>
+      <ul class="mb-0">
+        {% if preset.nb_teams %}<li><strong>Nombre d’équipes :</strong> {{ preset.nb_teams }}</li>{% endif %}
+        {% if preset.players_per_team %}<li><strong>Joueurs par équipe :</strong> {{ preset.players_per_team }}</li>{% endif %}
+        {% if preset.nb_sets_to_win %}<li><strong>Sets pour gagner :</strong> {{ preset.nb_sets_to_win }}</li>{% endif %}
+        {% if preset.points_per_set %}<li><strong>Points par set :</strong> {{ preset.points_per_set }}</li>{% endif %}
+        {% if preset.match_duration %}<li><strong>Durée du match :</strong> {{ preset.match_duration }} min</li>{% endif %}
+        {% if preset.extra_time %}<li><strong>Prolongations :</strong> Oui</li>{% endif %}
+        {% if preset.penalty_shootout %}<li><strong>Tirs au but :</strong> Oui</li>{% endif %}
+        {% if preset.half_time_duration %}<li><strong>Durée de la mi-temps :</strong> {{ preset.half_time_duration }} min</li>{% endif %}
+        {% if preset.quarter_duration %}<li><strong>Durée d’un quart-temps :</strong> {{ preset.quarter_duration }} min</li>{% endif %}
+        {% if preset.number_of_quarters %}<li><strong>Nombre de quart-temps :</strong> {{ preset.number_of_quarters }}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
 
   <form method="POST" class="w-75 mx-auto p-4 border rounded bg-light shadow">
     {% csrf_token %}
 
     <div class="form-group">
       <label>Nombre d’équipes :</label>
-      <input type="number" class="form-control" name="nb_teams" required>
+      <input type="number" class="form-control" name="nb_teams" required
+             value="{% if request.POST.nb_teams %}{{ request.POST.nb_teams }}{% elif preset.nb_teams %}{{ preset.nb_teams }}{% endif %}">
     </div>
 
     <div class="form-group">
       <label>Joueurs par équipe :</label>
-      <input type="number" class="form-control" name="players_per_team" required>
+      <input type="number" class="form-control" name="players_per_team" required
+             value="{% if request.POST.players_per_team %}{{ request.POST.players_per_team }}{% elif preset.players_per_team %}{{ preset.players_per_team }}{% endif %}">
     </div>
 
     {% if sport == 'volleyball' %}
       <div class="form-group">
         <label>Nombre de sets pour gagner :</label>
-        <input type="number" class="form-control" name="nb_sets_to_win" required>
+        <input type="number" class="form-control" name="nb_sets_to_win" required
+               value="{% if request.POST.nb_sets_to_win %}{{ request.POST.nb_sets_to_win }}{% elif preset.nb_sets_to_win %}{{ preset.nb_sets_to_win }}{% endif %}">
       </div>
       <div class="form-group">
         <label>Points par set :</label>
-        <input type="number" class="form-control" name="points_per_set" required>
+        <input type="number" class="form-control" name="points_per_set" required
+               value="{% if request.POST.points_per_set %}{{ request.POST.points_per_set }}{% elif preset.points_per_set %}{{ preset.points_per_set }}{% endif %}">
       </div>
-    
+
     {% elif sport == 'football' %}
       <div class="form-group">
         <label>Durée du match (minutes) :</label>
-        <input type="number" class="form-control" name="match_duration" required>
+        <input type="number" class="form-control" name="match_duration" required
+               value="{% if request.POST.match_duration %}{{ request.POST.match_duration }}{% elif preset.match_duration %}{{ preset.match_duration }}{% endif %}">
       </div>
       <div class="form-check mt-2">
-        <input type="checkbox" class="form-check-input" name="extra_time" id="extra_time">
+        <input type="checkbox" class="form-check-input" name="extra_time" id="extra_time"
+               {% if request.POST.extra_time or preset.extra_time %}checked{% endif %}>
         <label for="extra_time">Prolongations possibles</label>
       </div>
       <div class="form-check mt-2">
-        <input type="checkbox" class="form-check-input" name="penalty_shootout" id="penalty_shootout">
+        <input type="checkbox" class="form-check-input" name="penalty_shootout" id="penalty_shootout"
+               {% if request.POST.penalty_shootout or preset.penalty_shootout %}checked{% endif %}>
         <label for="penalty_shootout">Tirs au but</label>
       </div>
 
     {% elif sport == 'rugby' %}
       <div class="form-group">
         <label>Durée du match (minutes) :</label>
-        <input type="number" class="form-control" name="match_duration" required>
+        <input type="number" class="form-control" name="match_duration" required
+               value="{% if request.POST.match_duration %}{{ request.POST.match_duration }}{% elif preset.match_duration %}{{ preset.match_duration }}{% endif %}">
       </div>
       <div class="form-group">
         <label>Durée de la mi-temps (minutes) :</label>
-        <input type="number" class="form-control" name="half_time_duration" required>
+        <input type="number" class="form-control" name="half_time_duration" required
+               value="{% if request.POST.half_time_duration %}{{ request.POST.half_time_duration }}{% elif preset.half_time_duration %}{{ preset.half_time_duration }}{% endif %}">
       </div>
 
     {% elif sport == 'basketball' %}
       <div class="form-group">
         <label>Durée d’un quart-temps (minutes) :</label>
-        <input type="number" class="form-control" name="quarter_duration" required>
+        <input type="number" class="form-control" name="quarter_duration" required
+               value="{% if request.POST.quarter_duration %}{{ request.POST.quarter_duration }}{% elif preset.quarter_duration %}{{ preset.quarter_duration }}{% endif %}">
       </div>
       <div class="form-group">
         <label>Nombre de quart-temps :</label>
-        <input type="number" class="form-control" name="number_of_quarters" required>
+        <input type="number" class="form-control" name="number_of_quarters" required
+               value="{% if request.POST.number_of_quarters %}{{ request.POST.number_of_quarters }}{% elif preset.number_of_quarters %}{{ preset.number_of_quarters }}{% endif %}">
       </div>
     {% endif %}
 
     <button type="submit" class="btn btn-success mt-4 w-100">Créer le tournoi</button>
   </form>
 </div>
-
 {% endblock %}
-

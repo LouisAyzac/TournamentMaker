@@ -951,10 +951,18 @@ from django.core.mail import send_mail
     return render(request, 'create_tournament.html')
  
 '''
+
 from django.utils.text import slugify
+
 def create_tournament_step1(request):
     if request.method == 'POST':
-        # Enregistre les infos dans la session
+        preset_key = request.POST.get('preset')  # nom technique du preset
+        preset_name_map = {
+            'volley_classique': 'Volleyball Classique',
+            'foot_5v5': 'Football 5v5 Indoor',
+            'basket_standard': 'Basketball Standard',
+        }
+
         request.session['step1'] = {
             'name': request.POST.get('name'),
             'department': request.POST.get('department'),
@@ -965,28 +973,56 @@ def create_tournament_step1(request):
             'sport': request.POST.get('sport'),
             'type_tournament': request.POST.get('type_tournament'),
             'nb_pools': request.POST.get('nb_pools'),
-            'email': request.POST.get('email'),  # <<< ici tu ajoutes l'email
+            'email': request.POST.get('email'),
+            'preset_name': preset_name_map.get(preset_key, 'non spécifié'),  # ✅ ajouté
         }
 
         return redirect('create_tournament_step2')
-    
+
     return render(request, 'create_tournament_step1.html')
 
-def create_tournament_step2(request):
-    print("🎯 create_tournament_step2 appelée :", request.method)
-    if request.method == 'POST':
-        print("📥 POST reçu :", request.POST)
 
+def create_tournament_step2(request):
     step1 = request.session.get('step1')
     if not step1:
         return redirect('create_tournament_step1')
 
     sport = step1['sport']
     type_tournament = step1['type_tournament']
+    preset_name = step1.get('preset_name', 'non spécifié')
+
+    sport_presets = {
+        'volleyball': {
+            'nb_teams': 8,
+            'players_per_team': 6,
+            'nb_sets_to_win': 3,
+            'points_per_set': 25
+        },
+        'football': {
+            'nb_teams': 12,
+            'players_per_team': 11,
+            'match_duration': 90,
+            'extra_time': True,
+            'penalty_shootout': True
+        },
+        'rugby': {
+            'nb_teams': 10,
+            'players_per_team': 15,
+            'match_duration': 80,
+            'half_time_duration': 10
+        },
+        'basketball': {
+            'nb_teams': 6,
+            'players_per_team': 5,
+            'quarter_duration': 10,
+            'number_of_quarters': 4
+        }
+    }
+
+    preset = sport_presets.get(sport, {})
 
     if request.method == 'POST':
         try:
-            # Champs communs
             common_data = {
                 'name': step1['name'],
                 'department': step1['department'],
@@ -1002,7 +1038,6 @@ def create_tournament_step2(request):
                 'slug': slugify(step1['name']),
             }
 
-            # Champs spécifiques par sport
             if sport == 'volleyball':
                 common_data.update({
                     'nb_sets_to_win': int(request.POST.get('nb_sets_to_win')),
@@ -1014,7 +1049,6 @@ def create_tournament_step2(request):
                     'match_duration': int(request.POST.get('match_duration')),
                     'extra_time': request.POST.get('extra_time') == 'on',
                     'penalty_shootout': request.POST.get('penalty_shootout') == 'on',
-                    # Par défaut pour compatibilité avec le modèle :
                     'nb_sets_to_win': 1,
                     'points_per_set': 1,
                 })
@@ -1035,41 +1069,33 @@ def create_tournament_step2(request):
                     'points_per_set': 1,
                 })
 
-            # Email de l'organisateur
             email = step1.get('email')
             if not email:
                 messages.error(request, "L'email de l'organisateur est requis.")
                 return redirect('create_tournament_step1')
 
-            # Créer le tournoi
             tournoi = Tournament.objects.create(**common_data)
 
-            # Créer les pools si nécessaire
             if type_tournament == 'RR' and tournoi.number_of_pools > 0:
                 if not Pool.objects.filter(tournament=tournoi).exists():
                     for i in range(1, tournoi.number_of_pools + 1):
-                        pool_name = f"Pool {i}"
-                        Pool.objects.create(name=pool_name, tournament=tournoi)
+                        Pool.objects.create(name=f"Pool {i}", tournament=tournoi)
 
-            # Créer l'utilisateur organisateur
             try:
                 username = f"{email}_{tournoi.id}"
                 user = User.objects.create_user(username=username, email=email)
-
                 organisateur = Organisateur.objects.create(user=user)
-
                 tournoi.organizer = organisateur
                 tournoi.save()
 
-                # Envoyer le mail
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
                 token = default_token_generator.make_token(user)
                 domain = '127.0.0.1:8000'
                 link = f"http://{domain}/accounts/reset/{uid}/{token}/"
 
-                subject = f"Bienvenue organisateur du tournoi {tournoi.name} !"
-                message = f"""
-Bonjour,
+                send_mail(
+                    f"Bienvenue organisateur du tournoi {tournoi.name} !",
+                    f"""Bonjour,
 
 Vous avez été inscrit comme organisateur du tournoi "{tournoi.name}".
 Veuillez cliquer sur le lien suivant pour définir votre mot de passe :
@@ -1078,32 +1104,35 @@ Veuillez cliquer sur le lien suivant pour définir votre mot de passe :
 
 Merci,
 L'équipe du tournoi
-"""
-                send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
+""",
+                    'projetE3match@gmail.com',
+                    [email],
+                    fail_silently=False
+                )
 
             except Exception as e:
-                messages.error(request, f"Erreur lors de la création de l'utilisateur organisateur : {str(e)}")
+                messages.error(request, f"Erreur création organisateur : {str(e)}")
                 tournoi.delete()
                 return redirect('create_tournament_step2')
 
-            # Mettre le tournoi sélectionné en session
             request.session['selected_tournament_id'] = tournoi.id
-
             messages.success(request, f"Tournoi '{tournoi.name}' créé avec succès et sélectionné.")
             return redirect(f"{reverse('home')}?tournament_id={tournoi.id}")
 
-        
         except Exception as e:
             import traceback
-            print("ERREUR création tournoi:")
             traceback.print_exc()
-            messages.error(request, f"Erreur lors de la création du tournoi : {str(e)}")
+            messages.error(request, f"Erreur : {str(e)}")
             return redirect('create_tournament_step2')
 
+    return render(request, 'create_tournament_step2.html', {
+        'sport': sport,
+        'preset': preset,
+        'preset_name': preset_name,  # ✅ envoyé au template
+    })
 
-    return render(request, 'create_tournament_step2.html', {'sport': sport})
 
- 
+
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
 
