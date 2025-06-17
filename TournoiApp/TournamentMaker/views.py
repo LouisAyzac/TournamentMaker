@@ -707,15 +707,30 @@ def detail_poule(request, tournament_slug, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
     tournament = pool.tournament
 
-    # Vérifie que le slug correspond au tournoi
     if tournament.slug != tournament_slug:
         return redirect('detail_poule', tournament_slug=tournament.slug, pool_id=pool.id)
 
-    # Matchs joués et créés dans la poule (phase 'pool')
-    matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
+    # On récupère tous les matchs de poule
+    all_matchs = list(Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b'))
 
-    # On prépare les scores par sets
-    for match in matchs:
+    # Récupère toutes les équipes de la poule
+    teams = list(pool.teams.all())
+
+    # Ordre équilibré des matchs basé sur les équipes
+    scheduled_pairs = generate_balanced_schedule(teams)
+
+    # On réorganise les matchs selon cet ordre
+    ordered_matchs = []
+    for team_a, team_b in scheduled_pairs:
+        match = next(
+            (m for m in all_matchs if {m.team_a, m.team_b} == {team_a, team_b}),
+            None
+        )
+        if match:
+            ordered_matchs.append(match)
+
+    # Calcul des scores set par set pour chaque match
+    for match in ordered_matchs:
         match.score_sets = []
         for i in range(1, 6):
             sa = getattr(match, f"set{i}_team_a", None)
@@ -729,9 +744,10 @@ def detail_poule(request, tournament_slug, pool_id):
 
     return render(request, 'detail_poule.html', {
         'pool': pool,
-        'matchs': matchs,
+        'matchs': ordered_matchs,
         'tournament': tournament,
     })
+
 
 
 
@@ -1942,3 +1958,24 @@ def france_map_view(request):
     return render(request, 'france_map.html', {
         'departments_with_tournaments': departments_with_tournaments
     })
+<<<<<<< HEAD
+=======
+
+from itertools import combinations
+
+def generate_balanced_schedule(teams):
+    matchs = list(combinations(teams, 2))
+    schedule = []
+    
+    while matchs:
+        for i, match in enumerate(matchs):
+            team_a, team_b = match
+            if not schedule or (team_a not in schedule[-1] and team_b not in schedule[-1]):
+                schedule.append(match)
+                matchs.pop(i)
+                break
+        else:
+            schedule.append(matchs.pop(0))  # si pas possible, on prend le premier match
+
+    return schedule
+>>>>>>> antoine

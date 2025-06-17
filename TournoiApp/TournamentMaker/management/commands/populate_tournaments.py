@@ -5,10 +5,14 @@ import random
 
 class Command(BaseCommand):
 <<<<<<< HEAD
+<<<<<<< HEAD
     help = 'Génère 2 tournois pour chaque configuration de 2 à 8 poules avec 2 équipes par pool'
 =======
     help = 'Génère 10 tournois avec 5 pools manuelles, chacune contenant 2 équipes nommées 1.1, 1.2, etc.'
 >>>>>>> ange
+=======
+    help = 'Génère 10 tournois avec 5 pools manuelles, chacune contenant 2 équipes nommées 1.1, 1.2, etc.'
+>>>>>>> antoine
 
     def handle(self, *args, **kwargs):
         fake = Faker('fr_FR')
@@ -16,6 +20,7 @@ class Command(BaseCommand):
         sports = [choice[0] for choice in Tournament.SPORT_CHOICES]
         levels = [choice[0] for choice in Player.LEVEL_CHOICES]
 
+<<<<<<< HEAD
 <<<<<<< HEAD
         tournament_count = 1
         for num_pools in range(2, 9):  # de 2 à 8 poules
@@ -55,6 +60,8 @@ class Command(BaseCommand):
                         )
 
 =======
+=======
+>>>>>>> antoine
         for t_index in range(1, 11):  # Crée 10 tournois
             tournament = Tournament.objects.create(
                 name=f"Tournament {t_index}",
@@ -93,7 +100,10 @@ class Command(BaseCommand):
 
                     # Ajouter les joueurs
                     for _ in range(tournament.players_per_team):
+<<<<<<< HEAD
 >>>>>>> ange
+=======
+>>>>>>> antoine
                         Player.objects.create(
                             first_name=fake.first_name(),
                             last_name=fake.last_name(),
@@ -103,6 +113,7 @@ class Command(BaseCommand):
                             email=fake.email()
                         )
 
+<<<<<<< HEAD
 <<<<<<< HEAD
                 # Calcul des classements
                 for pool in Pool.objects.filter(tournament=tournament):
@@ -125,3 +136,8 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("🎯 Tous les tournois ont été générés sans duplication de pools."))
 >>>>>>> ange
+=======
+            self.stdout.write(self.style.SUCCESS(f"✅ Tournoi {tournament.name} avec 5 pools créées manuellement."))
+
+        self.stdout.write(self.style.SUCCESS("🎯 Tous les tournois ont été générés sans duplication de pools."))
+>>>>>>> antoine
