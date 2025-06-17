@@ -5,15 +5,12 @@
   .winner-red {
     color: red;
   }
-<<<<<<< HEAD
 
   .winner-blue {
     color: blue;
   }
 </style>
 <div class="container mt-5">
-=======
->>>>>>> antoine
 
   .winner-blue {
     color: blue;
@@ -41,11 +38,6 @@
                     {% for match in matchs %}
                     <tr>
                         <td>
-<<<<<<< HEAD
-<a href="{% url 'team_detail' pool.tournament.slug match.team_a.id %}" style="color: red;">{{ match.team_a.name }}</a>
-                            vs
-<a href="{% url 'team_detail' pool.tournament.slug match.team_b.id %}" style="color: blue;">{{ match.team_b.name }}</a>
-=======
                             <a href="{% url 'team_detail' pool.tournament.slug match.team_a.id %}" style="color: red;">
                                 {{ match.team_a.name }}
                             </a>
@@ -53,7 +45,6 @@
                             <a href="{% url 'team_detail' pool.tournament.slug match.team_b.id %}" style="color: blue;">
                                 {{ match.team_b.name }}
                             </a>
->>>>>>> antoine
                         </td>
 
                         <td>
@@ -82,14 +73,8 @@
 
                         <td>
                             <a href="{% url 'score_match' pool.tournament.slug match.id %}" class="btn btn-sm btn-primary">
-<<<<<<< HEAD
-    Modifier score
-</a>
-
-=======
                                 Modifier score
                             </a>
->>>>>>> antoine
                         </td>
                     </tr>
                     {% endfor %}
@@ -100,32 +85,9 @@
         {% endif %}
     </div>
 
-<<<<<<< HEAD
-    <!-- Matchs possibles -->
-    <div class="mb-4">
-        
-        {% if matchs_possibles %}
-            <ul>
-                {% for m in matchs_possibles %}
-                    <li>
-<a href="{% url 'team_detail' pool.tournament.slug m.team_a.id %}" style="color: red;">{{ m.team_a.name }}</a>
-                        vs
-<a href="{% url 'team_detail' pool.tournament.slug m.team_b.id %}" style="color: blue;">{{ m.team_b.name }}</a>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            
-        {% endif %}
-    </div>
-
-<a href="{% url 'matchs_poules' pool.tournament.slug %}" class="btn btn-secondary mt-3">Retour aux poules</a>
-
-=======
     <!-- Bouton retour -->
     <a href="{% url 'matchs_poules' pool.tournament.slug %}" class="btn btn-secondary mt-3">
         Retour aux poules
     </a>
->>>>>>> antoine
 </div>
 {% endblock %}

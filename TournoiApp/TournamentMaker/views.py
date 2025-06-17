@@ -1958,9 +1958,7 @@ def france_map_view(request):
     return render(request, 'france_map.html', {
         'departments_with_tournaments': departments_with_tournaments
     })
-<<<<<<< HEAD
-=======
-
+ 
 from itertools import combinations
 
 def generate_balanced_schedule(teams):
@@ -1978,4 +1976,4 @@ def generate_balanced_schedule(teams):
             schedule.append(matchs.pop(0))  # si pas possible, on prend le premier match
 
     return schedule
->>>>>>> antoine
+ 
