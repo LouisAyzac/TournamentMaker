@@ -9,7 +9,7 @@
   <!-- Bouton Retour -->
   <div class="mb-4 text-center">
     <a href="{% url 'create_tournament_step1' %}" class="btn btn-info px-4 py-2 rounded-pill shadow">
-      🔙 Revenir à l’étape 1
+      <i class="fas fa-arrow-left me-2"></i> Revenir à l’étape 1
     </a>
   </div>
 
@@ -17,7 +17,7 @@
 
   {% if preset %}
     <div class="alert alert-info text-start">
-      <h5 class="mb-2">🎯 Paramètres du preset <span class="text-primary">« {{ preset_name }} »</span> appliqués</h5>
+      <h5 class="mb-2"> Paramètres du preset <span class="text-primary">« {{ preset_name }} »</span> appliqués</h5>
       <ul class="mb-0">
         {% if preset.nb_teams %}<li><strong>Nombre d’équipes :</strong> {{ preset.nb_teams }}</li>{% endif %}
         {% if preset.players_per_team %}<li><strong>Joueurs par équipe :</strong> {{ preset.players_per_team }}</li>{% endif %}

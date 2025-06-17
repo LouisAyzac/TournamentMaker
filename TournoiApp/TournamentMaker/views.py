@@ -1128,7 +1128,8 @@ L'équipe du tournoi
     return render(request, 'create_tournament_step2.html', {
         'sport': sport,
         'preset': preset,
-        'preset_name': preset_name,  # ✅ envoyé au template
+        'preset_name': preset_name,
+        'hide_navbar_buttons': True,  
     })
 
 
