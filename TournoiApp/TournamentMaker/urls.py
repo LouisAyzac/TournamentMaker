@@ -18,10 +18,7 @@ urlpatterns = [
     path('<slug:tournament_slug>/players/', views.players, name='players'),
     path('<slug:tournament_slug>/players/<int:pk>/', views.player_detail, name='player_detail'),
     path('<slug:tournament_slug>/teams/', views.teams, name='teams'),
-<<<<<<< HEAD
-
-=======
->>>>>>> Remy
+    
     path('<slug:tournament_slug>/<int:pk>/', views.team_detail, name='team_detail'),
 
     # Scores & matchs

@@ -32,11 +32,9 @@
     <a href="?category=past" class="btn btn-outline-secondary {% if category == 'past' %}active{% endif %}">Tournois passés</a>
     <a href="{% url 'france_map' %}" class="btn btn-lg btn-outline-primary me-3">
       🗺️ Carte de France
-<<<<<<< HEAD
+
   </a> 
-=======
-    </a> 
->>>>>>> Remy
+
 </div>
 
 <!-- FORMULAIRE de filtre sport + département -->
@@ -66,53 +64,7 @@
     </form>
   </div>
 </div>
-<<<<<<< HEAD
-
-
-  <!-- TOURNOIS affichés en cartes -->
-  <div class="row">
-    {% for tournoi in tournois %}
-    <div class="col-md-6 mb-4">
-      <div class="card h-100">
-        <div class="card-header bg-primary text-white">
-          <h5 class="card-title mb-0 d-flex align-items-center">
-            {{ tournoi.name }}
-            {% if tournoi.teams.count >= tournoi.max_teams %}
-            <div class="badge bg-danger ms-2">
-              <i class="fas fa-exclamation-circle me-1"></i> Tournoi complet
-            </div>
-            {% endif %}
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-
-              <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }}{% if tournoi.department %} ({{ tournoi.department }}){% endif %}</p>
-
-              <p class="card-text"><strong>📅 Dates :</strong><br>Du {{ tournoi.start_date|date:"d/m/Y" }} au {{ tournoi.end_date|date:"d/m/Y" }}</p>
-            </div>
-            <div class="col-md-6">
-              <p class="card-text"><strong>🏃 Sport :</strong><br>{{ tournoi.get_sport_display }}</p>
-              <p class="card-text"><strong>👥 Équipes :</strong><br>{{ tournoi.teams.count }}/{{ tournoi.max_teams }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="card-footer bg-light">
-          <form method="POST" action="{% url 'home' %}" class="d-inline">
-            {% csrf_token %}
-            <input type="hidden" name="tournament_id" value="{{ tournoi.id }}">
-            <button type="submit" class="btn btn-primary btn-sm me-2">
-              <i class="fas fa-check"></i> Sélectionner
-            </button>
-          </form>
-          <a href="{% url 'tournament_detail' tournoi.slug %}" class="btn btn-info btn-sm me-2">
-            <i class="fas fa-info-circle"></i> Détails
-          </a>
-          
-        </div>
-=======
-
+ 
 <!-- TOURNOIS affichés en cartes -->
 <div class="row">
   {% for tournoi in tournois %}
@@ -151,7 +103,7 @@
         <a href="{% url 'tournament_detail' tournoi.slug %}" class="btn btn-info btn-sm me-2">
           <i class="fas fa-info-circle"></i> Détails
         </a>
->>>>>>> Remy
+        
       </div>
     </div>
   </div>
