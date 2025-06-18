@@ -19,7 +19,10 @@
                 <tr>
                     <th style="background-color: yellow; color: black;">ÉQUIPE</th>
                     <th style="background-color: #4caf50; color: white;">V</th>
+<<<<<<< HEAD
 
+=======
+>>>>>>> Remy
                     <th style="background-color: #f44336; color: white;">D</th>
                     <th style="background-color: #ffeb99; color: black;">MJ</th>
                     <th style="background-color: #ff9800; color: white;">Diff. Sets</th>
@@ -33,11 +36,18 @@
                     <tr>
                         <td>
                             <a href="{% url 'team_detail' tournament.slug team_data.team.id %}">
+<<<<<<< HEAD
     {{ team_data.team.name }}
 </a>
                         </td>
                         <td>{{ team_data.victoires }}</td>
 
+=======
+                                {{ team_data.team.name }}
+                            </a>
+                        </td>
+                        <td>{{ team_data.victoires }}</td>
+>>>>>>> Remy
                         <td>{{ team_data.defaites }}</td>
                         <td>{{ team_data.matchs_joues }}</td>
                         <td>{{ team_data.diff_sets }}</td>
@@ -52,11 +62,20 @@
                 {% endif %}
             </tbody>
         </table>
-
     {% endfor %}
 {% else %}
     <p class="text-center mt-4 text-dark" style="font-size: 1.4em;">Aucune poule trouvée.</p>
+<<<<<<< HEAD
 
+=======
+>>>>>>> Remy
 {% endif %}
+
+<!-- BOUTON RETOUR -->
+<div class="text-start mt-5 mb-4 ps-3">
+  <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
+    <i class="fas fa-arrow-left me-2"></i>Revenir à la sélection de la phase
+  </a>
+</div>
 
 {% endblock %}

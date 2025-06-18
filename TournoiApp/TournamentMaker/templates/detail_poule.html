@@ -9,9 +9,35 @@
   .winner-blue {
     color: blue;
   }
-</style>
-<div class="container mt-5">
 
+  .btn-simple-return {
+    display: inline-flex;
+    align-items: center;
+    background-color: #343a40;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+    font-size: 1.05rem;
+  }
+
+  .btn-simple-return:hover {
+    background-color: #23272b;
+    text-decoration: none;
+    color: white;
+  }
+
+  .btn-simple-return i {
+    margin-right: 8px;
+  }
+</style>
+
+<div class="container mt-5">
+  <h2 class="text-center mb-5">Détails de la poule : {{ pool.name }}</h2>
+
+<<<<<<< HEAD
   .winner-blue {
     color: blue;
   }
@@ -89,5 +115,85 @@
     <a href="{% url 'matchs_poules' pool.tournament.slug %}" class="btn btn-secondary mt-3">
         Retour aux poules
     </a>
+=======
+  <!-- Matchs joués -->
+  <div class="mb-4">
+    <h4 style="color: black;">Matchs joués :</h4>
+    {% if matchs %}
+    <table class="table table-bordered table-sm text-center align-middle">
+      <thead>
+        <tr>
+          <th>Match</th>
+          <th>Score par sets</th>
+          <th>Vainqueur</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for match in matchs %}
+        <tr>
+          <td>
+            <a href="{% url 'team_detail' pool.tournament.slug match.team_a.id %}" style="color: red;">{{ match.team_a.name }}</a>
+            vs
+            <a href="{% url 'team_detail' pool.tournament.slug match.team_b.id %}" style="color: blue;">{{ match.team_b.name }}</a>
+          </td>
+          <td>
+            {% if match.score_sets %}
+            {% for set in match.score_sets %}
+            <div>
+              Set {{ set.set_number }}:
+              <span style="color:red">{{ set.team_a_score }}</span> -
+              <span style="color:blue">{{ set.team_b_score }}</span>
+            </div>
+            {% endfor %}
+            {% else %}
+            Non joué
+            {% endif %}
+          </td>
+          <td>
+            {% if match.winner_team %}
+            <strong class="{% if match.winner_team == match.team_a %}winner-red{% else %}winner-blue{% endif %}">
+              {{ match.winner_team.name }}
+            </strong>
+            {% else %}
+            -
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'score_match' pool.tournament.slug match.id %}" class="btn btn-sm btn-primary">
+              Modifier score
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color: black;">Aucun match possible identifié.</p>
+    {% endif %}
+  </div>
+
+  <!-- Matchs possibles -->
+  <div class="mb-4">
+    {% if matchs_possibles %}
+    <ul>
+      {% for m in matchs_possibles %}
+      <li>
+        <a href="{% url 'team_detail' pool.tournament.slug m.team_a.id %}" style="color: red;">{{ m.team_a.name }}</a>
+        vs
+        <a href="{% url 'team_detail' pool.tournament.slug m.team_b.id %}" style="color: blue;">{{ m.team_b.name }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+
+  <!-- Bouton retour stylisé -->
+  <div class="text-start mt-4">
+    <a href="{% url 'matchs_poules' pool.tournament.slug %}" class="btn-simple-return">
+      <i class="fas fa-arrow-left"></i>Retour aux poules
+    </a>
+  </div>
+>>>>>>> Remy
 </div>
 {% endblock %}

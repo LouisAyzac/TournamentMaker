@@ -8,9 +8,15 @@
     }
 </style>
 
+<<<<<<< HEAD
 <div class="text-center my-4">
     <a href="/TournamentMaker/tournois/" class="btn btn-secondary">
         ⬅️ Retour à la liste des tournois
+=======
+<div class="text-start ms-4 mt-4">
+    <a href="{% url 'home_landing' %}" class="btn-simple-return">
+        <i class="fas fa-arrow-left me-2"></i>Revenir à la liste des tournois
+>>>>>>> Remy
     </a>
 </div>
 
@@ -41,8 +47,11 @@
         {% endfor %}
     ];
 
+<<<<<<< HEAD
     console.log(departmentsWithTournaments); // Debug → voir si OK
 
+=======
+>>>>>>> Remy
     departmentsWithTournaments.forEach(function(item) {
         var marker = L.marker([item.lat, item.lon]).addTo(map);
 
@@ -57,6 +66,7 @@
         });
     });
 
+<<<<<<< HEAD
 function tournamentsUrl(depCode) {
     return '/TournamentMaker/tournois/?category=all&sport=&department=' + encodeURIComponent(depCode);
 }
@@ -64,4 +74,10 @@ function tournamentsUrl(depCode) {
 
 </script>
 
+=======
+    function tournamentsUrl(depCode) {
+        return '/TournamentMaker/tournois/?category=all&sport=&department=' + encodeURIComponent(depCode);
+    }
+</script>
+>>>>>>> Remy
 {% endblock %}

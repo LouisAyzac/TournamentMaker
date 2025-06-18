@@ -18,7 +18,10 @@ urlpatterns = [
     path('<slug:tournament_slug>/players/', views.players, name='players'),
     path('<slug:tournament_slug>/players/<int:pk>/', views.player_detail, name='player_detail'),
     path('<slug:tournament_slug>/teams/', views.teams, name='teams'),
+<<<<<<< HEAD
 
+=======
+>>>>>>> Remy
     path('<slug:tournament_slug>/<int:pk>/', views.team_detail, name='team_detail'),
 
     # Scores & matchs
@@ -45,7 +48,7 @@ urlpatterns = [
     path('rankings/', views.rankings_list, name='rankings_list'),
 
     # Tournois
-    path('creer_tournoi/etape1/', views.create_tournament_step1, name='create_tournament'),
+    path('creer_tournoi/etape1/', views.create_tournament_step1, name='create_tournament_step1'),  # ✅ nom corrigé ici
     path('creer_tournoi/etape2/', views.create_tournament_step2, name='create_tournament_step2'),
     path('<slug:tournament_slug>/ranking/', views.rankings_list, name='rankings_list'),
     path('<slug:slug>/detail', TournamentDetailView.as_view(), name='tournament_detail'),
@@ -56,7 +59,6 @@ urlpatterns = [
 
     # Élimination directe
     path('<slug:tournament_slug>/direct-elimination/', views.direct_elimination, name='direct_elimination'),
-
 
     # Divers
     path('<slug:tournament_slug>/signup/', views.signup, name='signup'),

@@ -27,6 +27,22 @@
         display: inline-block;
         animation: bounce 2s infinite ease-in-out;
     }
+
+    .nav-button.home-highlight {
+        background: linear-gradient(to right, #4facfe, #00f2fe);
+        color: white;
+        font-weight: bold;
+        border-radius: 25px;
+        padding: 12px 24px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .nav-button.home-highlight:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        text-decoration: none;
+    }
     </style>
 </head>
 
@@ -43,6 +59,7 @@
     {% if not hide_navbar %}
     <nav class="nav-buttons-container">
         <div class="nav-buttons">
+<<<<<<< HEAD
             <!-- Lien vers l'accueil -->
             <a href="{% url 'home_landing' %}" class="nav-button">
                 <i class="fas fa-home"></i> Accueil
@@ -80,6 +97,43 @@
                         <a href="{% url 'direct_elimination' selected_tournament_slug %}" class="nav-button">
                             <i class="fas fa-clock"></i> Matchs
                         </a>
+=======
+            <!-- Toujours afficher le bouton Accueil -->
+            <a href="{% url 'home_landing' %}" class="nav-button home-highlight">
+                <i class="fas fa-home"></i> Accueil
+            </a>
+
+            {% if not hide_navbar_buttons %}
+                {% if request.session.selected_tournament_id %}
+                    {% if selected_tournament_slug %}
+                        <a href="{% url 'dashboard' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-info-circle"></i> Informations
+                        </a>
+
+                        <a href="{% url 'teams' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-users"></i> Voir les équipes
+                        </a>
+
+                        <a href="{% url 'rankings_list' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-trophy"></i> Voir le classement
+                        </a>
+
+                        {% if not hide_inscription %}
+                        <a href="{% url 'signup' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-user-plus"></i> Inscription
+                        </a>
+                        {% endif %}
+
+                        {% if request.session.type_tournament == 'RR' %}
+                            <a href="{% url 'matchs_choice' selected_tournament_slug %}" class="nav-button">
+                                <i class="fas fa-clock"></i> Matchs
+                            </a>
+                        {% else %}
+                            <a href="{% url 'direct_elimination' selected_tournament_slug %}" class="nav-button">
+                                <i class="fas fa-clock"></i> Matchs
+                            </a>
+                        {% endif %}
+>>>>>>> Remy
                     {% endif %}
                 {% endif %}
             {% endif %}
