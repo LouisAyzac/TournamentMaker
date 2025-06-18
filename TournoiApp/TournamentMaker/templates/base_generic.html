@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="fr">
+{% block extrahead %}{% endblock %}
 <head>
     {% block title %}
       <title>🏆TournamentMaker🏆</title>
@@ -29,7 +30,7 @@
     }
     </style>
 </head>
-
+{% block extrascript %}{% endblock %}
 <body>
     <!-- Header -->
     <header class="header-bar">
@@ -60,10 +61,15 @@
                     <i class="fas fa-medal"></i> Classements
                 </a>
 
+                <a href="{% url 'tournament_gallery' tournoi.id %}" class="nav-button">
+                    <i class="fas fa-medal"></i> Photo
+                </a>
+                
                 {% if tournoi.end_date >= today and tournoi.teams.count < tournoi.max_teams %}
                     <a href="{% url 'signup' %}?tournament_id={{ tournoi.id }}" class="nav-button">
                         <i class="fas fa-file-alt"></i> Inscription
                     </a>
+            
                 {% endif %}
 
                 {% if tournoi.type_tournament == 'RR' %}
@@ -97,9 +103,13 @@
             <div class="social-icons">
                 <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-facebook-f"></i></a>
                 <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-twitter"></i></a>
-                <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.instagram.com/tournamentmaker2025/" target="_blank" class="animate__animated animate__pulse animate__infinite animate__slower">
+  <i class="fab fa-instagram"></i>
+</a>
+
             </div>
-            <p class="copyright">©2025TournamentMaker. Tous droits réservés.</p>
+            <p class="copyright">Contactez-nous : tournamentmaker1@gmail.com<br>
+                                ©2025TournamentMaker. Tous droits réservés.</p>
         </div>
     </footer>
 </body>

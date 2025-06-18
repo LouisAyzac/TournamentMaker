@@ -13,6 +13,7 @@ import os
 import certifi
 from pathlib import Path
 
+
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -151,3 +152,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'projetE3match@gmail.com'
 EMAIL_HOST_PASSWORD = 'aati pugp tamd kegu'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

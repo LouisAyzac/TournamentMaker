@@ -1,0 +1,18 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="live-container" style="text-align: center; padding: 2rem;">
+  {% if stream %}
+    <h2>{{ stream.title }}</h2>
+    <iframe
+      src="{{ stream.twitch_url }}"
+      height="480"
+      width="100%"
+      allowfullscreen
+      frameborder="0">
+    </iframe>
+  {% else %}
+    <h2>Pas de live en cours</h2>
+  {% endif %}
+</div>
+{% endblock %}

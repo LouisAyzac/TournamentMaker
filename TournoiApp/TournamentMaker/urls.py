@@ -3,6 +3,8 @@ from django.contrib.auth import views as auth_views
 from . import views
 from .views import TournamentListView
 from TournamentMaker.views import TournamentDetailView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     # Accueil
@@ -71,4 +73,15 @@ urlpatterns = [
     path('carte-france/', views.france_map_view, name='france_map'),
     path('departement/<str:department>/tournois/', views.tournaments_by_department, name='tournaments_by_department'),
 
+    # Live et photo
+    path("live/", views.live_match_view, name="live_match"),
+    path("tournoi/<int:tournament_id>/galerie/", views.tournament_gallery_view, name="tournament_gallery"),
+    path('galerie/', views.public_gallery_view, name='public_gallery'),
+    path('TournamentMaker/media/photos_tournoi/', views.public_gallery_view, name='public_gallery'),
+    path('photo/<int:photo_id>/delete/', views.delete_tournament_photo, name='delete_tournament_photo'),
+
+
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

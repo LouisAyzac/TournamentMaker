@@ -71,6 +71,7 @@ def home(request):
         tournois = tournois.filter(department__icontains=selected_department)
 
     # Pagination
+    tournois = Tournament.objects.all().order_by('-id')  # ou 'created_at' si tu as un champ date
     paginator = Paginator(tournois, 6)  # 6 tournois par page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -1743,20 +1744,61 @@ DEPARTMENT_COORDS = {
 
 
 def france_map_view(request):
-    tournaments_by_dep = Tournament.objects.values('department').annotate(tournament_count=Count('id'))
+    tournois = Tournament.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+    return render(request, "france_map.html", {"tournois": tournois})
 
-    departments_with_tournaments = []
-    for item in tournaments_by_dep:
-        dep_code = item['department']
-        if dep_code in DEPARTMENT_COORDS:
-            departments_with_tournaments.append({
-                'department': dep_code,
-                'tournament_count': item['tournament_count'],
-                'lat': DEPARTMENT_COORDS[dep_code]['lat'],
-                'lon': DEPARTMENT_COORDS[dep_code]['lon'],
-            })
 
-    return render(request, 'france_map.html', {
-        'departments_with_tournaments': departments_with_tournaments
+from django.shortcuts import render
+from .models import LiveStream
+
+def live_match_view(request):
+    stream = LiveStream.objects.filter(active=True).first()
+    return render(request, "live_match.html", {"stream": stream})
+
+from django.shortcuts import render, redirect
+from .forms import TournamentPhotoForm
+from .models import TournamentPhoto
+from .models import TournamentPhoto, Tournament
+
+def tournament_gallery_view(request, tournament_id):
+    tournament = get_object_or_404(Tournament, pk=tournament_id)
+    photos = TournamentPhoto.objects.filter(tournament=tournament)
+
+    if request.method == 'POST' and request.FILES:
+        form = TournamentPhotoForm(request.POST, request.FILES)
+        if form.is_valid():
+            photo = form.save(commit=False)
+            photo.tournament = tournament
+            photo.save()
+            return redirect('tournament_gallery', tournament_id=tournament.id)
+    else:
+        form = TournamentPhotoForm()
+
+    return render(request, 'tournament_gallery.html', {
+        'form': form,
+        'photos': photos,
+        'tournament': tournament
     })
+
+from django.shortcuts import get_object_or_404, redirect
+from .models import TournamentPhoto
+
+def delete_tournament_photo(request, photo_id):
+    photo = get_object_or_404(TournamentPhoto, id=photo_id)
+
+    tournament_id = photo.tournament.id if photo.tournament else None
+    if request.method == 'POST':
+        photo.image.delete()  # supprime le fichier du disque
+        photo.delete()        # supprime l'objet de la base
+        if tournament_id:
+            return redirect('tournament_gallery', tournament_id=tournament_id)
+        else:
+            return redirect('public_gallery')  # fallback
+
+    return redirect('tournament_gallery', tournament_id=tournament_id)
+
+
+def public_gallery_view(request):
+    return render(request, 'public_gallery.html')
+
 

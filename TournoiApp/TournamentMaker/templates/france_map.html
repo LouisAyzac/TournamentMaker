@@ -1,67 +1,68 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<style>
-    /* Masquer tous les boutons de navigation sauf le bouton Accueil */
-    .nav-buttons-container .nav-button:not(:first-child) {
-      display: none !important;
-    }
-</style>
+<h2 class="section-title">🗺️ Carte des tournois en France</h2>
 
-<div class="text-center my-4">
-    <a href="/TournamentMaker/tournois/" class="btn btn-secondary">
-        ⬅️ Retour à la liste des tournois
-    </a>
-</div>
+<div id="map" style="height: 600px;"></div>
 
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Carte des départements avec tournois</h2>
+{% endblock %}
 
-    <div id="map" style="height: 600px; border: 1px solid #ccc;"></div>
-</div>
+{% block extrahead %}
+<!-- Leaflet CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"
+/>
+{% endblock %}
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+{% block extrascript %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
 <script>
-    var map = L.map('map').setView([46.8, 2.5], 6);
+  document.addEventListener("DOMContentLoaded", function () {
+    var map = L.map("map").setView([46.8, 2.5], 6);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
-    var departmentsWithTournaments = [
-        {% for dep in departments_with_tournaments %}
-            {
-                dep: "{{ dep.department }}",
-                lat: {{ dep.lat|floatformat:"6" }},
-                lon: {{ dep.lon|floatformat:"6" }},
-                count: {{ dep.tournament_count }}
-            }{% if not forloop.last %},{% endif %}
-        {% endfor %}
+    var markers = L.markerClusterGroup();
+
+    var tournaments = [
+      {% for tournoi in tournois %}
+        {% if tournoi.latitude and tournoi.longitude %}
+        {
+          name: "{{ tournoi.name|escapejs }}",
+          lat: {{ tournoi.latitude }},
+          lon: {{ tournoi.longitude }},
+          department: "{{ tournoi.department|default:'NC' }}",
+          sport: "{{ tournoi.get_sport_display|escapejs }}",
+          id: {{ tournoi.id }}
+        },
+        {% endif %}
+      {% endfor %}
     ];
 
-    console.log(departmentsWithTournaments); // Debug → voir si OK
+    console.log("TOURNOIS:", tournaments); // ✅ debug
 
-    departmentsWithTournaments.forEach(function(item) {
-        var marker = L.marker([item.lat, item.lon]).addTo(map);
-
-        marker.bindPopup(
-            'Département ' + item.dep +
-            '<br>' + item.count + (item.count > 1 ? ' tournois' : ' tournoi') +
-            '<br><a href="' + tournamentsUrl(item.dep) + '">Voir les tournois</a>'
-        );
-
-        marker.on('click', function() {
-            window.location.href = tournamentsUrl(item.dep);
-        });
+    tournaments.forEach(function (t) {
+      var marker = L.marker([t.lat, t.lon]);
+      marker.bindPopup(`
+        <strong>${t.name}</strong><br>
+        Département : ${t.department}<br>
+        Sport : ${t.sport}<br>
+        <a href="/TournamentMaker/tournament/${t.id}/">Voir détails</a>
+      `);
+      markers.addLayer(marker);
     });
 
-function tournamentsUrl(depCode) {
-    return '/TournamentMaker/tournois/?category=all&sport=&department=' + encodeURIComponent(depCode);
-}
-
-
+    map.addLayer(markers);
+  });
 </script>
-
 {% endblock %}

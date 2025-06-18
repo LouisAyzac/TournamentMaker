@@ -58,10 +58,13 @@ class Tournament(models.Model):
     
     half_time_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée de la mi-temps (en minutes)")
 
-    
+
     quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
     number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
 
+
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     
 
     def __str__(self):
@@ -434,5 +437,26 @@ def auto_generate_pool_matches(sender, instance, **kwargs):
             )
             print(f"Match créé : {team_a.name} vs {team_b.name} dans {pool.name}")
  
+from django.db import models
+
+class LiveStream(models.Model):
+    title = models.CharField(max_length=100, default="Match en direct")
+    twitch_url = models.URLField(help_text="Lien d'intégration Twitch (ex: https://player.twitch.tv/?channel=ton_chaine&parent=localhost)")
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.title
+
+from django.db import models
+from .models import Tournament  # si Tournament est dans le même fichier
+
+class TournamentPhoto(models.Model):
+    title = models.CharField(max_length=100)
+    image = models.ImageField(upload_to="photos_tournoi/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return self.title
 
  
