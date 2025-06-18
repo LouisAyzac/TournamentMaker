@@ -68,6 +68,7 @@ urlpatterns = [
     path('tournois/', views.home, name='home'),
     path('carte-france/', views.france_map_view, name='france_map'),
 
+    path('tournament/<slug:tournament_slug>/generate-bracket/', views.generate_elimination_bracket, name='generate_elimination_bracket'),
 
 
 ]
