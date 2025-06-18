@@ -1875,13 +1875,10 @@ def liste_matchs_phase_finale(request, tournament_slug):
     return render(request, 'liste_matchs_phase_finale.html', {
         'match_groups': match_groups,
         'message': "Matchs de phase finale pour ce tournoi.",
-<<<<<<< HEAD
+
         'tournament': tournament,  # ✅ toujours inclure
     })
-=======
-        'tournament': tournament,  # ✅ celui-là est ESSENTIEL
-})
->>>>>>> ange
+
 
 
  
