@@ -68,6 +68,7 @@
     <p class="lead mb-4">Tournoi sélectionné : <strong>{{ tournament.name }}</strong></p>
  
     <a href="{% url 'matchs_poules' tournament.slug %}" class="btn btn-primary choice-button">
+<<<<<<< HEAD
         Phase de Poule   </a>
 
  <a href="{% url 'liste_matchs_phase_finale' tournament_slug=tournament.slug %}" class="btn btn-success choice-button">
@@ -78,6 +79,27 @@
         Création des matchs de la phase finale
     </a>
  
+=======
+        Phase de Poule
+        
+    </a>
+
+    <a href="{% url 'liste_matchs_phase_finale' tournament_slug=tournament.slug %}" class="btn btn-success choice-button">
+        Phase Finale
+    </a>
+
+    {% if is_authorized %}
+        <a href="{% url 'matchs_finale' tournament_slug=tournament.slug %}" class="btn btn-warning choice-button">
+            Création des matchs de la phase finale
+        </a>
+    {% endif %}
+</div>
+
+<div class="text-start ms-4 mt-4">
+    <a href="{% url 'home_landing' %}" class="btn-simple-return">
+        <i class="fas fa-arrow-left me-2"></i>Revenir à la liste des tournois
+    </a>
+>>>>>>> ange
 </div>
 
 {% endblock %}

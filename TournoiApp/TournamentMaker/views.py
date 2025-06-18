@@ -572,25 +572,23 @@ from .models import Tournament
 from django.shortcuts import render, get_object_or_404
 from .models import Tournament
 
+
 def match_choice(request, tournament_slug):
     tournament = get_object_or_404(Tournament, slug=tournament_slug)
-    return render(request, 'matchs_choice.html', {'tournament': tournament})
 
-    if not tournament:
-        # Si aucun ID de tournoi n'est trouvé, afficher une erreur
-        return render(request, 'matchs_choice.html', {'error': 'Aucun tournoi sélectionné'})
+    user = request.user
+    is_authorized = False
 
-    try:
-        # Récupérer le tournoi de la base de données
-        tournament = get_object_or_404(Tournament, id=tournament_id)
+    if user.is_authenticated:
+        if user.is_superuser:
+            is_authorized = True
+        elif hasattr(user, 'organisateur') and tournament.organizer == user.organisateur:
+            is_authorized = True
 
-        # Rendre le template avec le tournoi
-        return render(request, 'matchs_choice.html', {'tournament': tournament})
-
-    except Exception as e:
-        # En cas d'erreur, afficher un message d'erreur
-        return render(request, 'matchs_choice.html', {'error': f'Erreur: {str(e)}'})
-
+    return render(request, 'matchs_choice.html', {
+        'tournament': tournament,
+        'is_authorized': is_authorized
+    })
 
 
 # Matchs en cours
@@ -1506,7 +1504,7 @@ def score_match(request, tournament_slug, match_id):
             except:
                 pass
 
-    if not authorized and from_param != 'phase_finale':
+    if not authorized:
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match.",
             'from_param': from_param,
@@ -1775,7 +1773,6 @@ def afficher_deux_premiers(request, tournament_slug):
         'qualified_teams': qualified_teams,
         'teams_for_eighth': teams_for_eighth,
         'teams_for_quarter': teams_for_quarter,
-
         'teams_for_semi': teams_for_semi,
         'match_range_eighth': match_range_eighth,
         'match_range_quarter': match_range_quarter,
@@ -1878,8 +1875,13 @@ def liste_matchs_phase_finale(request, tournament_slug):
     return render(request, 'liste_matchs_phase_finale.html', {
         'match_groups': match_groups,
         'message': "Matchs de phase finale pour ce tournoi.",
+<<<<<<< HEAD
         'tournament': tournament,  # ✅ toujours inclure
     })
+=======
+        'tournament': tournament,  # ✅ celui-là est ESSENTIEL
+})
+>>>>>>> ange
 
 
  
