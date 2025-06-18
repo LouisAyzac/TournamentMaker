@@ -12,14 +12,12 @@
         padding: 20px;
         font-family: sans-serif;
       }
-
       .title {
         font-size: 1.8rem;
         font-weight: bold;
         margin-bottom: 10px;
         color: #111;
       }
-
       .phase-title {
         font-size: 1.2rem;
         font-weight: 600;
@@ -27,19 +25,16 @@
         margin-top: 30px;
         margin-bottom: 10px;
       }
-
       .match-list {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
       }
-
       .match-link {
         text-decoration: none;
         color: inherit;
       }
-
       .match-card {
         display: flex;
         align-items: center;
@@ -53,28 +48,23 @@
         font-size: 0.95rem;
         cursor: pointer;
       }
-
       .match-card:hover {
         background-color: #eef4ff;
         box-shadow: 0 2px 6px rgba(0,0,0,0.06);
       }
-
       .team-name {
         font-weight: 500;
         color: #333;
       }
-
       .winner {
         color: #198754;
         font-weight: 600;
       }
-
       .vs {
         margin: 0 8px;
         color: #666;
         font-size: 0.95rem;
       }
-
       .pending {
         font-style: italic;
         color: #aaa;
@@ -86,12 +76,7 @@
 
       <div class="match-list">
         {% for match in group.matchs %}
-          {% url 'score_match' tournament_slug=match.tournament.slug match_id=match.id as score_url %}
-          <a href="{% if user.is_authenticated %}
-                     {{ score_url }}?from=phase_finale
-                   {% else %}
-                     {% url 'login' %}?next={{ score_url|add:'%3Ffrom%3Dphase_finale' }}
-                   {% endif %}" class="match-link">
+          <a href="{% url 'login' %}?next={% url 'score_match' tournament.slug match.id %}?from=phase_finale" class="match-link">
             <div class="match-card">
               <span class="team-name {% if match.winner_team == match.team_a %}winner{% endif %}">
                 {{ match.team_a.name|default:"En attente" }}

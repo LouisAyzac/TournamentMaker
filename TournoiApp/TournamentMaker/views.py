@@ -1463,18 +1463,25 @@ from .models import Match, UserProfile
  
 
 
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.shortcuts import get_object_or_404, redirect, render
+
 @login_required
 def score_match(request, tournament_slug, match_id):
+    """
+    – Accès : admin, organisateur du tournoi, ou capitaine de l’équipe A/B.
+    – Si l’utilisateur n’est pas authentifié, le décorateur @login_required
+      le redirige déjà vers /accounts/login/?next=...
+    """
+    # ───────────────────────────────────────────────────────── paramètres
     from_param = request.GET.get('from')
+    tournament  = get_object_or_404(Tournament, slug=tournament_slug)
+    match       = get_object_or_404(Match, id=match_id)
 
-    tournament = get_object_or_404(Tournament, slug=tournament_slug)
-    match = get_object_or_404(Match, id=match_id)
-
-    if match.pool:
-        match_tournament = match.pool.tournament
-    else:
-        match_tournament = match.team_a.tournament
-
+    # ────────────────────────────────── sécurité : match ∉ tournoi
+    match_tournament = match.pool.tournament if match.pool else match.team_a.tournament
     if match_tournament != tournament:
         return render(request, 'score_match.html', {
             'match': match,
@@ -1484,26 +1491,29 @@ def score_match(request, tournament_slug, match_id):
             'score_fields': {},
         })
 
-    user = request.user
-    authorized = user.is_superuser  # ✅ admin autorisé partout
+    # ──────────────────────────────────── vérification des droits
+    user        = request.user
+    authorized  = user.is_superuser                      # ① admin
+    if not authorized and hasattr(user, 'organisateur'): # ② organisateur
+        org = user.organisateur
+        if (match.pool and match.pool.tournament.organizer == org) or \
+           (not match.pool and match.team_a.tournament.organizer == org):
+            authorized = True
 
     if not authorized:
-        if hasattr(user, 'organisateur') and (
-            (match.pool and match.pool.tournament.organizer == user.organisateur) or
-            (not match.pool and match.team_a.tournament.organizer == user.organisateur)
-        ):
-            authorized = True
-        else:
-            try:
-                user_profile = user.userprofile
-                user_team = user_profile.team
-                if user_team == match.team_a and match.team_a.captain == user_profile:
-                    authorized = True
-                elif user_team == match.team_b and match.team_b.captain == user_profile:
-                    authorized = True
-            except:
-                pass
+        # ③ capitaine d’une des équipes A / B
+        try:
+            player_profile = user.userprofile            # ex : lié à Player/Profil
+            team_of_user   = player_profile.team
+            if (team_of_user == match.team_a and
+                    getattr(match.team_a, 'captain', None) == player_profile) or \
+               (team_of_user == match.team_b and
+                    getattr(match.team_b, 'captain', None) == player_profile):
+                authorized = True
+        except Exception:
+            pass
 
+    # → aucune dérogation, on bloque (sauf accès « lecture » depuis phase_finale)
     if not authorized and from_param != 'phase_finale':
         return render(request, 'no_team.html', {
             'error': "Vous n’avez pas le droit de modifier ce match.",
@@ -1513,81 +1523,60 @@ def score_match(request, tournament_slug, match_id):
             'tournament_slug': tournament_slug,
         })
 
-    tournament = match.pool.tournament if match.pool else match.team_a.tournament
-
+    # ──────────────────────────────────── préparation données formulaire
     nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
-    set_numbers = list(range(1, nb_sets_display + 1))
+    set_numbers     = list(range(1, nb_sets_display + 1))
+    score_fields    = {f'set{n}_team_a': getattr(match, f'set{n}_team_a') for n in set_numbers}
+    score_fields.update({f'set{n}_team_b': getattr(match, f'set{n}_team_b') for n in set_numbers})
 
-    score_fields = {
-        f'set{n}_team_a': getattr(match, f'set{n}_team_a')
-        for n in set_numbers
-    }
-    score_fields.update({
-        f'set{n}_team_b': getattr(match, f'set{n}_team_b')
-        for n in set_numbers
-    })
-
-    # 🔄 Préparer back_url AVANT le POST
+    # lien « retour »
     if match.phase == 'pool' and match.pool:
         back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
+    elif from_param == 'phase_finale':
+        back_url = reverse('liste_matchs_phase_finale', args=[tournament_slug]) \
+                   + f'?tournament_id={tournament.id}'
     else:
-        back_url = reverse('direct_elimination', args=[tournament_slug])  # 🔥 correction
+        back_url = reverse('direct_elimination', args=[tournament_slug])
 
-    # 🔄 Préparer back_url AVANT le POST
-    if match.phase == 'pool' and match.pool:
-        back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
-    else:
-        back_url = reverse('direct_elimination', args=[tournament_slug])  # 🔥 correction
-
-    # 🔥 Traitement du POST
+    # ──────────────────────────────────────────── POST : enregistrement
     if request.method == 'POST':
         for n in set_numbers:
-            a_field = f'set{n}_team_a'
-            b_field = f'set{n}_team_b'
-            a_val = request.POST.get(a_field, '')
-            b_val = request.POST.get(b_field, '')
-            setattr(match, a_field, int(a_val) if a_val.isdigit() else 0)
-            setattr(match, b_field, int(b_val) if b_val.isdigit() else 0)
+            a_val = request.POST.get(f'set{n}_team_a', '')
+            b_val = request.POST.get(f'set{n}_team_b', '')
+            setattr(match, f'set{n}_team_a', int(a_val) if a_val.isdigit() else 0)
+            setattr(match, f'set{n}_team_b', int(b_val) if b_val.isdigit() else 0)
 
-        winner = match.get_auto_winner(tournament.nb_sets_to_win)
-        match.winner_side = 'A' if winner == match.team_a else 'B' if winner == match.team_b else None
-
-        if winner:
-            match.statut = 'T'
-        elif any(getattr(match, f'set{i}_team_a') or getattr(match, f'set{i}_team_b') for i in set_numbers):
-            match.statut = 'EC'
-        else:
-            match.statut = 'ND'
-
+        winner              = match.get_auto_winner(tournament.nb_sets_to_win)
+        match.winner_side   = 'A' if winner == match.team_a else 'B' if winner == match.team_b else None
+        match.statut        = 'T' if winner else ('EC' if any(
+                                getattr(match, f'set{i}_team_a') or getattr(match, f'set{i}_team_b')
+                                for i in set_numbers) else 'ND')
         match.save()
 
+        # recalcul / propagation
         if match.phase == 'pool' and match.pool:
             match.pool.calculate_rankings()
         else:
             advance_elimination_bracket(match)
 
+        # redirections
         if match.phase == 'pool' and match.pool:
             return redirect('detail_poule', tournament_slug=tournament_slug, pool_id=match.pool.id)
-        elif from_param == 'phase_finale':
-            url = reverse('liste_matchs_phase_finale', args=[tournament_slug])
-            return HttpResponseRedirect(f"{url}?tournament_id={tournament.id}")
-        else:
-            return redirect('direct_elimination', tournament_slug=tournament_slug)
+        if from_param == 'phase_finale':
+            return HttpResponseRedirect(
+                reverse('liste_matchs_phase_finale', args=[tournament_slug])
+                + f'?tournament_id={tournament.id}'
+            )
+        return redirect('direct_elimination', tournament_slug=tournament_slug)
 
-    if match.phase == 'pool' and match.pool:
-        back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
-    elif from_param == 'phase_finale':
-        back_url = reverse('liste_matchs_phase_finale', args=[tournament_slug]) + f'?tournament_id={tournament.id}'
-    else:
-        back_url = reverse('direct_elimination', args=[tournament_slug])
-
+    # ─────────────────────────────────────────── rendu
     return render(request, 'score_match.html', {
-        'match': match,
-        'back_url': back_url,
-        'set_numbers': set_numbers,
+        'match':        match,
+        'back_url':     back_url,
+        'set_numbers':  set_numbers,
         'score_fields': score_fields,
-
     })
+
 
 
 def home_landing(request):
