@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="phase-final-wrapper">
-  <h1 class="title">Matchs de la phase finale</h1>
+  <h1 class="title" style="color: #000;">Matchs de la phase finale</h1>
 
   {% if match_groups %}
     <style>
@@ -102,25 +102,14 @@
       </div>
     {% endfor %}
   {% else %}
-    <p class="info-message">Aucun match à afficher pour cette phase finale pour le moment.</p>
+    <p class="info-message" style="color: #000;">Aucun match à afficher pour cette phase finale pour le moment.</p>
   {% endif %}
 </div>
-<<<<<<< HEAD
- 
-=======
-<<<<<<< HEAD
-{% endblock %}
-=======
 
->>>>>>> Remy
 <div class="text-start mt-5 mb-4 ps-3">
   <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
     <i class="fas fa-arrow-left me-2"></i>Revenir à la sélection de la phase
   </a>
 </div>
 {% endblock %}
-<<<<<<< HEAD
- 
-=======
->>>>>>> Remy
->>>>>>> Remy
+

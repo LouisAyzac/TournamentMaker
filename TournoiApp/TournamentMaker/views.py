@@ -1606,13 +1606,10 @@ from .models import Pool, Ranking, Tournament, Match
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Pool, Ranking, Tournament, Match
 
+
 def afficher_deux_premiers(request, tournament_slug):
     tournament = get_object_or_404(Tournament, slug=tournament_slug)
-
-<<<<<<< HEAD
-=======
-    # Vérifie s’il existe déjà des matchs de phases finales
->>>>>>> Remy
+ 
     matchs_existent = Match.objects.filter(
         tournament=tournament, phase__in=['eighth', 'quarter', 'semi']
     ).exists()
@@ -1628,7 +1625,7 @@ def afficher_deux_premiers(request, tournament_slug):
         qualified_teams.extend([ranking.team for ranking in rankings])
 
     total_teams = len(qualified_teams)
-<<<<<<< HEAD
+
     nb_pools = len(pools)
     is_three_pool_scenario = (nb_pools == 3 and total_teams == 6)
 
@@ -1668,28 +1665,10 @@ def afficher_deux_premiers(request, tournament_slug):
         match_range_eighth = range(nb_eighth_matches)
         match_range_quarter = range(len(teams_for_quarter) // 2)
         show_quarters = len(match_range_quarter) > 0
-=======
-    nb_teams_needed_in_quarter = 8  # pour 4 quarts
-    nb_eighth_matches = max(0, total_teams - nb_teams_needed_in_quarter)
-    nb_teams_in_eighth = nb_eighth_matches * 2
-    teams_for_eighth = qualified_teams[:nb_teams_in_eighth]
-    teams_for_quarter = qualified_teams[nb_teams_in_eighth:]
-
-    match_range_eighth = range(nb_eighth_matches)
-    match_range_quarter = range((len(teams_for_quarter)) // 2)
-
-    # 🆕 Cas spécial : 4 équipes → demi-finales directes
-    teams_for_semi = []
-    match_range_semi = []
-    if total_teams == 4:
-        teams_for_semi = qualified_teams
-        match_range_semi = range(2)
->>>>>>> Remy
-
+ 
     if request.method == 'POST' and not matchs_existent:
         created_match_ids = []
-
-<<<<<<< HEAD
+ 
         if is_three_pool_scenario:
             for i in range(2):
                 team_a_id = request.POST.get(f'quarter_team_a_{i}')
@@ -1704,13 +1683,7 @@ def afficher_deux_premiers(request, tournament_slug):
                         bracket_position=i
                     )
                     created_match_ids.append(match.id)
-=======
-        # Matchs de huitièmes (bracket_position espacée pour éviter collision)
-        for i in match_range_eighth:
-            team_a_id = request.POST.get(f'eighth_team_a_{i}')
-            team_b_id = request.POST.get(f'eighth_team_b_{i}')
->>>>>>> Remy
-
+ 
             team_a_id = request.POST.get('semi_team_a_0')
             team_b_id = request.POST.get('semi_team_b_0')
             if team_a_id and team_b_id and team_a_id != team_b_id:
@@ -1754,7 +1727,7 @@ def afficher_deux_premiers(request, tournament_slug):
                     phase='eighth',
                     statut='ND',
                     bracket_position=i
-<<<<<<< HEAD
+                    
                 )
                 created_match_ids.append(match.id)
 
@@ -1770,8 +1743,7 @@ def afficher_deux_premiers(request, tournament_slug):
                     phase='semi',
                     statut='ND',
                     bracket_position=i
-=======
->>>>>>> Remy
+                    
                 )
                 created_match_ids.append(match.id)
 
@@ -1792,22 +1764,7 @@ def afficher_deux_premiers(request, tournament_slug):
                     )
                     created_match_ids.append(match.id)
 
-        # 🆕 Matchs de demi-finales si 4 équipes (pas de quarts ou huitièmes)
-        if total_teams == 4:
-            for i in range(2):
-                team_a_id = request.POST.get(f'semi_team_a_{i}')
-                team_b_id = request.POST.get(f'semi_team_b_{i}')
-
-                if team_a_id and team_b_id and team_a_id != team_b_id:
-                    match = Match.objects.create(
-                        team_a_id=team_a_id,
-                        team_b_id=team_b_id,
-                        tournament=tournament,
-                        phase='semi',
-                        statut='ND',
-                        bracket_position=i
-                    )
-                    created_match_ids.append(match.id)
+    
 
         request.session['created_match_ids'] = created_match_ids
         return redirect('matchs_choice', tournament_slug=tournament.slug)
@@ -1818,7 +1775,7 @@ def afficher_deux_premiers(request, tournament_slug):
         'qualified_teams': qualified_teams,
         'teams_for_eighth': teams_for_eighth,
         'teams_for_quarter': teams_for_quarter,
-<<<<<<< HEAD
+
         'teams_for_semi': teams_for_semi,
         'match_range_eighth': match_range_eighth,
         'match_range_quarter': match_range_quarter,
@@ -1826,13 +1783,7 @@ def afficher_deux_premiers(request, tournament_slug):
         'matchs_existent': matchs_existent,
         'is_three_pool_scenario': is_three_pool_scenario,
         'show_quarters': show_quarters,  # ✅ ajouté ici pour le HTML
-=======
-        'match_range_eighth': match_range_eighth,
-        'match_range_quarter': match_range_quarter,
-        'matchs_existent': matchs_existent,
-        'teams_for_semi': teams_for_semi,
-        'match_range_semi': match_range_semi,
->>>>>>> Remy
+        
     })
 
 
@@ -1843,6 +1794,9 @@ from .models import Match
 
 from django.shortcuts import render
 from .models import Match
+
+from django.shortcuts import render, get_object_or_404
+from .models import Match, Tournament
 
 from django.shortcuts import render, get_object_or_404
 from .models import Match, Tournament
@@ -1876,10 +1830,11 @@ def liste_matchs_phase_finale(request, tournament_slug):
     if not first_phase:
         return render(request, 'liste_matchs_phase_finale.html', {
             'match_groups': [],
-            'message': "Aucun match de phase finale pour ce tournoi."
+            'message': "Aucun match de phase finale pour ce tournoi.",
+            'tournament': tournament,  # ✅ Ajouté ici pour éviter NoReverseMatch
         })
 
-    # Cas spécial : phase quarter utilisée pour 5, 6, 7 équipes avec des huitièmes "visuels"
+    # Cas spécial : "quarts" utilisés comme huitièmes + quarts si 5 à 7 équipes
     if first_phase == 'quarter':
         quarter_matches = phase_to_matches['quarter']
         total = len(quarter_matches)
@@ -1922,17 +1877,12 @@ def liste_matchs_phase_finale(request, tournament_slug):
 
     return render(request, 'liste_matchs_phase_finale.html', {
         'match_groups': match_groups,
-<<<<<<< HEAD
         'message': "Matchs de phase finale pour ce tournoi.",
-        'tournament': tournament,  # ✅ celui-là est ESSENTIEL
-})
-=======
-        'message': "Matchs de phase finale pour ce tournoi."
+        'tournament': tournament,  # ✅ toujours inclure
     })
 
->>>>>>> Remy
 
-
+ 
 # Coordonées simplifiées pour démonstration
 DEPARTMENT_COORDS = {
     '75': {'x': 300, 'y': 200},
