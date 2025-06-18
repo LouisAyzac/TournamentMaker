@@ -247,11 +247,9 @@ def rankings_list(request, tournament_slug):
 
     # ---------- 1. Classements par poule ----------
     pool_rankings = []
-    # On charge toutes les poules du tournoi
     pools = Pool.objects.filter(tournament=tournoi)
 
     for pool in pools:
-        # Tous les classements des équipes de la poule, déjà triés
         rankings = (
             Ranking.objects
             .filter(team__in=pool.teams.all())
@@ -261,8 +259,8 @@ def rankings_list(request, tournament_slug):
         pool_rankings.append({'pool': pool, 'rankings': rankings})
 
     # ---------- 2. Vainqueur & finaliste ----------
-    winner = finalist = None
-    # On récupère le premier match étiqueté "final" pour ce tournoi
+    winner = finalist = third_place = None
+
     final_match = (
         Match.objects
         .filter(
@@ -275,17 +273,36 @@ def rankings_list(request, tournament_slug):
     )
 
     if final_match and final_match.winner_side:
-        winner   = final_match.team_a if final_match.winner_side == 'A' else final_match.team_b
+        winner = final_match.team_a if final_match.winner_side == 'A' else final_match.team_b
         finalist = final_match.team_b if final_match.winner_side == 'A' else final_match.team_a
 
-    # ---------- 3. Rendu ----------
+    # ---------- 3. Troisième place (petite finale) ----------
+    third_place_match = (
+        Match.objects
+        .filter(
+            tournament=tournoi,
+            phase='third_place',
+            team_a__isnull=False,
+            team_b__isnull=False,
+            statut='T'  # terminé uniquement
+        )
+        .first()
+    )
+
+    if third_place_match and third_place_match.winner_side:
+        third_place = (
+            third_place_match.team_a if third_place_match.winner_side == 'A'
+            else third_place_match.team_b
+        )
+
+    # ---------- 4. Rendu ----------
     return render(request, 'rankings.html', {
         'pool_rankings': pool_rankings,
         'winner':        winner,
         'finalist':      finalist,
-        'tournament':    tournoi,      # pratique pour le template
-        'tournament_slug': tournoi.slug,  # <-- ici
-
+        'third_place':   third_place,  # ← ajouté ici
+        'tournament':    tournoi,
+        'tournament_slug': tournoi.slug,
     })
 
 # === Scores (par joueur connecté) ===
@@ -1342,9 +1359,16 @@ def get_next_phase(current_phase):
     }.get(current_phase)
 
 def advance_elimination_bracket(match):
-    # ───── 1. Vainqueur ─────
-    winner = match.team_a if match.winner_side == 'A' else \
-             match.team_b if match.winner_side == 'B' else None
+    # ───── 1. Vainqueur et perdant ─────
+    if match.winner_side == 'A':
+        winner = match.team_a
+        loser = match.team_b
+    elif match.winner_side == 'B':
+        winner = match.team_b
+        loser = match.team_a
+    else:
+        return
+
     if not winner or match.bracket_position is None:
         return
 
@@ -1385,7 +1409,7 @@ def advance_elimination_bracket(match):
     )
 
     # ───── 4. Placement du vainqueur ─────
-    if match.bracket_position >= 100:                         # quarts spéciaux (3 poules)
+    if match.bracket_position >= 100:  # quarts spéciaux (3 poules)
         even_index = (match.bracket_position - 100) % 2 == 0
     else:
         even_index = match.bracket_position % 2 == 0
@@ -1405,9 +1429,24 @@ def advance_elimination_bracket(match):
     setattr(next_match, target_field, winner)
     next_match.save()
 
-    # ───── 5. Propagation récursive ─────
+    # ───── 5. Ajout automatique à la petite finale ─────
+    if current_phase == 'semi' and loser:
+        third_place, _ = Match.objects.get_or_create(
+            tournament=tournament,
+            phase='third_place',
+            bracket_position=0,
+            defaults={'team_a': None, 'team_b': None, 'statut': 'ND'}
+        )
+        if not third_place.team_a:
+            third_place.team_a = loser
+        elif not third_place.team_b and third_place.team_a != loser:
+            third_place.team_b = loser
+        third_place.save()
+
+    # ───── 6. Propagation récursive ─────
     if next_match.statut == 'T' and next_match.winner_side in ('A', 'B'):
         advance_elimination_bracket(next_match)
+
 
 
 from django.contrib.auth.decorators import login_required
