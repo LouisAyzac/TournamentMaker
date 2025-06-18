@@ -1,24 +1,26 @@
 import random
+from datetime import date
+from itertools import combinations
+
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.models import Site
+from django.core.mail import send_mail
+from django.core.signals import request_finished
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.contrib.auth.models import User
-from datetime import date
+from django.shortcuts import get_object_or_404, render
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.utils.text import slugify
 
-from django.db import models
-from datetime import date
-from django.db import models
-from datetime import date
 class Organisateur(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Organisateur: {self.user.email}"
-
-from django.db import models
-from datetime import date
 
 class Tournament(models.Model):
     SPORT_CHOICES = [
@@ -44,21 +46,13 @@ class Tournament(models.Model):
     players_per_team = models.PositiveIntegerField(default=5)
     number_of_pools = models.IntegerField(default=0)
     type_tournament = models.CharField(max_length=2, choices=TOURNAMENT_TYPE_CHOICES, default='RR')
-
-    
     nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
     points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
     organizer = models.OneToOneField(Organisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name='organized_tournament')
-
-    
     match_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un match (en minutes)")
     extra_time = models.BooleanField(null=True, blank=True, help_text="Prolongations possibles")
     penalty_shootout = models.BooleanField(null=True, blank=True, help_text="Tirs au but en cas d’égalité")
-
-    
     half_time_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée de la mi-temps (en minutes)")
-
-    
     quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
     number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
     slug = models.SlugField(max_length=200, unique=False, blank=True)
@@ -77,8 +71,6 @@ class Team(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
     captain = models.OneToOneField('UserProfile', on_delete=models.CASCADE, related_name='captained_team', null=True, blank=True)
     pool = models.ForeignKey('Pool', on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
-
-    
 
     def __str__(self):
         return self.name
@@ -104,7 +96,7 @@ class Team(models.Model):
         matches.sort(key=lambda x: x.id, reverse=True)
         results = []
         for match in matches[:n]:
-            winner = match.winner()
+            winner = match.get_match_winner()
             if winner == self:
                 results.append('W')
             elif winner is None:
@@ -146,10 +138,6 @@ class Pool(models.Model):
         blank=False
     )
 
-
-    def __str__(self):
-        return self.name
-
     def __str__(self):
         return f"{self.name} ({self.tournament.name})"
 
@@ -173,48 +161,93 @@ class Pool(models.Model):
 
     def all_matches_played(self):
         nb_sets_to_win = self.tournament.nb_sets_to_win
-        return all(match.get_auto_winner(nb_sets_to_win) is not None for match in self.matches.all())
-
+        return all(match.get_match_winner() is not None for match in self.matches.all())
+    
     def calculate_rankings(self):
-        nb_sets_to_win = self.tournament.nb_sets_to_win  # ✅ récupéré ici
-
-        stats = {team.id: {"team": team, "wins": 0, "sets_won": 0, "sets_lost": 0} for team in self.teams.all()}
+        sport = self.tournament.sport
+        stats = {
+            team.id: {
+                "team": team,
+                "wins": 0,
+                "draws": 0,
+                "losses": 0,
+                "sets_won": 0,
+                "sets_lost": 0,
+                "scored": 0,
+                "conceded": 0,
+            }
+            for team in self.teams.all()
+        }
 
         for match in self.matches.all():
-            winner = match.get_auto_winner(nb_sets_to_win)  # ✅ on passe bien le paramètre
+            team_a = match.team_a
+            team_b = match.team_b
+            winner = match.get_match_winner()
             if not winner:
                 continue
-            loser = match.team_a if winner == match.team_b else match.team_b
-            stats[winner.id]["wins"] += 1
 
-            for i in range(1, 6):
-                a_score = getattr(match, f"set{i}_team_a", None)
-                b_score = getattr(match, f"set{i}_team_b", None)
-                if a_score is not None and b_score is not None:
-                    stats[match.team_a.id]["sets_won"] += a_score
-                    stats[match.team_a.id]["sets_lost"] += b_score
-                    stats[match.team_b.id]["sets_won"] += b_score
-                    stats[match.team_b.id]["sets_lost"] += a_score
+            # FOOT, RUGBY, BASKET
+            if sport in ['football', 'rugby', 'basketball']:
+                # Score total (additionne les quarts-temps ou mi-temps)
+                score_a = match.set1_team_a + match.set2_team_a + match.set3_team_a + (match.set4_team_a or 0)
+                score_b = match.set1_team_b + match.set2_team_b + match.set3_team_b + (match.set4_team_b or 0)
 
-        sorted_teams = sorted(
-            stats.values(),
-            key=lambda x: (x["wins"], x["sets_won"] - x["sets_lost"]),
-            reverse=True
-        )
+                stats[team_a.id]['scored'] += score_a
+                stats[team_a.id]['conceded'] += score_b
+                stats[team_b.id]['scored'] += score_b
+                stats[team_b.id]['conceded'] += score_a
+
+                if score_a > score_b:
+                    stats[team_a.id]['wins'] += 1
+                    stats[team_b.id]['losses'] += 1
+                elif score_b > score_a:
+                    stats[team_b.id]['wins'] += 1
+                    stats[team_a.id]['losses'] += 1
+                else:
+                    stats[team_a.id]['draws'] += 1
+                    stats[team_b.id]['draws'] += 1
+
+            # VOLLEYBALL
+            elif sport == 'volleyball':
+                stats[winner.id]['wins'] += 1
+                for i in range(1, 6):
+                    a_score = getattr(match, f"set{i}_team_a", None)
+                    b_score = getattr(match, f"set{i}_team_b", None)
+                    if a_score is not None and b_score is not None:
+                        stats[team_a.id]['sets_won'] += a_score
+                        stats[team_a.id]['sets_lost'] += b_score
+                        stats[team_b.id]['sets_won'] += b_score
+                        stats[team_b.id]['sets_lost'] += a_score
+
+            # Autres sports : gagne +1, pas de stats détaillées
+            else:
+                stats[winner.id]["wins"] += 1
+
+        # Tri selon le sport
+        if sport == 'volleyball':
+            key_func = lambda x: (x["wins"], x["sets_won"] - x["sets_lost"], x["scored"] - x["conceded"])
+        elif sport in ['football', 'rugby', 'basketball']:
+            key_func = lambda x: (
+                x["wins"] * 3 + x["draws"],  # Points (3 victoires, 1 nul)
+                x["scored"] - x["conceded"],  # Différence de buts
+                x["scored"]  # Buts marqués
+            )
+        else:
+            key_func = lambda x: (x["wins"],)
+
+        sorted_teams = sorted(stats.values(), key=key_func, reverse=True)
 
         for i, stat in enumerate(sorted_teams, start=1):
             Ranking.objects.update_or_create(team=stat["team"], defaults={"rank": i})
 
 class Match(models.Model):
     tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
-
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
     team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a',null=True, blank=True)
     team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b', null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True, verbose_name="Heure de début")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Heure de fin")
-
-    bracket_position = models.PositiveIntegerField(null=True, blank=True)  # ✅ Ajout ici
+    bracket_position = models.PositiveIntegerField(null=True, blank=True)
 
      
 
@@ -227,9 +260,6 @@ class Match(models.Model):
 
     TERRAIN_CHOICES = [(str(i), f'Terrain {i}') for i in range(1, 7)]
     terrain_number = models.CharField(max_length=1, choices=TERRAIN_CHOICES, blank=True, null=True, verbose_name="Terrain")
-
-    WINNER_CHOICES = [('A', 'Team A'), ('B', 'Team B')]
-    winner_side = models.CharField(max_length=1, choices=WINNER_CHOICES, blank=True, null=True, verbose_name='Vainqueur')
 
     set1_team_a = models.PositiveIntegerField(default=0)
     set1_team_b = models.PositiveIntegerField(default=0)
@@ -253,34 +283,53 @@ class Match(models.Model):
 
     @property
     def winner_team(self):
-        return self.team_a if self.winner_side == 'A' else self.team_b if self.winner_side == 'B' else None
+        return self.get_match_winner()
 
     def __str__(self):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"
-
-    def get_auto_winner(self, nb_sets_to_win):
-        sets = [
-            (self.set1_team_a, self.set1_team_b),
-            (self.set2_team_a, self.set2_team_b),
-            (self.set3_team_a, self.set3_team_b),
-        ]
-        if self.set4_team_a is not None and self.set4_team_b is not None:
-            sets.append((self.set4_team_a, self.set4_team_b))
-        if self.set5_team_a is not None and self.set5_team_b is not None:
-            sets.append((self.set5_team_a, self.set5_team_b))
-
-        # Filtrer les sets non joués (où les deux scores sont à 0)
-        sets_played = [(a, b) for a, b in sets if a != 0 or b != 0]
-
-        score_a = sum(1 for a, b in sets_played if a > b)
-        score_b = sum(1 for a, b in sets_played if b > a)
-
-        if score_a >= nb_sets_to_win:
-            return self.team_a
-        elif score_b >= nb_sets_to_win:
-            return self.team_b
-        else:
+    
+    def get_match_winner(self):
+        tournament = self.tournament
+        if not tournament or not self.team_a or not self.team_b:
             return None
+
+        sport = tournament.sport
+
+        if sport == 'volleyball':
+            sets = [
+                (self.set1_team_a, self.set1_team_b),
+                (self.set2_team_a, self.set2_team_b),
+                (self.set3_team_a, self.set3_team_b),
+            ]
+            if self.set4_team_a is not None and self.set4_team_b is not None:
+                sets.append((self.set4_team_a, self.set4_team_b))
+            if self.set5_team_a is not None and self.set5_team_b is not None:
+                sets.append((self.set5_team_a, self.set5_team_b))
+
+            win_a = sum(1 for a, b in sets if a > b)
+            win_b = sum(1 for a, b in sets if b > a)
+
+            if win_a >= tournament.nb_sets_to_win:
+                return self.team_a
+            elif win_b >= tournament.nb_sets_to_win:
+                return self.team_b
+
+        else:
+            # Football, rugby, basket...
+            score_a = sum(filter(None, [self.set1_team_a, self.set2_team_a, self.set3_team_a, self.set4_team_a]))
+            score_b = sum(filter(None, [self.set1_team_b, self.set2_team_b, self.set3_team_b, self.set4_team_b]))
+
+            # Ajouter scores supplémentaires si nécessaires (basket par exemple)
+            if sport == 'basketball':
+                score_a += self.set2_team_a + self.set3_team_a + (self.set4_team_a or 0)
+                score_b += self.set2_team_b + self.set3_team_b + (self.set4_team_b or 0)
+
+            if score_a > score_b:
+                return self.team_a
+            elif score_b > score_a:
+                return self.team_b
+
+        return None
 
 class Ranking(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)
@@ -309,7 +358,8 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False)
     level = models.IntegerField(choices=LEVEL_CHOICES)
     team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='members', null=True, blank=True)
-    def __str__(self):  
+    def __str__(self):
+        team_name = self.team.name if self.team else "Aucune équipe"  
         return f"{self.user.username} - {self.get_level_display()} (Équipe: {self.team.name})"
 
 
@@ -317,22 +367,7 @@ class UserProfile(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-
-
-
         pass
-
- 
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from django.contrib.auth.models import User
-from django.core.mail import send_mail
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.contrib.sites.models import Site
-
-from .models import Team, UserProfile, Player
 
 
 
@@ -365,9 +400,6 @@ def assign_teams_to_pools(tournament):
         if i // 4 < len(pools):
             pools[i // 4].teams.add(team)
     for p in pools: p.save()
- 
-from django.shortcuts import render, get_object_or_404
-from .models import Team, Player
 
 
 def team_detail(request, team_id):
@@ -380,8 +412,6 @@ def team_detail(request, team_id):
     }
     return render(request, 'team_detail.html', context)
 
-from django.db import models
-
 class City(models.Model):
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=100, default='')
@@ -390,10 +420,6 @@ class City(models.Model):
 
     def __str__(self):
         return self.name
-
-
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
 @receiver(post_save, sender=Tournament)
 def create_pools_for_tournament(sender, instance, created, **kwargs):
@@ -404,14 +430,14 @@ def create_pools_for_tournament(sender, instance, created, **kwargs):
             pool = Pool.objects.create(name=pool_name, tournament=instance)
             print(f"Pool créée : {pool.name} pour le tournoi {instance.name}")
 
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from .models import Team, Match, Pool
 
 @receiver(post_save, sender=Team)
 def auto_generate_pool_matches(sender, instance, **kwargs):
     pool = instance.pool
     if pool is None:
+        return
+    
+    if instance.tournament.type_tournament != 'RR':
         return
 
     # Récupérer toutes les équipes de la pool
@@ -425,7 +451,6 @@ def auto_generate_pool_matches(sender, instance, **kwargs):
         existing_pairs.add(pair)
 
     # Pour chaque paire d’équipes
-    from itertools import combinations
     for team_a, team_b in combinations(teams, 2):
         pair = tuple(sorted([team_a.id, team_b.id]))
         if pair not in existing_pairs:
@@ -437,6 +462,3 @@ def auto_generate_pool_matches(sender, instance, **kwargs):
                 phase='pool',
             )
             print(f"Match créé : {team_a.name} vs {team_b.name} dans {pool.name}")
- 
-
- 

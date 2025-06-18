@@ -1,15 +1,25 @@
-
-from django.contrib import admin
-from django.core.exceptions import ValidationError
-from django import forms
 import random
+
+from django import forms
+from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .models import Tournament, Team, Player, Match, Ranking, Pool, UserProfile
-from django.contrib.auth.models import User
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.admin import SimpleListFilter
+from .models import (
+    Tournament,
+    Team,
+    Player,
+    Match,
+    Ranking,
+    Pool,
+    UserProfile,
+    Organisateur,
+)
 
 
 
@@ -82,34 +92,14 @@ class PoolAdmin(admin.ModelAdmin):
 
 
 class MatchForm(forms.ModelForm):
-    WINNER_CHOICES = [
-        ('', '---------'),
-        ('A', 'Team A'),
-        ('B', 'Team B'),
-    ]
-
-    winner_choice = forms.ChoiceField(
-        choices=WINNER_CHOICES,
-        required=False,
-        label="Vainqueur",
-        help_text="Choisir Team A ou Team B"
-    )
-
     class Meta:
         model = Match
-        exclude = ['winner_side']  # Masque le champ technique dans le formulaire admin
+        fields = '__all__'  # ou liste des champs à afficher, si tu veux le contrôle
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         instance = kwargs.get('instance')
-
-        # Initialise le choix vainqueur selon la valeur en base
-        if instance and instance.team_a and instance.team_b:
-            if instance.winner_side == 'A':
-                self.fields['winner_choice'].initial = 'A'
-            elif instance.winner_side == 'B':
-                self.fields['winner_choice'].initial = 'B'
 
         # Restreint les équipes aux équipes de la pool
         pool = instance.pool if instance and instance.pk else None
@@ -135,23 +125,11 @@ class MatchForm(forms.ModelForm):
         cleaned_data = super().clean()
         team_a = cleaned_data.get('team_a')
         team_b = cleaned_data.get('team_b')
-        choice = cleaned_data.get('winner_choice')
 
-        # Équipes différentes
         if team_a and team_b and team_a == team_b:
             raise ValidationError("Les équipes doivent être différentes.")
 
-        # Stocke le vainqueur dans winner_side
-        if choice == 'A':
-            self.instance.winner_side = 'A'
-        elif choice == 'B':
-            self.instance.winner_side = 'B'
-        else:
-            self.instance.winner_side = None
-
         return cleaned_data
-
-
 
 
 class PoolFilter(SimpleListFilter):
@@ -402,10 +380,6 @@ def auto_generate_final(sender, instance, **kwargs):
     Match.objects.create(pool=None, team_a=winners[0], team_b=winners[1], phase='final')
     Match.objects.create(pool=None, team_a=losers[0], team_b=losers[1], phase='third_place')
 
-from django.db import models
-from django.contrib import admin
-from .models import Ranking, Team, Match  # à adapter selon ton projet
-
 class FinalRankingProxy(Ranking):
     class Meta:
         proxy = True
@@ -516,9 +490,6 @@ class TournamentAdmin(admin.ModelAdmin):
     list_display = ('name', 'department', 'address', 'is_indoor', 'start_date', 'end_date', 'sport')
     list_filter = ('sport', 'is_indoor', 'start_date', 'end_date')
     search_fields = ('name', 'department', 'address')
-
-from django.contrib import admin
-from .models import Organisateur
 
 @admin.register(Organisateur)
 class OrganisateurAdmin(admin.ModelAdmin):
