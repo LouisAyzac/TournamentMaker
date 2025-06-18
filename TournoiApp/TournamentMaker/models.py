@@ -189,8 +189,19 @@ class Pool(models.Model):
             # FOOT, RUGBY, BASKET
             if sport in ['football', 'rugby', 'basketball']:
                 # Score total (additionne les quarts-temps ou mi-temps)
-                score_a = match.set1_team_a + match.set2_team_a + match.set3_team_a + (match.set4_team_a or 0)
-                score_b = match.set1_team_b + match.set2_team_b + match.set3_team_b + (match.set4_team_b or 0)
+                score_a = sum([
+                    match.set1_team_a or 0,
+                    match.set2_team_a or 0,
+                    match.set3_team_a or 0,
+                    match.set4_team_a or 0,
+                ])
+
+                score_b = sum([
+                    match.set1_team_b or 0,
+                    match.set2_team_b or 0,
+                    match.set3_team_b or 0,
+                    match.set4_team_b or 0,
+                ])
 
                 stats[team_a.id]['scored'] += score_a
                 stats[team_a.id]['conceded'] += score_b
@@ -288,32 +299,110 @@ class Match(models.Model):
     def __str__(self):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"
     
+    def is_match_complete(self):
+        if not self.tournament:
+            return False
+
+        sport = self.tournament.sport
+
+        if sport == 'volleyball':
+            sets_to_win = self.tournament.nb_sets_to_win
+            points_per_set = self.tournament.points_per_set
+            sets_won_a = 0
+            sets_won_b = 0
+
+            for i in range(1, 6):
+                sa = getattr(self, f"set{i}_team_a", None)
+                sb = getattr(self, f"set{i}_team_b", None)
+
+                if sa is None or sb is None:
+                    continue
+
+                if sa >= points_per_set and sa - sb >= 2:
+                    sets_won_a += 1
+                elif sb >= points_per_set and sb - sa >= 2:
+                    sets_won_b += 1
+
+            return sets_won_a >= sets_to_win or sets_won_b >= sets_to_win
+
+        else:
+            # Vérifie qu’au moins 2 périodes ont été RENSEIGNÉES (peu importe le score)
+            periods_filled = 0
+            for i in range(1, 6):
+                sa = getattr(self, f"set{i}_team_a", None)
+                sb = getattr(self, f"set{i}_team_b", None)
+
+                if sa is not None and sb is not None:
+                    periods_filled += 1
+
+            return periods_filled >= 2
+    
+
     def get_match_winner(self):
-        if not self.team_a or not self.team_b:
+        if not self.team_a or not self.team_b or not self.tournament:
             return None
 
+        sport = self.tournament.sport
+
+        # === Cas Volleyball (sets gagnants avec score minimum) ===
+        if sport == 'volleyball':
+            sets_to_win = self.tournament.nb_sets_to_win
+            points_per_set = self.tournament.points_per_set
+
+            sets_won_a = 0
+            sets_won_b = 0
+
+            for i in range(1, 6):
+                sa = getattr(self, f"set{i}_team_a", None)
+                sb = getattr(self, f"set{i}_team_b", None)
+
+                if sa is None or sb is None or (sa == 0 and sb == 0):
+                    continue  
+
+                # Condition pour valider un set
+                if sa >= points_per_set and sa - sb >= 2:
+                    sets_won_a += 1
+                elif sb >= points_per_set and sb - sa >= 2:
+                    sets_won_b += 1
+
+            # Une des deux équipes a-t-elle gagné le bon nombre de sets ?
+            if sets_won_a >= sets_to_win:
+                return self.team_a
+            elif sets_won_b >= sets_to_win:
+                return self.team_b
+            else:
+                return None  
+        
+        elif sport == 'basketball':
+            num_quarters = self.tournament.number_of_quarters or 4
+            total_a, total_b = 0, 0
+            for i in range(1, num_quarters + 1):
+                sa = getattr(self, f"set{i}_team_a", None)
+                sb = getattr(self, f"set{i}_team_b", None)
+                if sa is not None and sb is not None:
+                    total_a += sa
+                    total_b += sb
+                else:
+                    return None  # Quart-temps non rempli → match incomplet
+            return self.team_a if total_a > total_b else self.team_b if total_b > total_a else None
+
+        # === Cas autres sports (score cumulé) ===
         total_a = 0
         total_b = 0
 
-        for i in range(1, 6):
+        for i in range(1, 6):  # On garde 5 "sets" car utilisés comme unités de temps
             sa = getattr(self, f"set{i}_team_a", None)
             sb = getattr(self, f"set{i}_team_b", None)
 
             if sa is not None and sb is not None:
-                print(f"[DEBUG SET {i}] {self.team_a.name}: {sa} - {self.team_b.name}: {sb}")
                 total_a += sa
                 total_b += sb
 
-        print(f"[DEBUG TOTAL] {self.team_a.name}: {total_a} vs {self.team_b.name}: {total_b}")
-
         if total_a > total_b:
-            print(f"[DEBUG WINNER] Gagnant: {self.team_a.name}")
             return self.team_a
         elif total_b > total_a:
-            print(f"[DEBUG WINNER] Gagnant: {self.team_b.name}")
             return self.team_b
         else:
-            print(f"[DEBUG NUL] Match nul")
             return None
 
 class Ranking(models.Model):
@@ -442,6 +531,7 @@ def auto_generate_pool_matches(sender, instance, **kwargs):
             # Créer le match en base
             Match.objects.create(
                 pool=pool,
+                tournament=pool.tournament,
                 team_a=team_a,
                 team_b=team_b,
                 phase='pool',

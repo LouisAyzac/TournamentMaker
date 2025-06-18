@@ -58,7 +58,9 @@
                                     <div>
                                         {% if tournament.sport == "volleyball" %}
                                             Set {{ set.set_number }} :
-                                        {% endif %}
+                                        {% elif tournament.sport == "basketball" %}
+                                            {{ set.label }} :
+                                        {% endif %} 
                                         <span style="color:red">{{ set.team_a_score }}</span> -
                                         <span style="color:blue">{{ set.team_b_score }}</span>
                                     </div>
@@ -69,12 +71,16 @@
                         </td>
                         <td>{{ match.total_score }}</td>
                         <td>
-                            {% if match.winner_team %}
-                                <strong class="{% if match.winner_team == match.team_a %}winner-red{% else %}winner-blue{% endif %}">
-                                    {{ match.winner.name }}
-                                </strong>
+                            {% if match.is_complete %}
+                                {% if match.winner %}
+                                    <strong class="{% if match.winner == match.team_a %}winner-red{% else %}winner-blue{% endif %}">
+                                        {{ match.winner.name }}
+                                    </strong>
+                                {% else %}
+                                    <strong class="draw-green">Match nul</strong>
+                                {% endif %}
                             {% else %}
-                                <strong class="draw-green">Match nul</strong>
+                                <span style="color: gray;">-</span>
                             {% endif %}
                         </td>
                         <td>

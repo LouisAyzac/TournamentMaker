@@ -93,7 +93,15 @@
         {% with "set"|add:set_number|stringformat:"d"|add:"_team_a" as field_team_a %}
         {% with "set"|add:set_number|stringformat:"d"|add:"_team_b" as field_team_b %}
         <tr>
-          <td class="set-label">Set {{ set_number }}</td>
+          <td class="set-label">
+            {% if sport == 'volleyball' %}
+              Set {{ set_number }}
+            {% elif sport == 'basketball' %}
+              Quart-temps {{ set_number }}
+            {% else %}
+              Score {{ set_number }}
+            {% endif %}
+          </td>
           <td>
             <input type="number" name="set{{ set_number }}_team_a"
                    value="{{ score_fields|get_item:field_team_a }}">

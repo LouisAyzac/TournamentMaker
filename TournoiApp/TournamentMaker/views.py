@@ -617,6 +617,7 @@ def detail_poule(request, tournament_slug, pool_id):
         return redirect('detail_poule', tournament_slug=tournament.slug, pool_id=pool.id)
 
     matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
+    nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
 
     for match in matchs:
         match.score_sets = []
@@ -624,23 +625,54 @@ def detail_poule(request, tournament_slug, pool_id):
         total_b = 0
 
         # Affichage jusqu’à 5 sets max ou nombre de sets du tournoi
-        nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
         for i in range(1, nb_sets_display + 1):
             sa = getattr(match, f"set{i}_team_a", None)
             sb = getattr(match, f"set{i}_team_b", None)
 
-            if sa is not None and sb is not None and (sa != 0 or sb != 0):
-                match.score_sets.append({
-                    'set_number': i,
-                    'team_a_score': sa,
-                    'team_b_score': sb
-                })
-                total_a += sa
-                total_b += sb
+            if sa is None or sb is None:
+                continue
+
+            # Pour le volley : n'afficher que les sets valides
+            if tournament.sport == 'volleyball':
+                if (sa >= tournament.points_per_set or sb >= tournament.points_per_set) and abs(sa - sb) >= 2:
+                    match.score_sets.append({
+                        'set_number': i,
+                        'team_a_score': sa,
+                        'team_b_score': sb
+                    })
+                    total_a += sa
+                    total_b += sb
+
+            elif tournament.sport == "basketball":
+                nb_quarters = tournament.number_of_quarters or 4
+                for i in range(1, nb_quarters + 1):
+                    sa = getattr(match, f"set{i}_team_a", None)
+                    sb = getattr(match, f"set{i}_team_b", None)
+                    if sa is not None and sb is not None and (sa != 0 or sb != 0):
+                        match.score_sets.append({
+                            'set_number': i,
+                            'team_a_score': sa,
+                            'team_b_score': sb,
+                            'label': f"QT {i}"
+                        })
+                        total_a += sa
+                        total_b += sb
+
+            else:
+                # Pour les autres sports, afficher tout set non vide
+                if sa != 0 or sb != 0:
+                    match.score_sets.append({
+                        'set_number': i,
+                        'team_a_score': sa,
+                        'team_b_score': sb
+                    })
+                    total_a += sa
+                    total_b += sb
 
         match.total_score = f"{total_a} - {total_b}"
         match.winner = match.get_match_winner()
-        print(f"[DEBUG] Match {match.team_a} vs {match.team_b} → Vainqueur: {match.winner}")
+        match.is_complete = match.is_match_complete()
+
 
     return render(request, 'detail_poule.html', {
         'pool': pool,
@@ -1109,8 +1141,13 @@ def score_match(request, tournament_slug, match_id):
         })
 
     tournament = match.pool.tournament if match.pool else match.team_a.tournament
+    sport = tournament.sport
 
-    nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
+    if tournament.sport == 'basketball':
+        nb_sets_display = tournament.number_of_quarters or 4
+    else:
+        nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
+
     set_numbers = list(range(1, nb_sets_display + 1))
 
     score_fields = {}
@@ -1176,7 +1213,7 @@ def score_match(request, tournament_slug, match_id):
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
-
+        'sport': sport,
     })
 
 
