@@ -4,14 +4,15 @@ from faker import Faker
 import random
 
 class Command(BaseCommand):
-    help = 'Génère 2 tournois pour chaque configuration de 2 à 8 poules avec 2 équipes par pool'
 
+    help = 'Génère 2 tournois pour chaque configuration de 2 à 8 poules avec 2 équipes par pool'
+ 
     def handle(self, *args, **kwargs):
         fake = Faker('fr_FR')
 
         sports = [choice[0] for choice in Tournament.SPORT_CHOICES]
         levels = [choice[0] for choice in Player.LEVEL_CHOICES]
-
+ 
         tournament_count = 1
         for num_pools in range(2, 9):  # de 2 à 8 poules
             for _ in range(2):  # deux tournois par config
@@ -48,7 +49,7 @@ class Command(BaseCommand):
                             tournament=tournament,
                             pool=pool
                         )
-
+ 
                         Player.objects.create(
                             first_name=fake.first_name(),
                             last_name=fake.last_name(),
@@ -57,7 +58,7 @@ class Command(BaseCommand):
                             team=team,
                             email=fake.email()
                         )
-
+ 
                 # Calcul des classements
                 for pool in Pool.objects.filter(tournament=tournament):
                     pool.calculate_rankings()
@@ -74,3 +75,4 @@ class Command(BaseCommand):
                 tournament_count += 1
 
         self.stdout.write(self.style.SUCCESS("🎯 Tous les tournois ont été générés avec succès."))
+ 

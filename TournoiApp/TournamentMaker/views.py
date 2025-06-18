@@ -646,12 +646,24 @@ def matchs_poules(request, tournament_slug):
                     if score_a is None or score_b is None:
                         break
 
+                    # Pour les points : somme directe
                     if match.team_a == team:
-                        diff_sets += score_a - score_b
                         diff_points += score_a - score_b
                     elif match.team_b == team:
-                        diff_sets += score_b - score_a
                         diff_points += score_b - score_a
+
+                    # Pour les sets : on compte le set gagné
+                    if match.team_a == team:
+                        if score_a > score_b:
+                            diff_sets += 1
+                        elif score_a < score_b:
+                            diff_sets -= 1
+                    elif match.team_b == team:
+                        if score_b > score_a:
+                            diff_sets += 1
+                        elif score_b < score_a:
+                            diff_sets -= 1
+
 
             # Calcul des points (3 points par victoire en volley)
             points = victoires * 3
@@ -695,15 +707,30 @@ def detail_poule(request, tournament_slug, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
     tournament = pool.tournament
 
-    # Vérifie que le slug correspond au tournoi
     if tournament.slug != tournament_slug:
         return redirect('detail_poule', tournament_slug=tournament.slug, pool_id=pool.id)
 
-    # Matchs joués et créés dans la poule (phase 'pool')
-    matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
+    # On récupère tous les matchs de poule
+    all_matchs = list(Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b'))
 
-    # On prépare les scores par sets
-    for match in matchs:
+    # Récupère toutes les équipes de la poule
+    teams = list(pool.teams.all())
+
+    # Ordre équilibré des matchs basé sur les équipes
+    scheduled_pairs = generate_balanced_schedule(teams)
+
+    # On réorganise les matchs selon cet ordre
+    ordered_matchs = []
+    for team_a, team_b in scheduled_pairs:
+        match = next(
+            (m for m in all_matchs if {m.team_a, m.team_b} == {team_a, team_b}),
+            None
+        )
+        if match:
+            ordered_matchs.append(match)
+
+    # Calcul des scores set par set pour chaque match
+    for match in ordered_matchs:
         match.score_sets = []
         for i in range(1, 6):
             sa = getattr(match, f"set{i}_team_a", None)
@@ -717,7 +744,7 @@ def detail_poule(request, tournament_slug, pool_id):
 
     return render(request, 'detail_poule.html', {
         'pool': pool,
-        'matchs': matchs,
+        'matchs': ordered_matchs,
         'tournament': tournament,
     })
 
@@ -954,7 +981,13 @@ from django.core.mail import send_mail
 from django.utils.text import slugify
 def create_tournament_step1(request):
     if request.method == 'POST':
-        # Enregistre les infos dans la session
+        preset_key = request.POST.get('preset')  # nom technique du preset
+        preset_name_map = {
+            'volley_classique': 'Volleyball Classique',
+            'foot_5v5': 'Football 5v5 Indoor',
+            'basket_standard': 'Basketball Standard',
+        }
+
         request.session['step1'] = {
             'name': request.POST.get('name'),
             'department': request.POST.get('department'),
@@ -965,28 +998,56 @@ def create_tournament_step1(request):
             'sport': request.POST.get('sport'),
             'type_tournament': request.POST.get('type_tournament'),
             'nb_pools': request.POST.get('nb_pools'),
-            'email': request.POST.get('email'),  # <<< ici tu ajoutes l'email
+            'email': request.POST.get('email'),
+            'preset_name': preset_name_map.get(preset_key, 'non spécifié'),  # ✅ ajouté
         }
 
         return redirect('create_tournament_step2')
-    
+
     return render(request, 'create_tournament_step1.html')
 
-def create_tournament_step2(request):
-    print("🎯 create_tournament_step2 appelée :", request.method)
-    if request.method == 'POST':
-        print("📥 POST reçu :", request.POST)
 
+def create_tournament_step2(request):
     step1 = request.session.get('step1')
     if not step1:
         return redirect('create_tournament_step1')
 
     sport = step1['sport']
     type_tournament = step1['type_tournament']
+    preset_name = step1.get('preset_name', 'non spécifié')
+
+    sport_presets = {
+        'volleyball': {
+            'nb_teams': 8,
+            'players_per_team': 6,
+            'nb_sets_to_win': 3,
+            'points_per_set': 25
+        },
+        'football': {
+            'nb_teams': 12,
+            'players_per_team': 11,
+            'match_duration': 90,
+            'extra_time': True,
+            'penalty_shootout': True
+        },
+        'rugby': {
+            'nb_teams': 10,
+            'players_per_team': 15,
+            'match_duration': 80,
+            'half_time_duration': 10
+        },
+        'basketball': {
+            'nb_teams': 6,
+            'players_per_team': 5,
+            'quarter_duration': 10,
+            'number_of_quarters': 4
+        }
+    }
+
+    preset = sport_presets.get(sport, {})
 
     if request.method == 'POST':
         try:
-            # Champs communs
             common_data = {
                 'name': step1['name'],
                 'department': step1['department'],
@@ -1002,7 +1063,6 @@ def create_tournament_step2(request):
                 'slug': slugify(step1['name']),
             }
 
-            # Champs spécifiques par sport
             if sport == 'volleyball':
                 common_data.update({
                     'nb_sets_to_win': int(request.POST.get('nb_sets_to_win')),
@@ -1014,7 +1074,6 @@ def create_tournament_step2(request):
                     'match_duration': int(request.POST.get('match_duration')),
                     'extra_time': request.POST.get('extra_time') == 'on',
                     'penalty_shootout': request.POST.get('penalty_shootout') == 'on',
-                    # Par défaut pour compatibilité avec le modèle :
                     'nb_sets_to_win': 1,
                     'points_per_set': 1,
                 })
@@ -1035,41 +1094,33 @@ def create_tournament_step2(request):
                     'points_per_set': 1,
                 })
 
-            # Email de l'organisateur
             email = step1.get('email')
             if not email:
                 messages.error(request, "L'email de l'organisateur est requis.")
                 return redirect('create_tournament_step1')
 
-            # Créer le tournoi
             tournoi = Tournament.objects.create(**common_data)
 
-            # Créer les pools si nécessaire
             if type_tournament == 'RR' and tournoi.number_of_pools > 0:
                 if not Pool.objects.filter(tournament=tournoi).exists():
                     for i in range(1, tournoi.number_of_pools + 1):
-                        pool_name = f"Pool {i}"
-                        Pool.objects.create(name=pool_name, tournament=tournoi)
+                        Pool.objects.create(name=f"Pool {i}", tournament=tournoi)
 
-            # Créer l'utilisateur organisateur
             try:
                 username = f"{email}_{tournoi.id}"
                 user = User.objects.create_user(username=username, email=email)
-
                 organisateur = Organisateur.objects.create(user=user)
-
                 tournoi.organizer = organisateur
                 tournoi.save()
 
-                # Envoyer le mail
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
                 token = default_token_generator.make_token(user)
                 domain = '127.0.0.1:8000'
                 link = f"http://{domain}/accounts/reset/{uid}/{token}/"
 
-                subject = f"Bienvenue organisateur du tournoi {tournoi.name} !"
-                message = f"""
-Bonjour,
+                send_mail(
+                    f"Bienvenue organisateur du tournoi {tournoi.name} !",
+                    f"""Bonjour,
 
 Vous avez été inscrit comme organisateur du tournoi "{tournoi.name}".
 Veuillez cliquer sur le lien suivant pour définir votre mot de passe :
@@ -1078,32 +1129,36 @@ Veuillez cliquer sur le lien suivant pour définir votre mot de passe :
 
 Merci,
 L'équipe du tournoi
-"""
-                send_mail(subject, message, 'projetE3match@gmail.com', [email], fail_silently=False)
+""",
+                    'projetE3match@gmail.com',
+                    [email],
+                    fail_silently=False
+                )
 
             except Exception as e:
-                messages.error(request, f"Erreur lors de la création de l'utilisateur organisateur : {str(e)}")
+                messages.error(request, f"Erreur création organisateur : {str(e)}")
                 tournoi.delete()
                 return redirect('create_tournament_step2')
 
-            # Mettre le tournoi sélectionné en session
             request.session['selected_tournament_id'] = tournoi.id
-
             messages.success(request, f"Tournoi '{tournoi.name}' créé avec succès et sélectionné.")
             return redirect(f"{reverse('home')}?tournament_id={tournoi.id}")
 
-        
         except Exception as e:
             import traceback
-            print("ERREUR création tournoi:")
             traceback.print_exc()
-            messages.error(request, f"Erreur lors de la création du tournoi : {str(e)}")
+            messages.error(request, f"Erreur : {str(e)}")
             return redirect('create_tournament_step2')
 
+    return render(request, 'create_tournament_step2.html', {
+        'sport': sport,
+        'preset': preset,
+        'preset_name': preset_name,
+        'hide_navbar_buttons': True,  
+    })
 
-    return render(request, 'create_tournament_step2.html', {'sport': sport})
 
- 
+
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
 
@@ -1375,6 +1430,70 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from .models import Tournament, Match
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from .models import Match, UserProfile
+
+
+def get_next_phase(current_phase):
+    return {
+        'eighth': 'quarter',
+        'quarter': 'semi',
+        'semi': 'final',
+        'final': None,
+    }.get(current_phase)
+
+
+def advance_elimination_bracket(match):
+    winner = match.winner_team
+    if not winner or match.bracket_position is None:
+        return
+
+    current_phase = match.phase
+    next_phase = get_next_phase(current_phase)
+    if not next_phase:
+        return
+
+    tournament = match.tournament
+    next_position = match.bracket_position // 2
+
+    # Crée ou récupère le match de la phase suivante
+    next_match, created = Match.objects.get_or_create(
+        tournament=tournament,
+        phase=next_phase,
+        bracket_position=next_position,
+        defaults={'team_a': None, 'team_b': None}
+    )
+
+    # Place le vainqueur dans team_a ou team_b selon pair/impair
+    if match.bracket_position % 2 == 0:
+        if not next_match.team_a:
+            next_match.team_a = winner
+    else:
+        if not next_match.team_b:
+            next_match.team_b = winner
+
+    next_match.save()
+
+    # ⚠️ Ne PAS avancer automatiquement tant que l’autre match (adversaire) n’a pas été joué
+    expected_opponent_pos = match.bracket_position ^ 1
+    opponent_match = Match.objects.filter(
+        tournament=tournament,
+        phase=current_phase,
+        bracket_position=expected_opponent_pos
+    ).first()
+
+    # Seulement avancer si l’autre match n’existe PAS du tout
+    if opponent_match is None:
+        # Avancement automatique
+        next_match.winner_side = 'A' if next_match.team_a == winner else 'B'
+        next_match.statut = 'T'
+        next_match.save()
+        advance_elimination_bracket(next_match)
+
+
+
 @login_required
 def score_match(request, tournament_slug, match_id):
     from_param = request.GET.get('from')
@@ -1439,6 +1558,19 @@ def score_match(request, tournament_slug, match_id):
         for n in set_numbers
     })
 
+    # 🔄 Préparer back_url AVANT le POST
+    if match.phase == 'pool' and match.pool:
+        back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
+    else:
+        back_url = reverse('direct_elimination', args=[tournament_slug])  # 🔥 correction
+
+    # 🔄 Préparer back_url AVANT le POST
+    if match.phase == 'pool' and match.pool:
+        back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
+    else:
+        back_url = reverse('direct_elimination', args=[tournament_slug])  # 🔥 correction
+
+    # 🔥 Traitement du POST
     if request.method == 'POST':
         for n in set_numbers:
             a_field = f'set{n}_team_a'
@@ -1485,6 +1617,7 @@ def score_match(request, tournament_slug, match_id):
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
+
     })
 
 
@@ -1858,3 +1991,22 @@ def france_map_view(request):
     return render(request, 'france_map.html', {
         'departments_with_tournaments': departments_with_tournaments
     })
+ 
+from itertools import combinations
+
+def generate_balanced_schedule(teams):
+    matchs = list(combinations(teams, 2))
+    schedule = []
+    
+    while matchs:
+        for i, match in enumerate(matchs):
+            team_a, team_b = match
+            if not schedule or (team_a not in schedule[-1] and team_b not in schedule[-1]):
+                schedule.append(match)
+                matchs.pop(i)
+                break
+        else:
+            schedule.append(matchs.pop(0))  # si pas possible, on prend le premier match
+
+    return schedule
+ 

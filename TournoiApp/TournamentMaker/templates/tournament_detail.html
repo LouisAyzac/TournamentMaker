@@ -7,7 +7,12 @@
   <!-- Section héros -->
   <div class="bg-primary text-white rounded-4 shadow-sm p-4 mb-4 text-center">
     <h1 class="display-5 fw-bold"><i class="fas fa-trophy me-2"></i>{{ tournoi.name }}</h1>
-    <p class="lead mb-0">{{ tournoi.get_sport_display }} - {{ tournoi.departement }}</p>
+
+
+    <p class="lead mb-0">{{ tournoi.get_sport_display }}{% if tournoi.department %} - {{ tournoi.department }}{% endif %}</p>
+
+
+
   </div>
 
   <!-- Détails du tournoi -->
@@ -16,7 +21,10 @@
       <div class="row g-4">
         <div class="col-md-6">
           {% if tournoi.address %}
-          <p class="mb-2"><i class="fas fa-map-marker-alt text-primary me-2"></i><strong>Adresse :</strong> {{ tournoi.address }}</p>
+          <p class="mb-2">
+            <i class="fas fa-map-marker-alt text-primary me-2"></i>
+            <strong>Adresse :</strong> {{ tournoi.address }}{% if tournoi.department %} ({{ tournoi.department }}){% endif %}
+          </p>
           {% endif %}
           <p class="mb-2"><i class="fas fa-building text-primary me-2"></i><strong>En intérieur :</strong> {{ tournoi.is_indoor|yesno:"Oui,Non" }}</p>
           <p class="mb-2"><i class="fas fa-users text-primary me-2"></i><strong>Équipes max :</strong> {{ tournoi.max_teams }}</p>
@@ -35,13 +43,10 @@
           {% if tournoi.type_tournament == 'RR' %}
           <p class="mb-2"><i class="fas fa-th-large text-primary me-2"></i><strong>Nombre de poules :</strong> {{ tournoi.number_of_pools }}</p>
           {% endif %}
-          
-          {# 🎯 Affichage conditionnel selon le sport #}
+
           {% if tournoi.sport == 'volleyball' %}
-          
             <p class="mb-2"><i class="fas fa-trophy text-primary me-2"></i><strong>Sets pour gagner :</strong> {{ tournoi.nb_sets_to_win }}</p>
             <p class="mb-2"><i class="fas fa-star text-primary me-2"></i><strong>Points par set :</strong> {{ tournoi.points_per_set }}</p>
-          
           {% elif tournoi.sport == 'football' %}
             <p class="mb-2"><i class="fas fa-clock text-primary me-2"></i><strong>Durée du match :</strong> {{ tournoi.match_duration }} min</p>
             <p class="mb-2"><i class="fas fa-stopwatch text-primary me-2"></i><strong>Prolongations :</strong> {{ tournoi.extra_time|yesno:"Oui,Non" }}</p>
@@ -52,14 +57,19 @@
           {% elif tournoi.sport == 'rugby' %}
             <p class="mb-2"><i class="fas fa-star text-primary me-2"></i><strong>Durée de la mi-temps :</strong> {{ tournoi.half_time_duration }} min</p>
           {% endif %}
-          
         </div>
       </div>
     </div>
 
     <div class="card-footer bg-light text-end py-3 px-4">
-      <a href="{% url 'home' %}" class="btn btn-outline-primary">
-        <i class="fas fa-arrow-left me-1"></i> Retour aux tournois
+      <a href="{% url 'dashboard' tournoi.slug %}" class="btn btn-outline-primary">
+        <i class="fas fa-clipboard-list me-2"></i> Retour à la page du tournoi
+      </a>
+    </div>
+
+    <div class="text-start ms-3 mb-4">
+      <a href="{% url 'home' %}" class="btn-simple-return">
+        <i class="fas fa-arrow-left me-2"></i> Revenir à la liste des tournois
       </a>
     </div>
   </div>
