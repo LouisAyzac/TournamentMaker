@@ -2,10 +2,12 @@
 <html lang="fr">
 <head>
     {% block title %}
-      <title>VolleyTournoi</title>
+      <title>🏆TournamentMaker🏆</title>
     {% endblock %}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -15,77 +17,113 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link rel="icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+    .ball-animation {
+        display: inline-block;
+        animation: bounce 2s infinite ease-in-out;
+    }
+
+    .nav-button.home-highlight {
+        background: linear-gradient(to right, #4facfe, #00f2fe);
+        color: white;
+        font-weight: bold;
+        border-radius: 25px;
+        padding: 12px 24px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .nav-button.home-highlight:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        text-decoration: none;
+    }
+    </style>
 </head>
 
 <body>
     <!-- Header -->
     <header class="header-bar">
         <div class="container">
-            <h1 class="header-title">Volleyball</h1>
+            <h1 class="header-title">🏆TournamentMaker🏆</h1>
             <p class="header-subtitle">Organisez. Jouez. Gagnez.</p>
         </div>
     </header>
 
     <!-- Navigation -->
+    {% if not hide_navbar %}
     <nav class="nav-buttons-container">
-    <div class="nav-buttons">
-        <a href="{% url 'home' %}" class="nav-button">
-            <i class="fas fa-home"></i> Accueil
-        </a>
-        <a href="{% url 'index' %}" class="nav-button">
-            <i class="fas fa-landmark"></i> Tournoi
-        </a>
+        <div class="nav-buttons"> 
 
-        {% if request.session.selected_tournament_id %}
-            <a href="{% url 'players' %}" class="nav-button">
-                <i class="fas fa-users"></i> Joueurs
-            </a>
-            <a href="{% url 'teams' %}" class="nav-button">
-                <i class="fas fa-tshirt"></i> Équipes
-            </a>
-            <a href="{% url 'login' %}" class="nav-button">
-                <i class="fas fa-star"></i> Scores
-            </a>
-            <a href="{% url 'pool_list' %}" class="nav-button">
-                <i class="fas fa-trophy"></i> Poules
-            </a>
-            <a href="{% url 'rankings_list' %}" class="nav-button">
-                <i class="fas fa-medal"></i> Classements
-            </a>
-            <a href="{% url 'signup' %}" class="nav-button">
-                <i class="fas fa-file-alt"></i> Inscription
-
+            <!-- Toujours afficher le bouton Accueil -->
+            <a href="{% url 'home_landing' %}" class="nav-button home-highlight">
+                <i class="fas fa-home"></i> Accueil
             </a>
 
-            <a href="{% url 'matchs_en_cours' %}" class="nav-button">
-                              <i class="fas fa-clock"></i> Matchs en cours
-</a>
+            {% if not hide_navbar_buttons %}
+                {% if request.session.selected_tournament_id %}
+                    {% if selected_tournament_slug %}
+                        <a href="{% url 'dashboard' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-info-circle"></i> Informations
+                        </a>
 
-        {% endif %}
-    </div>
-</nav>
+                        <a href="{% url 'teams' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-users"></i> Voir les équipes
+                        </a>
 
+                        <a href="{% url 'rankings_list' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-trophy"></i> Voir le classement
+                        </a>
+
+                        {% if not hide_inscription %}
+                        <a href="{% url 'signup' selected_tournament_slug %}" class="nav-button">
+                            <i class="fas fa-user-plus"></i> Inscription
+                        </a>
+                        {% endif %}
+
+                        {% if request.session.type_tournament == 'RR' %}
+                            <a href="{% url 'matchs_choice' selected_tournament_slug %}" class="nav-button">
+                                <i class="fas fa-clock"></i> Matchs
+                            </a>
+                        {% else %}
+                            <a href="{% url 'direct_elimination' selected_tournament_slug %}" class="nav-button">
+                                <i class="fas fa-clock"></i> Matchs
+                            </a>
+                        {% endif %}
+                        
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </div> <!-- fermeture du nav-buttons -->
     </nav>
+    {% endif %}
 
     <!-- Main Content -->
     <main class="container main-content">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="social-icons">
-                <a href="#"><i class="fab fa-facebook-f"></i></a>
-                <a href="#"><i class="fab fa-twitter"></i></a>
-                <a href="#"><i class="fab fa-instagram"></i></a>
-            </div>
-            <p class="copyright">© 2025 VolleyTournoi. Tous droits réservés.</p>
-        </div>
-    </footer>
-
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/main.js' %}"></script>
+    <div class="volley-ball">
+        <i class="fas fa-volleyball-ball fa-3x" style="color: rgba(255,255,255,0.7);"></i>
+    </div>
+
+    <footer class="footer animate__animated animate__fadeInUp">
+        <div class="container">
+            <div class="social-icons">
+                <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="animate__animated animate__pulse animate__infinite animate__slower"><i class="fab fa-instagram"></i></a>
+            </div>
+            <p class="copyright">©2025TournamentMaker. Tous droits réservés.</p>
+        </div>
+    </footer>
 </body>
 </html>

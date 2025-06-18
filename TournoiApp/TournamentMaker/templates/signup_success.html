@@ -1,15 +1,56 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8" />
-    <title>Inscription réussie</title>
-</head>
-<body>
-    <h1>🎉 Inscription réussie !</h1>
-    <p>Votre équipe a bien été enregistrée.</p>
+{% extends "base_generic.html" %}
 
-    <form action="{% url 'dashboard' %}" method="get">
-        <button type="submit">Retour au menu</button>
-    </form>
-</body>
-</html>
+{% block content %}
+<style>
+  /* Masquer la barre de navigation uniquement sur cette page */
+  .nav-buttons-container {
+    display: none;
+  }
+
+  .success-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 30px 20px;
+    background: #e6ffed;
+    border: 2px solid #4caf50;
+    border-radius: 10px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+  }
+  .success-container h1 {
+    color: #2e7d32;
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+  }
+  .success-container p {
+    font-size: 1.1rem;
+    color: #388e3c;
+    margin-bottom: 30px;
+  }
+  .success-container a.button-link {
+    display: inline-block;
+    background-color: #4caf50;
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
+  .success-container a.button-link:hover {
+    background-color: #388e3c;
+  }
+</style>
+
+<div class="success-container">
+  <h1>🎉 Inscription réussie !</h1>
+  <p>Votre équipe a bien été enregistrée.</p>
+
+  <!-- On force vers le dashboard du tournoi, car on est sûr qu'on a le slug -->
+  <a href="{% url 'dashboard' selected_tournament_slug %}" class="button-link">
+    Retour au menu du tournoi
+  </a>
+</div>
+{% endblock %}

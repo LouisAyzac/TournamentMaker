@@ -1,0 +1,116 @@
+{% extends 'base_generic.html' %}
+{% load custom_tags %}
+
+{% block content %}
+<h2 style="text-align: center;">Modifier le score</h2>
+
+<style>
+  .score-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .teams-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    font-size: 1.4em;
+    font-weight: 600;
+    color: #222;
+  }
+
+  .set-table {
+    width: 100%;
+    border-spacing: 20px;
+  }
+
+  .set-table td {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .set-label {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #444;
+  }
+
+  input[type="number"] {
+    width: 60px;
+    padding: 8px;
+    font-size: 1.1em;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  .submit-btn {
+    margin-top: 30px;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(to right, #007bff, #00c6ff);
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .submit-btn:hover {
+    background: linear-gradient(to right, #0062cc, #009acb);
+  }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+    text-decoration: none;
+  }
+
+  .back-link:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="score-container">
+  <div class="teams-header">
+    <div>{{ match.team_a.name }}</div>
+    <div>{{ match.team_b.name }}</div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <table class="set-table">
+      {% for set_number in set_numbers %}
+        {% with "set"|add:set_number|stringformat:"d"|add:"_team_a" as field_team_a %}
+        {% with "set"|add:set_number|stringformat:"d"|add:"_team_b" as field_team_b %}
+        <tr>
+          <td class="set-label">Set {{ set_number }}</td>
+          <td>
+            <input type="number" name="set{{ set_number }}_team_a"
+                   value="{{ score_fields|get_item:field_team_a }}">
+          </td>
+          <td>
+            <input type="number" name="set{{ set_number }}_team_b"
+                   value="{{ score_fields|get_item:field_team_b }}">
+          </td>
+        </tr>
+        {% endwith %}
+        {% endwith %}
+      {% endfor %}
+    </table>
+
+    <button type="submit" class="submit-btn">Enregistrer le score</button>
+  </form>
+
+  <a href="{{ back_url }}" class="back-link">← Retour</a>
+</div>
+{% endblock %}

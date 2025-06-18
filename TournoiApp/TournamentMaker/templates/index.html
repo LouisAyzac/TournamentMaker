@@ -9,22 +9,33 @@
 
     {% block content %}
 
+    <div class="text-center mt-5">
+      <h1>Bienvenue au tournoi de volleyball</h1>
+      <p>Veuillez sélectionner un tournoi pour commencer.</p>
 
-      <div class="text-center mt-5">
-        <h1>Bienvenue au tournoi de volleyball</h1>
-        <p>Veuillez sélectionner un tournoi pour commencer.</p>
+      {% if not request.session.selected_tournament %}
+        <a href="{% url 'select_tournament' %}" class="nav-button">Sélectionner un tournoi</a>
+      {% endif %}
+    </div>
 
-        {% if not request.session.selected_tournament %}
-          <a href="{% url 'select_tournament' %}" class="nav-button">Sélectionner un tournoi</a>
-        {% endif %}
-      </div>
+    <div class="container mt-5">
+      <h2 class="text-center">Sélectionnez un tournoi</h2>
+    
+        <form method="POST" class="mt-4 text-center">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="tournamentSelect">Tournoi :</label>
+            <select class="form-control w-50 mx-auto" id="tournamentSelect" name="tournament_id" required>
+              <option value="" disabled selected>-- Choisissez un tournoi --</option>
+              {% for tournoi in tournois %}
+                <option value="{{ tournoi.id }}">{{ tournoi.name }} - {{ tournoi.department }} - {{ tournoi.address }} - {{ tournoi.is_indoor }} - {{ tournoi.start_date }} - {{ tournoi.end_date }} - {{ tournoi.sport }}</option>
+              {% endfor %}
+            </select>
+          </div>
+    
+          <button type="submit" class="btn btn-primary mt-3">Valider</button>
+        </form>
 
-      
-      
-<h1>Bienvenue au tournoi de volleyball</h1>
-<i class="fas fa-volleyball-ball"></i>
-<i class="fas fa-trophy"></i>
-<i class="fas fa-users"></i>
     {% endblock %}
 
 

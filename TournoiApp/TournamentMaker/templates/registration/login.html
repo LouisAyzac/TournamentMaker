@@ -15,6 +15,8 @@
     {% endif %}
   {% endif %}
 
+  <p><strong>Le nom d’utilisateur est l’adresse e-mail du capitaine.</strong></p>
+
   <form method="post" action="{% url 'login' %}">
     {% csrf_token %}
     <table>

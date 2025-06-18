@@ -1,0 +1,168 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}
+  <title>Créer un tournoi</title>
+{% endblock %}
+
+{% block content %}
+<style>
+  .nav-buttons-container .nav-button:not(:first-child) {
+    display: none !important;
+  }
+</style>
+
+<div class="container mt-5" style="color: black;">
+  <h2 class="text-center mb-4">Créer un nouveau tournoi</h2>
+
+  <form method="POST" class="w-75 mx-auto p-4 border rounded bg-light shadow" style="color: black;">
+    {% csrf_token %}
+
+    <!-- 🎯 Liste des presets -->
+    <div class="form-group">
+      <label for="preset"><strong>Optionnel - Choisir un preset :</strong></label>
+      <select class="form-control" id="preset" name="preset" onchange="applyPreset(this.value)">
+        <option value=""> -- Sans preset -- </option>
+        <option value="volley_classique">🏐 Volleyball Classique | 8 équipes | 6 joueurs | 3 sets | 25 pts | Intérieur | À la ronde</option>
+        <option value="foot_5v5">⚽ Football 5v5 Indoor | 12 équipes | 11 joueurs | 90 min | Intérieur | Élimination directe</option>
+        <option value="basket_standard">🏀 Basketball Standard | 6 équipes | 5 joueurs | 4 x 10 min | Extérieur | À la ronde</option>
+        <option value="rugby_classique">🏉 Rugby Classique | 10 équipes | 15 joueurs | 2 x 40 min | Mi-temps 10 min | Extérieur | À la ronde</option>
+      </select>
+    </div>
+
+    <hr>
+
+    <div class="form-group">
+      <label for="name"><strong>Nom du tournoi :</strong></label>
+      <input type="text" class="form-control" name="name" required>
+    </div>
+
+    <div class="form-group">
+      <label for="department"><strong>Département :</strong></label>
+      <input type="number" class="form-control" name="department" required>
+    </div>
+
+    <div class="form-group">
+      <label for="address"><strong>Adresse :</strong></label>
+      <input type="text" class="form-control" name="address" required>
+    </div>
+
+    <div class="form-group mt-3">
+      <label for="email"><strong>Email de l'organisateur :</strong></label>
+      <input type="email" class="form-control" name="email" required>
+    </div>
+
+    <div class="form-group form-check mt-3">
+      <input type="checkbox" class="form-check-input" name="is_indoor" id="indoorCheck">
+      <label class="form-check-label" for="indoorCheck"><strong>Tournoi en intérieur</strong></label>
+    </div>
+
+    <div class="form-group mt-3">
+      <label for="start_date"><strong>Date de début :</strong></label>
+      <input type="date" class="form-control" name="start_date" required>
+    </div>
+
+    <div class="form-group mt-3">
+      <label for="end_date"><strong>Date de fin :</strong></label>
+      <input type="date" class="form-control" name="end_date" required>
+    </div>
+
+    <div class="form-group mt-3">
+      <label for="sport"><strong>Sport :</strong></label>
+      <select class="form-control" name="sport" id="sportSelect" required>
+        <option value="">-- Choisissez un sport --</option>
+        <option value="football">Football</option>
+        <option value="volleyball">Volleyball</option>
+        <option value="basketball">Basketball</option>
+        <option value="rugby">Rugby</option>
+      </select>
+    </div>
+
+    <div class="form-group mt-3">
+      <label><strong>Type de Tournoi :</strong></label>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="type_tournament" id="roundRobin" value="RR" checked onchange="togglePoolsField()">
+        <label class="form-check-label" for="roundRobin">Tournoi à la Ronde</label>
+      </div>
+
+      <div class="form-group mt-3" id="nb_pools_group">
+        <label for="nb_pools"><strong>Nombre de poules :</strong></label>
+        <input type="number" class="form-control" name="nb_pools" min="1">
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="type_tournament" id="directElimination" value="DE" onchange="togglePoolsField()">
+        <label class="form-check-label" for="directElimination">Élimination Directe</label>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-4 w-100">Étape suivante</button>
+  </form>
+</div>
+
+<script>
+  const presets = {
+    'volley_classique': {
+      sport: 'volleyball',
+      type_tournament: 'RR',
+      nb_pools: 2,
+      is_indoor: true
+    },
+    'foot_5v5': {
+      sport: 'football',
+      type_tournament: 'DE',
+      nb_pools: '',
+      is_indoor: true
+    },
+    'basket_standard': {
+      sport: 'basketball',
+      type_tournament: 'RR',
+      nb_pools: 2,
+      is_indoor: false
+    },
+    'rugby_classique': {
+      sport: 'rugby',
+      type_tournament: 'RR',
+      nb_pools: 2,
+      is_indoor: false
+    }
+  };
+
+  function applyPreset(presetKey) {
+    const selected = presets[presetKey];
+
+    // Reset all fields before applying a preset
+    document.getElementById('sportSelect').value = "";
+    document.getElementById('roundRobin').checked = true;
+    document.querySelector('[name="nb_pools"]').value = "";
+    document.getElementById('indoorCheck').checked = false;
+    togglePoolsField();
+
+    if (!selected) return;
+
+    document.getElementById('sportSelect').value = selected.sport;
+    document.getElementById(
+      selected.type_tournament === 'RR' ? 'roundRobin' : 'directElimination'
+    ).checked = true;
+
+    togglePoolsField();
+    document.querySelector('[name="nb_pools"]').value = selected.nb_pools;
+    document.getElementById('indoorCheck').checked = selected.is_indoor;
+  }
+
+  function togglePoolsField() {
+    const roundRobinSelected = document.getElementById('roundRobin').checked;
+    const nbPoolsGroup = document.getElementById('nb_pools_group');
+    const nbPoolsInput = nbPoolsGroup.querySelector('input');
+
+    if (roundRobinSelected) {
+      nbPoolsGroup.style.display = 'block';
+      nbPoolsInput.setAttribute('required', 'required');
+    } else {
+      nbPoolsGroup.style.display = 'none';
+      nbPoolsInput.removeAttribute('required');
+    }
+  }
+
+  window.onload = togglePoolsField;
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Modifier le score</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- En-tête des équipes -->
+        <div class="row text-center fw-bold mb-3">
+            <div class="col-3"></div>
+            <div class="col-3 text-danger">{{ match.team_a.name }}</div>
+            <div class="col-3 text-primary">{{ match.team_b.name }}</div>
+            <div class="col-3"></div>
+        </div>
+
+        <!-- Ligne par set -->
+        {% for set in score_sets %}
+        <div class="row align-items-center py-3 border-top border-bottom">
+            <div class="col-3 text-end fw-semibold text-dark">Set {{ set.set_number }}</div>
+
+            <div class="col-3">
+                <input type="number" name="set{{ set.set_number }}_team_a"
+                       value="{{ set.team_a_score }}" class="form-control text-center w-75 mx-auto">
+            </div>
+
+            <div class="col-3">
+                <input type="number" name="set{{ set.set_number }}_team_b"
+                       value="{{ set.team_b_score }}" class="form-control text-center w-75 mx-auto">
+            </div>
+
+            <div class="col-3"></div>
+        </div>
+        {% endfor %}
+
+        <!-- Bouton -->
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg">Mettre à jour les scores</button>
+        </div>
+
+        <div class="mt-4 text-center">
+            <a href="{% url 'detail_poule' match.pool.id %}" class="btn btn-outline-secondary">Retour à la poule</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% with team1=team1 team2=team2 match=match %}
+  {% if team2 %}
+    {% if match %}
+      <div class="match-block {% if match.statut == 'T' %}finished{% endif %}">
+        <div class="team {% if match.winner_team == team1 %}winner{% endif %}">{{ team1.name }}</div>
+        <div class="vs">
+          {% if match.statut == 'T' %}
+            <span class="status">Terminé</span>
+          {% else %}
+            <a href="{% url 'login' %}?next={% url 'score_match' match.id %}">VS</a>
+          {% endif %}
+        </div>
+        <div class="team {% if match.winner_team == team2 %}winner{% endif %}">{{ team2.name }}</div>
+      </div>
+    {% else %}
+      <div class="form-wrapper">
+        <form method="post" action="{% url 'create_elimination_match' %}">
+          {% csrf_token %}
+          <input type="hidden" name="team_a_id" value="{{ team1.id }}">
+          <input type="hidden" name="team_b_id" value="{{ team2.id }}">
+          <button type="submit" class="match-block">
+            <div class="team">{{ team1.name }}</div>
+            <div class="vs">VS</div>
+            <div class="team">{{ team2.name }}</div>
+          </button>
+        </form>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="match-block">
+      <div class="team">{{ team1.name }}</div>
+      <div class="vs">VS</div>
+      <div class="team">En attente...</div>
+    </div>
+  {% endif %}
+{% endwith %}
