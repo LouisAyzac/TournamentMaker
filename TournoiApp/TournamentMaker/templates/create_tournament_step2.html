@@ -4,6 +4,13 @@
 
 {% block content %}
 <div class="container mt-5">
+  {% if messages %}
+      <div class="alert alert-danger">
+          {% for message in messages %}
+              {{ message }}
+          {% endfor %}
+      </div>
+  {% endif %}
   <h2 class="text-center mb-4">Étape 2 : Paramètres spécifiques</h2>
 
   <form method="POST" class="w-75 mx-auto p-4 border rounded bg-light shadow">

@@ -289,47 +289,32 @@ class Match(models.Model):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"
     
     def get_match_winner(self):
-        tournament = self.tournament
-        if not tournament or not self.team_a or not self.team_b:
+        if not self.team_a or not self.team_b:
             return None
 
-        sport = tournament.sport
+        total_a = 0
+        total_b = 0
 
-        if sport == 'volleyball':
-            sets = [
-                (self.set1_team_a, self.set1_team_b),
-                (self.set2_team_a, self.set2_team_b),
-                (self.set3_team_a, self.set3_team_b),
-            ]
-            if self.set4_team_a is not None and self.set4_team_b is not None:
-                sets.append((self.set4_team_a, self.set4_team_b))
-            if self.set5_team_a is not None and self.set5_team_b is not None:
-                sets.append((self.set5_team_a, self.set5_team_b))
+        for i in range(1, 6):
+            sa = getattr(self, f"set{i}_team_a", None)
+            sb = getattr(self, f"set{i}_team_b", None)
 
-            win_a = sum(1 for a, b in sets if a > b)
-            win_b = sum(1 for a, b in sets if b > a)
+            if sa is not None and sb is not None:
+                print(f"[DEBUG SET {i}] {self.team_a.name}: {sa} - {self.team_b.name}: {sb}")
+                total_a += sa
+                total_b += sb
 
-            if win_a >= tournament.nb_sets_to_win:
-                return self.team_a
-            elif win_b >= tournament.nb_sets_to_win:
-                return self.team_b
+        print(f"[DEBUG TOTAL] {self.team_a.name}: {total_a} vs {self.team_b.name}: {total_b}")
 
+        if total_a > total_b:
+            print(f"[DEBUG WINNER] Gagnant: {self.team_a.name}")
+            return self.team_a
+        elif total_b > total_a:
+            print(f"[DEBUG WINNER] Gagnant: {self.team_b.name}")
+            return self.team_b
         else:
-            # Football, rugby, basket...
-            score_a = sum(filter(None, [self.set1_team_a, self.set2_team_a, self.set3_team_a, self.set4_team_a]))
-            score_b = sum(filter(None, [self.set1_team_b, self.set2_team_b, self.set3_team_b, self.set4_team_b]))
-
-            # Ajouter scores supplémentaires si nécessaires (basket par exemple)
-            if sport == 'basketball':
-                score_a += self.set2_team_a + self.set3_team_a + (self.set4_team_a or 0)
-                score_b += self.set2_team_b + self.set3_team_b + (self.set4_team_b or 0)
-
-            if score_a > score_b:
-                return self.team_a
-            elif score_b > score_a:
-                return self.team_b
-
-        return None
+            print(f"[DEBUG NUL] Match nul")
+            return None
 
 class Ranking(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)

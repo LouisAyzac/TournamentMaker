@@ -21,7 +21,7 @@ from urllib.parse import urlencode
 from .models import (
     Player, Team, Match, Pool, Ranking, Tournament, UserProfile, Organisateur
 )
- 
+
 LEVEL_MAP = {
     'débutant': 1,
     'intermédiaire': 2,
@@ -506,7 +506,7 @@ def matchs_en_cours(request):
 def matchs_poules(request, tournament_slug):
     tournament = get_object_or_404(Tournament, slug=tournament_slug)
     pools_data = []
-
+    sport = tournament.sport
     pools = Pool.objects.filter(tournament=tournament)
 
     for pool in pools.prefetch_related('teams'):
@@ -521,52 +521,81 @@ def matchs_poules(request, tournament_slug):
             total_joues = matchs_joues.count()
             victoires = 0
             defaites = 0
+            nuls = 0
+            buts_marques = 0
+            buts_encaisses = 0
             diff_sets = 0
-            diff_points = 0
 
             for match in matchs_joues:
-                winner = match.get_match_winner()
+                is_team_a = (match.team_a == team)
+                team_score = 0
+                opponent_score = 0
 
-                if winner == team:
-                    victoires += 1
-                elif winner and winner != team:
-                    defaites += 1
+                for i in range(1, 6):
+                    score_a = getattr(match, f'set{i}_team_a', 0) or 0
+                    score_b = getattr(match, f'set{i}_team_b', 0) or 0
 
-                for i in range(1, 6):  # max 5 sets
-                    score_a = getattr(match, f'set{i}_team_a', None)
-                    score_b = getattr(match, f'set{i}_team_b', None)
+                    if sport == 'volleyball':
+                        if score_a == 0 and score_b == 0:
+                            continue
+                        if is_team_a:
+                            if score_a > score_b:
+                                diff_sets += 1
+                            elif score_b > score_a:
+                                diff_sets -= 1
+                            buts_marques += score_a
+                            buts_encaisses += score_b
+                        else:
+                            if score_b > score_a:
+                                diff_sets += 1
+                            elif score_a > score_b:
+                                diff_sets -= 1
+                            buts_marques += score_b
+                            buts_encaisses += score_a
+                    else:
+                        team_score += score_a if is_team_a else score_b
+                        opponent_score += score_b if is_team_a else score_a
 
-                    if score_a is None or score_b is None:
-                        break
+                if sport != 'volleyball':
+                    buts_marques += team_score
+                    buts_encaisses += opponent_score
+                    if team_score > opponent_score:
+                        victoires += 1
+                    elif team_score < opponent_score:
+                        defaites += 1
+                    else:
+                        nuls += 1
+                else:
+                    winner = match.get_match_winner()
+                    if winner == team:
+                        victoires += 1
+                    elif winner and winner != team:
+                        defaites += 1
+                    elif winner is None:
+                        nuls += 1
 
-                    if match.team_a == team:
-                        diff_sets += (score_a > score_b) - (score_b > score_a)
-                        diff_points += score_a - score_b
-                    elif match.team_b == team:
-                        diff_sets += (score_b > score_a) - (score_a > score_b)
-                        diff_points += score_b - score_a
+            points = victoires * 3 + nuls  # 👈 Ajout des points pour nuls
 
             stats.append({
                 'team': team,
                 'matchs_joues': total_joues,
                 'victoires': victoires,
+                'nuls': nuls,
                 'defaites': defaites,
-                'diff_sets': diff_sets,
-                'diff_points': diff_points,
-                'points': victoires * 3,
+                'diff_sets': diff_sets if sport == 'volleyball' else buts_marques,
+                'diff_points': buts_marques - buts_encaisses,
+                'points': points,
             })
 
-        # Tri des équipes de la poule
         stats.sort(
             key=lambda x: (
                 x['points'],
+                x['diff_points'],
                 x['diff_sets'],
-                x['diff_points']
             ),
             reverse=True
         )
 
-        # Attribution des rangs
         for index, team_data in enumerate(stats, start=1):
             team_data['rank'] = index
 
@@ -584,31 +613,39 @@ def detail_poule(request, tournament_slug, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
     tournament = pool.tournament
 
-    # Vérifie que le slug correspond au tournoi
     if tournament.slug != tournament_slug:
         return redirect('detail_poule', tournament_slug=tournament.slug, pool_id=pool.id)
 
-    # Matchs joués et créés dans la poule (phase 'pool')
     matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
 
-    # On prépare les scores par sets
     for match in matchs:
         match.score_sets = []
+        total_a = 0
+        total_b = 0
+
+        # Affichage jusqu’à 5 sets max ou nombre de sets du tournoi
         nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
         for i in range(1, nb_sets_display + 1):
             sa = getattr(match, f"set{i}_team_a", None)
             sb = getattr(match, f"set{i}_team_b", None)
+
             if sa is not None and sb is not None and (sa != 0 or sb != 0):
                 match.score_sets.append({
                     'set_number': i,
                     'team_a_score': sa,
                     'team_b_score': sb
                 })
+                total_a += sa
+                total_b += sb
+
+        match.total_score = f"{total_a} - {total_b}"
+        match.winner = match.get_match_winner()
+        print(f"[DEBUG] Match {match.team_a} vs {match.team_b} → Vainqueur: {match.winner}")
 
     return render(request, 'detail_poule.html', {
         'pool': pool,
-        'matchs': matchs,
         'tournament': tournament,
+        'matchs': matchs,
     })
 
 
