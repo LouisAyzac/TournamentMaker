@@ -11,12 +11,12 @@
   <form method="post">
     {% csrf_token %}
 
-    {% if match_range_eighth %}
+    {# ---------------- Huitièmes ---------------- #}
+    {% if match_range_eighth|length %}
       <h2 style="color: #0d6efd;">Huitièmes de finale</h2>
       {% for i in match_range_eighth %}
         <div class="match-block">
           <h4 style="color: black;">Huitième {{ i|add:1 }}</h4>
-
           <label>Équipe A :</label>
           <select name="eighth_team_a_{{ i }}" class="team-select" required>
             {% for team in teams_for_eighth %}
@@ -30,39 +30,16 @@
               <option value="{{ team.id }}">{{ team.name }}</option>
             {% endfor %}
           </select>
-        </div>
-        <br>
+        </div><br>
       {% endfor %}
     {% endif %}
 
-    {% if teams_for_semi %}
-      <h2 style="color: #fd7e14;">Demi-finales</h2>
-      {% for i in match_range_semi %}
-        <div class="match-block">
-          <h4 style="color: black;">Demi-finale {{ i|add:1 }}</h4>
-
-          <label>Équipe A :</label>
-          <select name="semi_team_a_{{ i }}" class="team-select" required>
-            {% for team in qualified_teams %}
-              <option value="{{ team.id }}">{{ team.name }}</option>
-            {% endfor %}
-          </select>
-
-          <label>Équipe B :</label>
-          <select name="semi_team_b_{{ i }}" class="team-select" required>
-            {% for team in qualified_teams %}
-              <option value="{{ team.id }}">{{ team.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <br>
-      {% endfor %}
-    {% elif match_range_quarter %}
+    {# ---------------- Quarts -------------------- #}
+    {% if show_quarters %}
       <h2 style="color: #198754;">Quarts de finale</h2>
       {% for i in match_range_quarter %}
         <div class="match-block">
           <h4 style="color: black;">Quart {{ i|add:1 }}</h4>
-
           <label>Équipe A :</label>
           <select name="quarter_team_a_{{ i }}" class="team-select" required>
             {% for team in teams_for_quarter %}
@@ -76,8 +53,30 @@
               <option value="{{ team.id }}">{{ team.name }}</option>
             {% endfor %}
           </select>
-        </div>
-        <br>
+        </div><br>
+      {% endfor %}
+    {% endif %}
+
+    {# ---------------- Demis --------------------- #}
+    {% if match_range_semi|length %}
+      <h2 style="color: #fd7e14;">Demi-finales</h2>
+      {% for i in match_range_semi %}
+        <div class="match-block">
+          <h4 style="color: black;">Demi-finale {{ i|add:1 }}</h4>
+          <label>Équipe A :</label>
+          <select name="semi_team_a_{{ i }}" class="team-select" required>
+            {% for team in qualified_teams %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+
+          <label>Équipe B :</label>
+          <select name="semi_team_b_{{ i }}" class="team-select" required>
+            {% for team in qualified_teams %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+        </div><br>
       {% endfor %}
     {% endif %}
 
@@ -104,10 +103,7 @@
         const currentValue = currentSelect.value;
 
         Array.from(currentSelect.options).forEach(option => {
-          if (
-            selectedValues.includes(option.value) &&
-            option.value !== currentValue
-          ) {
+          if (selectedValues.includes(option.value) && option.value !== currentValue) {
             option.disabled = true;
           } else {
             option.disabled = false;

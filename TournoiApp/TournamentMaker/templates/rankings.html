@@ -11,11 +11,7 @@
       <div class="podium-place second mx-3">
         <div class="podium-team-name mb-2">
           <i class="fas fa-medal silver"></i> 
-<<<<<<< HEAD
-<a href="{% url 'team_detail' tournament_slug finalist.id %}" class="team-link">{{ finalist.name }}</a>
-=======
           <a href="{% url 'team_detail' tournament_slug finalist.id %}" class="team-link">{{ finalist.name }}</a>
->>>>>>> Remy
         </div>
         <div class="podium-box silver">
           <div class="podium-rank">2</div>
@@ -26,27 +22,25 @@
       <div class="podium-place first mx-3">
         <div class="podium-team-name mb-2">
           <i class="fas fa-trophy gold"></i> 
-<<<<<<< HEAD
-<a href="{% url 'team_detail' tournament_slug winner.id %}" class="team-link">{{ winner.name }}</a>
-=======
           <a href="{% url 'team_detail' tournament_slug winner.id %}" class="team-link">{{ winner.name }}</a>
->>>>>>> Remy
         </div>
         <div class="podium-box gold">
           <div class="podium-rank">1</div>
         </div>
       </div>
 
-      <!-- 3ème place (préparé pour plus tard) -->
-      {# <div class="podium-place third mx-3">
+      <!-- 3ème place -->
+      {% if third_place %}
+      <div class="podium-place third mx-3">
         <div class="podium-team-name mb-2">
           <i class="fas fa-award bronze"></i> 
-          <span class="team-link">À venir...</span>
+          <a href="{% url 'team_detail' tournament_slug third_place.id %}" class="team-link">{{ third_place.name }}</a>
         </div>
         <div class="podium-box bronze">
           <div class="podium-rank">3</div>
         </div>
-      </div> #}
+      </div>
+      {% endif %}
 
     </div>
   {% else %}
@@ -54,8 +48,6 @@
   {% endif %}
 </div>
 
-<<<<<<< HEAD
-=======
 <!-- Retour -->
 <div class="text-start mt-4 mb-5 ms-4">
   <a href="{% url 'home' %}" class="btn-simple-return">
@@ -63,7 +55,6 @@
   </a>
 </div>
 
->>>>>>> Remy
 <!-- Style podium -->
 <style>
 .podium { gap: 30px; }
