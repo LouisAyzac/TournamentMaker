@@ -261,6 +261,8 @@ class Match(models.Model):
 
     WINNER_CHOICES = [('A', 'Team A'), ('B', 'Team B')]
     winner_side = models.CharField(max_length=1, choices=WINNER_CHOICES, blank=True, null=True, verbose_name='Vainqueur')
+    next_match = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='previous_matches')
+
 
     set1_team_a = models.PositiveIntegerField(default=0)
     set1_team_b = models.PositiveIntegerField(default=0)

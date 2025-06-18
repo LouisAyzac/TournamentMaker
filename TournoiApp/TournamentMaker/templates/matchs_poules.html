@@ -33,11 +33,12 @@
                     <tr>
                         <td>
                             <a href="{% url 'team_detail' tournament.slug team_data.team.id %}">
+
     {{ team_data.team.name }}
 </a>
                         </td>
                         <td>{{ team_data.victoires }}</td>
-
+ 
                         <td>{{ team_data.defaites }}</td>
                         <td>{{ team_data.matchs_joues }}</td>
                         <td>{{ team_data.diff_sets }}</td>
@@ -52,11 +53,17 @@
                 {% endif %}
             </tbody>
         </table>
-
     {% endfor %}
 {% else %}
     <p class="text-center mt-4 text-dark" style="font-size: 1.4em;">Aucune poule trouvée.</p>
-
+    
 {% endif %}
+
+<!-- BOUTON RETOUR -->
+<div class="text-start mt-5 mb-4 ps-3">
+  <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
+    <i class="fas fa-arrow-left me-2"></i>Revenir à la sélection de la phase
+  </a>
+</div>
 
 {% endblock %}

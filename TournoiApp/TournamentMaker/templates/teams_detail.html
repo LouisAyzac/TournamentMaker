@@ -2,57 +2,61 @@
 
 {% block content %}
 <div class="teams-container animate__animated animate__fadeIn">
-  <div class="team-header">
-  <h2 class="section-title"><i class="fas fa-tshirt"></i> Détails de l'Équipe</h2>
-  
-  <p class="team-name-detail">{{ team.name }}</p>
-  
-  {% if team.logo %}
-    <div class="team-logo-detail">
-      <img src="{{ team.logo.url }}" alt="{{ team.name }}">
-    </div>
-  {% else %}
-    <div class="default-logo-detail">
-      <i class="fas fa-volleyball-ball"></i>
-    </div>
-  {% endif %}
-  
-  <p><strong>Victoires :</strong> {{ team.wins|default:"0" }}</p>
-  <p><strong>Défaites :</strong> {{ team.losses|default:"0" }}</p>
-</div>
+  <div class="team-header text-center">
+    <h2 class="section-title"><i class="fas fa-tshirt"></i> Détails de l'Équipe</h2>
+    
+    <p class="team-name-detail">{{ team.name }}</p>
 
+    {% if team.logo %}
+      <div class="team-logo-detail">
+        <img src="{{ team.logo.url }}" alt="{{ team.name }}">
+      </div>
+    {% else %}
+      <div class="default-logo-detail">
+        <i class="fas fa-volleyball-ball"></i>
+      </div>
+    {% endif %}
+
+    <p><strong>Victoires :</strong> {{ team.wins|default:"0" }}</p>
+    <p><strong>Défaites :</strong> {{ team.losses|default:"0" }}</p>
+  </div>
 
   <div class="players-grid" id="playersList">
     {% if team.players.count > 0 %}
       {% for player in team.players.all %}
-<a href="{% url 'player_detail' tournament_slug player.id %}" class="player-card {{ player.level|lower }}">
-        <div class="player-image">
-          {% if player.photo %}
-            <img src="{{ player.photo.url }}" alt="{{ player.first_name }} {{ player.last_name }}">
-          {% else %}
-            <div class="default-avatar">
-              <i class="fas fa-user"></i>
-            </div>
-          {% endif %}
-          <span class="player-age">{{ player.birth_date }}</span>
-        </div>
-        
-        <div class="player-info">
-          <h3 class="player-name">{{ player.first_name }} <strong>{{ player.last_name }}</strong></h3>
-          <div class="player-level {{ player.level|lower }}">
-            {{ player.get_level_display }}
+        <a href="{% url 'player_detail' tournament_slug player.id %}" class="player-card {{ player.level|lower }}">
+          <div class="player-image">
+            {% if player.photo %}
+              <img src="{{ player.photo.url }}" alt="{{ player.first_name }} {{ player.last_name }}">
+            {% else %}
+              <div class="default-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+            {% endif %}
+            <span class="player-age">{{ player.birth_date }}</span>
           </div>
-        </div>
-      </a>
+
+          <div class="player-info">
+            <h3 class="player-name">{{ player.first_name }} <strong>{{ player.last_name }}</strong></h3>
+            <div class="player-level {{ player.level|lower }}">
+              {{ player.get_level_display }}
+            </div>
+          </div>
+        </a>
       {% endfor %}
     {% else %}
-      <div class="no-players">
+      <div class="no-players text-center">
         <i class="fas fa-exclamation-circle"></i>
         <p>Aucun joueur dans cette équipe.</p>
       </div>
     {% endif %}
   </div>
+ 
+  <div class="text-start mt-4">
+    <a href="{% url 'teams' tournament_slug %}" class="btn-simple-return">
+      <i class="fas fa-arrow-left"></i> Retour à la liste des équipes
+    </a>
+  </div>
 
-  <p><a href="{% url 'teams' tournament_slug %}">← Retour à la liste des équipes</a></p>
 </div>
 {% endblock %}
