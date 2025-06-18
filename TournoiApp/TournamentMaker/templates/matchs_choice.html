@@ -1,50 +1,86 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
-<h2 class="text-center mt-4">Matchs - {{ tournament.name }}</h2>
-
 <style>
-    .choice-container {
-        max-width: 500px;
-        margin: 50px auto;
-        text-align: center;
-    }
+  .text-purple {
+    color: #8e44ad !important;
+  }
+</style>
 
-    .choice-button {
-        display: block;
-        width: 100%;
-        padding: 20px;
-        margin-bottom: 20px;
-        font-size: 1.3rem;
-        border-radius: 10px;
-        transition: all 0.3s ease-in-out;
-    }
+<!-- Bandeau tournoi harmonisé -->
+<div class="container mt-4">
+  <div class="p-4 rounded shadow-sm text-center bg-gradient" style="background: linear-gradient(to right, #e0f7ff, #dceeff); border: 1px solid #b6d4fe;">
+    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4 fw-semibold fs-5 text-dark">
+      <div class="d-flex align-items-center gap-2">
+        <span style="font-size: 1.4em;">🏆</span>
+        <span class="text-dark">{{ tournament.name }}</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        {% if tournament.get_sport_display == 'Volleyball' %}
+          <span style="font-size: 1.2em;">🏐</span>
+        {% elif tournament.get_sport_display == 'Football' %}
+          <span style="font-size: 1.2em;">⚽</span>
+        {% elif tournament.get_sport_display == 'Basketball' %}
+          <span style="font-size: 1.2em;">🏀</span>
+        {% else %}
+          <i class="fas fa-dumbbell"></i>
+        {% endif %}
+        <span>{{ tournament.get_sport_display }}</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="fas fa-calendar-alt text-purple"></i>
+        <span>du {{ tournament.start_date|date:"d/m/Y" }} au {{ tournament.end_date|date:"d/m/Y" }}</span>
+      </div>
+    </div>
+  </div>
+</div>
 
-    .choice-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
+<!-- Titre -->
+<h2 class="text-center mt-5">Matchs</h2>
+
+<!-- Choix des phases -->
+<style>
+  .choice-container {
+    max-width: 500px;
+    margin: 40px auto;
+    text-align: center;
+  }
+
+  .choice-button {
+    display: block;
+    width: 100%;
+    padding: 20px;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    border-radius: 10px;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .choice-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
 </style>
 
 <div class="choice-container">
-    <p class="lead mb-4">Tournoi sélectionné : <strong>{{ tournament.name }}</strong></p>
+  <a href="{% url 'matchs_poules' tournament.slug %}" class="btn btn-primary choice-button">
+    Phase de Poule
+  </a>
 
-    <a href="{% url 'matchs_poules' tournament.slug %}" class="btn btn-primary choice-button">
-        Phase de Poule
-    </a>
+  <a href="{% url 'liste_matchs_phase_finale' tournament_slug=tournament.slug %}" class="btn btn-success choice-button">
+    Phase Finale
+  </a>
 
-    <a href="{% url 'liste_matchs_phase_finale' tournament_slug=tournament.slug %}" class="btn btn-success choice-button">
-        Phase Finale
-    </a>
-
-    <a href="{% url 'matchs_finale' tournament_slug=tournament.slug %}" class="btn btn-warning choice-button">
-        Création des matchs de la phase finale
-    </a>
+  <a href="{% url 'matchs_finale' tournament_slug=tournament.slug %}" class="btn btn-warning choice-button">
+    Création des matchs de la phase finale
+  </a>
 </div>
 
-<div class="text-start ms-4 mt-4">
-    <a href="{% url 'home_landing' %}" class="btn-simple-return">
-        <i class="fas fa-arrow-left me-2"></i>Revenir à la liste des tournois
-    </a>
+<!-- Bouton retour -->
+<div class="text-start ms-4 mt-4 mb-5">
+  <a href="{% url 'home' %}" class="btn-simple-return">
+    <i class="fas fa-arrow-left me-2"></i>Revenir à la liste des tournois
+  </a>
 </div>
+
 {% endblock %}

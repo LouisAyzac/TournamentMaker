@@ -176,34 +176,65 @@ class Pool(models.Model):
         return all(match.get_auto_winner(nb_sets_to_win) is not None for match in self.matches.all())
 
     def calculate_rankings(self):
-        nb_sets_to_win = self.tournament.nb_sets_to_win  # ✅ récupéré ici
+        nb_sets_to_win = self.tournament.nb_sets_to_win
 
-        stats = {team.id: {"team": team, "wins": 0, "sets_won": 0, "sets_lost": 0} for team in self.teams.all()}
+        stats = {
+            team.id: {
+                "team": team,
+                "wins": 0,
+                "sets_won": 0,
+                "sets_lost": 0,
+                "points_won": 0,
+                "points_lost": 0,
+            }
+            for team in self.teams.all()
+        }
 
         for match in self.matches.all():
-            winner = match.get_auto_winner(nb_sets_to_win)  # ✅ on passe bien le paramètre
+            winner = match.get_auto_winner(nb_sets_to_win)
             if not winner:
                 continue
+
             loser = match.team_a if winner == match.team_b else match.team_b
             stats[winner.id]["wins"] += 1
 
             for i in range(1, 6):
                 a_score = getattr(match, f"set{i}_team_a", None)
                 b_score = getattr(match, f"set{i}_team_b", None)
-                if a_score is not None and b_score is not None:
-                    stats[match.team_a.id]["sets_won"] += a_score
-                    stats[match.team_a.id]["sets_lost"] += b_score
-                    stats[match.team_b.id]["sets_won"] += b_score
-                    stats[match.team_b.id]["sets_lost"] += a_score
 
+                if a_score is None or b_score is None:
+                    continue
+
+                # Points total
+                stats[match.team_a.id]["points_won"] += a_score
+                stats[match.team_a.id]["points_lost"] += b_score
+                stats[match.team_b.id]["points_won"] += b_score
+                stats[match.team_b.id]["points_lost"] += a_score
+
+                # Sets gagnés/perdus
+                if a_score > b_score:
+                    stats[match.team_a.id]["sets_won"] += 1
+                    stats[match.team_b.id]["sets_lost"] += 1
+                elif b_score > a_score:
+                    stats[match.team_b.id]["sets_won"] += 1
+                    stats[match.team_a.id]["sets_lost"] += 1
+
+        # Tri selon victoires, diff sets, diff points
         sorted_teams = sorted(
             stats.values(),
-            key=lambda x: (x["wins"], x["sets_won"] - x["sets_lost"]),
+            key=lambda x: (
+                x["wins"],
+                x["sets_won"] - x["sets_lost"],
+                x["points_won"] - x["points_lost"],
+            ),
             reverse=True
         )
 
         for i, stat in enumerate(sorted_teams, start=1):
-            Ranking.objects.update_or_create(team=stat["team"], defaults={"rank": i})
+            Ranking.objects.update_or_create(
+                team=stat["team"],
+                defaults={"rank": i}
+            )
 
 class Match(models.Model):
     tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
@@ -230,6 +261,8 @@ class Match(models.Model):
 
     WINNER_CHOICES = [('A', 'Team A'), ('B', 'Team B')]
     winner_side = models.CharField(max_length=1, choices=WINNER_CHOICES, blank=True, null=True, verbose_name='Vainqueur')
+    next_match = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='previous_matches')
+
 
     set1_team_a = models.PositiveIntegerField(default=0)
     set1_team_b = models.PositiveIntegerField(default=0)
@@ -259,6 +292,12 @@ class Match(models.Model):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"
 
     def get_auto_winner(self, nb_sets_to_win):
+        tournament = self.tournament or (self.pool.tournament if self.pool else None)
+        if not tournament:
+            return None
+
+        points_per_set = tournament.points_per_set
+
         sets = [
             (self.set1_team_a, self.set1_team_b),
             (self.set2_team_a, self.set2_team_b),
@@ -269,11 +308,17 @@ class Match(models.Model):
         if self.set5_team_a is not None and self.set5_team_b is not None:
             sets.append((self.set5_team_a, self.set5_team_b))
 
-        # Filtrer les sets non joués (où les deux scores sont à 0)
         sets_played = [(a, b) for a, b in sets if a != 0 or b != 0]
 
-        score_a = sum(1 for a, b in sets_played if a > b)
-        score_b = sum(1 for a, b in sets_played if b > a)
+        score_a = 0
+        score_b = 0
+
+        for a, b in sets_played:
+            if max(a, b) >= points_per_set and abs(a - b) >= 2:
+                if a > b:
+                    score_a += 1
+                elif b > a:
+                    score_b += 1
 
         if score_a >= nb_sets_to_win:
             return self.team_a
@@ -281,6 +326,7 @@ class Match(models.Model):
             return self.team_b
         else:
             return None
+
 
 class Ranking(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)

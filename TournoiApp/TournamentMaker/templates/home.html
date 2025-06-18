@@ -1,3 +1,4 @@
+
 {% extends 'base_generic.html' %}
 
 {% block title %}
@@ -31,7 +32,9 @@
     <a href="?category=past" class="btn btn-outline-secondary {% if category == 'past' %}active{% endif %}">Tournois passés</a>
     <a href="{% url 'france_map' %}" class="btn btn-lg btn-outline-primary me-3">
       🗺️ Carte de France
-    </a> 
+
+  </a> 
+
 </div>
 
 <!-- FORMULAIRE de filtre sport + département -->
@@ -61,7 +64,7 @@
     </form>
   </div>
 </div>
-
+ 
 <!-- TOURNOIS affichés en cartes -->
 <div class="row">
   {% for tournoi in tournois %}
@@ -100,6 +103,7 @@
         <a href="{% url 'tournament_detail' tournoi.slug %}" class="btn btn-info btn-sm me-2">
           <i class="fas fa-info-circle"></i> Détails
         </a>
+        
       </div>
     </div>
   </div>

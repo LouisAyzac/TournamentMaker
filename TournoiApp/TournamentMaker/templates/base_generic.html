@@ -58,7 +58,8 @@
     <!-- Navigation -->
     {% if not hide_navbar %}
     <nav class="nav-buttons-container">
-        <div class="nav-buttons">
+        <div class="nav-buttons"> 
+
             <!-- Toujours afficher le bouton Accueil -->
             <a href="{% url 'home_landing' %}" class="nav-button home-highlight">
                 <i class="fas fa-home"></i> Accueil
@@ -94,10 +95,11 @@
                                 <i class="fas fa-clock"></i> Matchs
                             </a>
                         {% endif %}
+                        
                     {% endif %}
                 {% endif %}
             {% endif %}
-        </div>
+        </div> <!-- fermeture du nav-buttons -->
     </nav>
     {% endif %}
 

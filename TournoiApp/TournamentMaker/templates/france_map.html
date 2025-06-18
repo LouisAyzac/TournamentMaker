@@ -41,6 +41,8 @@
         {% endfor %}
     ];
 
+    console.log(departmentsWithTournaments); // Debug → voir si OK
+
     departmentsWithTournaments.forEach(function(item) {
         var marker = L.marker([item.lat, item.lon]).addTo(map);
 
@@ -54,9 +56,10 @@
             window.location.href = tournamentsUrl(item.dep);
         });
     });
-
+ 
     function tournamentsUrl(depCode) {
         return '/TournamentMaker/tournois/?category=all&sport=&department=' + encodeURIComponent(depCode);
     }
 </script>
+
 {% endblock %}

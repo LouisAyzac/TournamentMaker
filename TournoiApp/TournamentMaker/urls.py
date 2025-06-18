@@ -18,6 +18,7 @@ urlpatterns = [
     path('<slug:tournament_slug>/players/', views.players, name='players'),
     path('<slug:tournament_slug>/players/<int:pk>/', views.player_detail, name='player_detail'),
     path('<slug:tournament_slug>/teams/', views.teams, name='teams'),
+    
     path('<slug:tournament_slug>/<int:pk>/', views.team_detail, name='team_detail'),
 
     # Scores & matchs
@@ -31,8 +32,12 @@ urlpatterns = [
     path('<slug:tournament_slug>/matchs/poule/<int:pool_id>/', views.detail_poule, name='detail_poule'),
     path('<slug:tournament_slug>/poules/', views.matchs_poules, name='matchs_poules'),
     path('<slug:tournament_slug>/matchs-finale/', views.afficher_deux_premiers, name='matchs_finale'),
-    path('<slug:tournament_slug>/matchs-finale/liste/', views.liste_matchs_phase_finale, name='liste_matchs_phase_finale'),
+    path('<slug:tournament_slug>/matchs-finale/liste/', views.liste_matchs_phase_finale, name='liste_matchs_phase_finale'), # ← ajout ici
     path('matchs-en-cours/', views.matchs_en_cours, name='matchs_en_cours'),
+    path('<slug:tournament_slug>/match/<int:match_id>/score/', views.score_match, name='score_match'),
+
+
+    
 
     # Pools et classements
     path('pools/', views.pool_list, name='pool_list'),
@@ -45,6 +50,8 @@ urlpatterns = [
     path('<slug:tournament_slug>/ranking/', views.rankings_list, name='rankings_list'),
     path('<slug:slug>/detail', TournamentDetailView.as_view(), name='tournament_detail'),
 
+
+
     path('tournament/full/', views.tournament_full, name='tournament_full'),
 
     # Élimination directe
@@ -53,8 +60,14 @@ urlpatterns = [
     # Divers
     path('<slug:tournament_slug>/signup/', views.signup, name='signup'),
     path('<slug:tournament_slug>/signup/success/', views.signup_success, name='signup_success'),
+
     path('<slug:tournament_slug>/dashboard/', views.dashboard, name='dashboard'),
+    
+    path('<slug:tournament_slug>/match/<int:match_id>/score/', views.score_match, name='score_match'),
     path('select_tournament/', views.home, name='select_tournament'),
     path('tournois/', views.home, name='home'),
     path('carte-france/', views.france_map_view, name='france_map'),
+
+
+
 ]
