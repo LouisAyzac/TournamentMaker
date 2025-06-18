@@ -1,16 +1,52 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
-<h1 style="color: black;">Créer les matchs de la phase finale</h1>
+<style>
+  .text-purple {
+    color: #8e44ad !important;
+  }
+</style>
+
+<!-- Bandeau tournoi -->
+<div class="container mt-4">
+  <div class="p-4 rounded shadow-sm text-center bg-gradient" style="background: linear-gradient(to right, #e0f7ff, #dceeff); border: 1px solid #b6d4fe;">
+    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4 fw-semibold fs-5 text-dark">
+      <div class="d-flex align-items-center gap-2">
+        <span style="font-size: 1.4em;">🏆</span>
+        <span class="text-dark">{{ tournament.name }}</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        {% if tournament.get_sport_display == 'Volleyball' %}
+          <span style="font-size: 1.2em;">🏐</span>
+        {% elif tournament.get_sport_display == 'Football' %}
+          <span style="font-size: 1.2em;">⚽</span>
+        {% elif tournament.get_sport_display == 'Basketball' %}
+          <span style="font-size: 1.2em;">🏀</span>
+        {% else %}
+          <i class="fas fa-dumbbell"></i>
+        {% endif %}
+        <span>{{ tournament.get_sport_display }}</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="fas fa-calendar-alt text-purple"></i>
+        <span>du {{ tournament.start_date|date:"d/m/Y" }} au {{ tournament.end_date|date:"d/m/Y" }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Titre principal -->
+<h2 class="text-center mt-5 text-dark">Créer les matchs de la phase finale</h2>
 
 {% if matchs_existent %}
-  <p style="color: red; font-weight: bold;">
-    Les matchs de la phase finale ont déjà été créés pour ce tournoi. Vous ne pouvez plus en créer d'autres.
+  <p class="text-danger text-center fw-bold mt-4">
+    ⚠️ Les matchs de la phase finale ont déjà été créés pour ce tournoi.
   </p>
 {% else %}
-  <form method="post">
+  <form method="post" class="container mt-4">
     {% csrf_token %}
 
+<<<<<<< HEAD
     {# ---------------- Huitièmes ---------------- #}
     {% if match_range_eighth|length %}
       <h2 style="color: #0d6efd;">Huitièmes de finale</h2>
@@ -26,10 +62,21 @@
 
           <label>Équipe B :</label>
           <select name="eighth_team_b_{{ i }}" class="team-select" required>
+=======
+    {% if match_range_eighth %}
+      <h3 class="text-primary mt-4">Huitièmes de finale</h3>
+      {% for i in match_range_eighth %}
+        <div class="match-block my-3">
+          <h5 class="text-dark">Huitième {{ i|add:1 }}</h5>
+
+          <label>Équipe A :</label>
+          <select name="eighth_team_a_{{ i }}" class="form-select team-select mb-2" required>
+>>>>>>> Remy
             {% for team in teams_for_eighth %}
               <option value="{{ team.id }}">{{ team.name }}</option>
             {% endfor %}
           </select>
+<<<<<<< HEAD
         </div><br>
       {% endfor %}
     {% endif %}
@@ -65,31 +112,89 @@
           <h4 style="color: black;">Demi-finale {{ i|add:1 }}</h4>
           <label>Équipe A :</label>
           <select name="semi_team_a_{{ i }}" class="team-select" required>
+=======
+
+          <label>Équipe B :</label>
+          <select name="eighth_team_b_{{ i }}" class="form-select team-select" required>
+            {% for team in teams_for_eighth %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% if teams_for_semi %}
+      <h3 class="text-warning mt-4">Demi-finales</h3>
+      {% for i in match_range_semi %}
+        <div class="match-block my-3">
+          <h5 class="text-dark">Demi-finale {{ i|add:1 }}</h5>
+
+          <label>Équipe A :</label>
+          <select name="semi_team_a_{{ i }}" class="form-select team-select mb-2" required>
+>>>>>>> Remy
             {% for team in qualified_teams %}
               <option value="{{ team.id }}">{{ team.name }}</option>
             {% endfor %}
           </select>
 
           <label>Équipe B :</label>
+<<<<<<< HEAD
           <select name="semi_team_b_{{ i }}" class="team-select" required>
+=======
+          <select name="semi_team_b_{{ i }}" class="form-select team-select" required>
+>>>>>>> Remy
             {% for team in qualified_teams %}
               <option value="{{ team.id }}">{{ team.name }}</option>
             {% endfor %}
           </select>
+<<<<<<< HEAD
         </div><br>
       {% endfor %}
     {% endif %}
 
     <button type="submit">Créer les matchs</button>
+=======
+        </div>
+      {% endfor %}
+    {% elif match_range_quarter %}
+      <h3 class="text-success mt-4">Quarts de finale</h3>
+      {% for i in match_range_quarter %}
+        <div class="match-block my-3">
+          <h5 class="text-dark">Quart {{ i|add:1 }}</h5>
+
+          <label>Équipe A :</label>
+          <select name="quarter_team_a_{{ i }}" class="form-select team-select mb-2" required>
+            {% for team in teams_for_quarter %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+
+          <label>Équipe B :</label>
+          <select name="quarter_team_b_{{ i }}" class="form-select team-select" required>
+            {% for team in teams_for_quarter %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="text-center mt-4">
+      <button type="submit" class="btn btn-primary">Créer les matchs</button>
+    </div>
+>>>>>>> Remy
   </form>
 {% endif %}
 
+<!-- Bouton retour -->
 <div class="text-start mt-5 mb-4 ps-3">
   <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
     <i class="fas fa-arrow-left me-2"></i>Revenir à la sélection de la phase
   </a>
 </div>
 
+<!-- Script de sélection -->
 <script>
   const selects = document.querySelectorAll('.team-select');
 
