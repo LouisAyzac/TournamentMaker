@@ -4,22 +4,15 @@ from faker import Faker
 import random
 
 class Command(BaseCommand):
-    help = "Génère des tournois à élimination directe avec équipes et joueurs (pas de matchs/brackets)."
+    help = "Crée 5 tournois à élimination directe avec 2 à 6 équipes (1 tournoi par nombre d'équipes)."
 
-    def add_arguments(self, parser):
-        parser.add_argument('--count', type=int, default=3, help="Nombre de tournois à générer")
-        parser.add_argument('--teams', type=int, default=16, help="Nombre d'équipes par tournoi")
-        parser.add_argument('--players', type=int, default=6, help="Nombre de joueurs par équipe")
-
-    def handle(self, *args, **options):
+    def handle(self, *args, **kwargs):
         fake = Faker('fr_FR')
-        count = options['count']
-        num_teams = options['teams']
-        players_per_team = options['players']
+        players_per_team = 6  # fixe, ajustable
 
-        for i in range(count):
-            t_name = f"Tournoi DE {fake.city()}"
-            t_slug = f"de-{random.randint(1000, 9999)}"
+        for num_teams in range(2,9):  # Génère pour 2, 3, 4, 5, 6 équipes
+            t_name = f"Tournoi DE {num_teams} équipes - {fake.city()}"
+            t_slug = f"de-{num_teams}-{random.randint(1000, 9999)}"
 
             tournament = Tournament.objects.create(
                 name=t_name,
@@ -45,19 +38,15 @@ class Command(BaseCommand):
                 )
 
                 for _ in range(players_per_team):
-                    # Dans la boucle Player.objects.create(...)
                     Player.objects.create(
                         first_name=fake.first_name(),
                         last_name=fake.last_name(),
                         birth_date=fake.date_of_birth(minimum_age=16, maximum_age=40),
-                        level=random.choice([choice[0] for choice in Player.LEVEL_CHOICES]),  # ✅ fix ici
-                        email=fake.email(),
+                        level=random.choice([choice[0] for choice in Player.LEVEL_CHOICES]),
+                        email=fake.unique.email(),
                         team=team
                     )
 
-
             self.stdout.write(self.style.SUCCESS(
-                f"✅ {tournament.name} ({tournament.slug}) – {num_teams} équipes créées."
+                f"✅ Tournoi créé : {tournament.name} ({tournament.slug}) avec {num_teams} équipes."
             ))
-
-        self.stdout.write(self.style.SUCCESS("🎯 Génération terminée sans création de matchs."))

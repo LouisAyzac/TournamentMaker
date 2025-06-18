@@ -1250,56 +1250,36 @@ from .models import Tournament, Team
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Tournament, Team
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Tournament, Match
-from django.contrib import messages
-
-from math import ceil, log2
-from django.shortcuts import render, get_object_or_404, redirect
-from math import ceil, log2
-from .models import Tournament, Match, Team
-
-from django.shortcuts import render, get_object_or_404, redirect
-from math import ceil, log2
-from .models import Tournament, Match
-
-from django.shortcuts import get_object_or_404, render, redirect
-from math import ceil, log2
-from TournamentMaker.models import Tournament, Match
-
 def direct_elimination(request, tournament_slug):
     tournament = get_object_or_404(Tournament, slug=tournament_slug)
 
     if tournament.type_tournament != 'DE':
         return redirect('home')
 
-    phase_order = [
-        ('sixteenth', 'Seizièmes'),
-        ('eighth', 'Huitièmes'),
-        ('quarter', 'Quarts'),
-        ('semi', 'Demi-finales'),
-        ('final', 'Finale'),
-    ]
+    matches = Match.objects.filter(tournament=tournament).order_by('phase', 'bracket_position')
+    has_matches = matches.exists()
+
+    phases_order = ['eighth', 'quarter', 'semi', 'final', 'third_place']
+    phase_labels = {
+        'eighth': 'Huitièmes',
+        'quarter': 'Quarts',
+        'semi': 'Demi-finales',
+        'final': 'Finale',
+        'third_place': 'Petite finale'
+    }
 
     phases_present = []
-    has_matches = False
-
-    for phase_code, phase_label in phase_order:
-        matches = Match.objects.filter(tournament=tournament, phase=phase_code).order_by('bracket_position')
-        if matches.exists():
-            has_matches = True
-            phases_present.append((phase_code, phase_label, list(matches)))  # ✅ uniquement si des matchs
-
-    third_place_matches = Match.objects.filter(tournament=tournament, phase='third_place').order_by('bracket_position')
-    if third_place_matches.exists():
-        has_matches = True
-        phases_present.append(('third_place', 'Petite finale', list(third_place_matches)))
+    for phase_code in phases_order:
+        phase_matches = matches.filter(phase=phase_code)
+        if phase_matches.exists():
+            phases_present.append((phase_code, phase_labels[phase_code], phase_matches))
 
     return render(request, 'direct_elimination.html', {
         'tournament': tournament,
-        'phases_present': phases_present,
         'has_matches': has_matches,
+        'phases_present': phases_present
     })
+
 
 
 from .models import Match, Team, Tournament
@@ -1375,8 +1355,9 @@ def get_next_phase(current_phase):
         'final': None,
     }.get(current_phase)
 
+from .models import Match, Team, Ranking
+
 def advance_elimination_bracket(match):
-    # ───── 1. Vainqueur et perdant ─────
     if match.winner_side == 'A':
         winner = match.team_a
         loser = match.team_b
@@ -1386,81 +1367,46 @@ def advance_elimination_bracket(match):
     else:
         return
 
-    if not winner or match.bracket_position is None:
+    if not winner:
         return
 
-    current_phase = match.phase
-    next_phase = get_next_phase(current_phase)
-    if not next_phase:
-        return
-
-    tournament = match.tournament or (match.pool.tournament if match.pool else None)
-    if not tournament:
-        return
-
-    # ───── 2. Bracket position ─────
-    if current_phase == 'eighth':
-        next_position = 100 + (match.bracket_position // 2)
-
-    elif current_phase == 'quarter':
-        total_quarters = Match.objects.filter(
-            tournament=tournament,
-            phase='quarter'
-        ).count()
-
-        if total_quarters == 2:
-            next_position = 1  # Cas 3 poules : 2 quarts → tous dans demi 1
-        elif match.bracket_position in (0, 1):
-            next_position = 0  # Quarts 0-1 → demi 0
-        else:
-            next_position = 1  # Quarts 2-3 → demi 1
-    else:
-        next_position = match.bracket_position // 2
-
-    # ───── 3. Récupération / création du match suivant ─────
-    next_match, _ = Match.objects.get_or_create(
-        tournament=tournament,
-        phase=next_phase,
-        bracket_position=next_position,
-        defaults={'team_a': None, 'team_b': None, 'statut': 'ND'}
-    )
-
-    # ───── 4. Placement du vainqueur ─────
-    if match.bracket_position >= 100:  # quarts spéciaux (3 poules)
-        even_index = (match.bracket_position - 100) % 2 == 0
-    else:
-        even_index = match.bracket_position % 2 == 0
-
-    target_is_a = even_index
-    target_field = 'team_a' if target_is_a else 'team_b'
-
-    already_there = getattr(next_match, target_field)
-    if already_there and already_there != winner:
-        next_match = Match.objects.create(
-            tournament=tournament,
-            phase=next_phase,
-            bracket_position=next_position + 1000,
-            statut='ND'
+    # Cas 3 équipes → classement auto
+    total_teams = Team.objects.filter(tournament=match.tournament).count()
+    if match.phase == 'semi' and total_teams == 3 and loser:
+        Ranking.objects.update_or_create(
+            team=loser,
+            defaults={'rank': 3}
         )
 
-    setattr(next_match, target_field, winner)
+    next_match = match.next_match
+    if not next_match:
+        return
+
+    if next_match.team_a is None:
+        next_match.team_a = winner
+    elif next_match.team_b is None:
+        next_match.team_b = winner
+    elif winner not in (next_match.team_a, next_match.team_b):
+        # Sécurité : évite doublons ou collision
+        return
+
     next_match.save()
 
-    # ───── 5. Ajout automatique à la petite finale ─────
-    if current_phase == 'semi' and loser:
+    # Petite finale automatique si > 3 équipes
+    if match.phase == 'semi' and loser and total_teams > 3:
         third_place, _ = Match.objects.get_or_create(
-            tournament=tournament,
+            tournament=match.tournament,
             phase='third_place',
             bracket_position=0,
             defaults={'team_a': None, 'team_b': None, 'statut': 'ND'}
         )
-        if not third_place.team_a:
+        if third_place.team_a is None:
             third_place.team_a = loser
-        elif not third_place.team_b and third_place.team_a != loser:
+        elif third_place.team_b is None and third_place.team_a != loser:
             third_place.team_b = loser
         third_place.save()
 
-    # ───── 6. Propagation récursive ─────
+    # Propagation récursive si le match suivant est déjà joué
     if next_match.statut == 'T' and next_match.winner_side in ('A', 'B'):
         advance_elimination_bracket(next_match)
 
@@ -1481,9 +1427,9 @@ from .models import Match, UserProfile
 
 
 @login_required
-
 def score_match(request, tournament_slug, match_id):
     from_param = request.GET.get('from')
+
     tournament = get_object_or_404(Tournament, slug=tournament_slug)
     match = get_object_or_404(Match, id=match_id)
 
@@ -1502,7 +1448,7 @@ def score_match(request, tournament_slug, match_id):
         })
 
     user = request.user
-    authorized = user.is_superuser
+    authorized = user.is_superuser  # ✅ admin autorisé partout
 
     if not authorized:
         if hasattr(user, 'organisateur') and (
@@ -1531,14 +1477,17 @@ def score_match(request, tournament_slug, match_id):
         })
 
     tournament = match.pool.tournament if match.pool else match.team_a.tournament
+
     nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
     set_numbers = list(range(1, nb_sets_display + 1))
 
     score_fields = {
-        f'set{n}_team_a': getattr(match, f'set{n}_team_a') for n in set_numbers
+        f'set{n}_team_a': getattr(match, f'set{n}_team_a')
+        for n in set_numbers
     }
     score_fields.update({
-        f'set{n}_team_b': getattr(match, f'set{n}_team_b') for n in set_numbers
+        f'set{n}_team_b': getattr(match, f'set{n}_team_b')
+        for n in set_numbers
     })
 
     # 🔄 Préparer back_url AVANT le POST
@@ -1550,12 +1499,10 @@ def score_match(request, tournament_slug, match_id):
     # 🔄 Préparer back_url AVANT le POST
     if match.phase == 'pool' and match.pool:
         back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
-    elif from_param == 'phase_finale':
-        back_url = reverse('liste_matchs_phase_finale', args=[tournament_slug]) + f'?tournament_id={tournament.id}'
     else:
-        back_url = reverse('direct_elimination', args=[tournament_slug])
+        back_url = reverse('direct_elimination', args=[tournament_slug])  # 🔥 correction
 
-    # ✅ Traitement du POST
+    # 🔥 Traitement du POST
     if request.method == 'POST':
         for n in set_numbers:
             a_field = f'set{n}_team_a'
@@ -1581,8 +1528,6 @@ def score_match(request, tournament_slug, match_id):
             match.pool.calculate_rankings()
         else:
             advance_elimination_bracket(match)
-            if match.phase == 'semi':
-                update_third_place_match(tournament)
 
         if match.phase == 'pool' and match.pool:
             return redirect('detail_poule', tournament_slug=tournament_slug, pool_id=match.pool.id)
@@ -1592,12 +1537,21 @@ def score_match(request, tournament_slug, match_id):
         else:
             return redirect('direct_elimination', tournament_slug=tournament_slug)
 
+    if match.phase == 'pool' and match.pool:
+        back_url = reverse('detail_poule', args=[tournament_slug, match.pool.id])
+    elif from_param == 'phase_finale':
+        back_url = reverse('liste_matchs_phase_finale', args=[tournament_slug]) + f'?tournament_id={tournament.id}'
+    else:
+        back_url = reverse('direct_elimination', args=[tournament_slug])
+
     return render(request, 'score_match.html', {
         'match': match,
         'back_url': back_url,
         'set_numbers': set_numbers,
         'score_fields': score_fields,
+
     })
+
 
 def home_landing(request):
     return render(request, 'home_landing.html', {'hide_navbar': True})
@@ -2020,6 +1974,7 @@ def france_map_view(request):
     })
  
 from itertools import combinations
+import random
 
 def generate_balanced_schedule(teams):
     matchs = list(combinations(teams, 2))
@@ -2036,4 +1991,165 @@ def generate_balanced_schedule(teams):
             schedule.append(matchs.pop(0))  # si pas possible, on prend le premier match
 
     return schedule
- 
+
+import random
+from django.shortcuts import get_object_or_404, redirect
+from TournamentMaker.models import Tournament, Match, Team
+
+def generate_elimination_bracket(request, tournament_slug):
+    tournament = get_object_or_404(Tournament, slug=tournament_slug)
+    Match.objects.filter(tournament=tournament).delete()
+
+    teams = list(Team.objects.filter(tournament=tournament))
+    random.shuffle(teams)
+    total = len(teams)
+
+    if total < 2 or total > 8:
+        return redirect('direct_elimination', tournament_slug=tournament_slug)
+
+    # Création de la finale une seule fois
+    final = Match.objects.create(
+        tournament=tournament,
+        phase='final',
+        bracket_position=0
+    )
+
+    if total == 2:
+        final.team_a = teams.pop(0)
+        final.team_b = teams.pop(0)
+        final.save()
+
+    elif total == 3:
+    # Tirer au sort une équipe qui va directement en finale
+        finalist = teams.pop(0)
+
+        # Créer la demi-finale entre les 2 autres
+        semi = Match.objects.create(
+            tournament=tournament,
+            phase='semi',
+            bracket_position=0,
+            next_match=final,
+            team_a=teams.pop(0),
+            team_b=teams.pop(0)
+        )
+
+        semi.save()
+
+        # L'équipe qui attend en finale est mise en team_a
+        final.team_a = finalist
+        final.save()
+
+    elif total == 4:
+        for i in range(2):
+            semi = Match.objects.create(tournament=tournament, phase='semi', bracket_position=i, next_match=final)
+            semi.team_a = teams.pop(0)
+            semi.team_b = teams.pop(0)
+            semi.save()
+
+    elif total == 5:
+        semi1 = Match.objects.create(tournament=tournament, phase='semi', bracket_position=0, next_match=final)
+        semi2 = Match.objects.create(tournament=tournament, phase='semi', bracket_position=1, next_match=final)
+
+        quarter = Match.objects.create(tournament=tournament, phase='quarter', bracket_position=0, next_match=semi1)
+        quarter.team_a = teams.pop(0)
+        quarter.team_b = teams.pop(0)
+        quarter.save()
+
+        semi1.team_b = teams.pop(0)
+        semi1.save()
+
+        semi2.team_a = teams.pop(0)
+        semi2.team_b = teams.pop(0)
+        semi2.save()
+
+    elif total == 6:
+        final = Match.objects.create(tournament=tournament, phase='final', bracket_position=0)
+
+        semi1 = Match.objects.create(tournament=tournament, phase='semi', bracket_position=0, next_match=final)
+        semi2 = Match.objects.create(tournament=tournament, phase='semi', bracket_position=1, next_match=final)
+
+        # 2 quarts de finale reliés à semi1 et semi2
+        quarter1 = Match.objects.create(
+            tournament=tournament,
+            phase='quarter',
+            bracket_position=0,
+            next_match=semi1,  # 🟢 le vainqueur ira dans semi1
+            team_a=teams.pop(0),
+            team_b=teams.pop(0)
+        )
+
+        quarter2 = Match.objects.create(
+            tournament=tournament,
+            phase='quarter',
+            bracket_position=1,
+            next_match=semi2,  # 🟢 le vainqueur ira dans semi2
+            team_a=teams.pop(0),
+            team_b=teams.pop(0)
+        )
+
+        # 2 équipes restantes directement mises en demi
+        semi1.team_b = teams.pop(0)
+        semi2.team_b = teams.pop(0)
+        semi1.save()
+        semi2.save()
+
+    elif total == 7:
+        semi1 = Match.objects.create(tournament=tournament, phase='semi', bracket_position=0, next_match=final)
+        semi2 = Match.objects.create(tournament=tournament, phase='semi', bracket_position=1, next_match=final)
+
+        Match.objects.get_or_create(tournament=tournament, phase='third_place', bracket_position=0)
+
+        q1 = Match.objects.create(tournament=tournament, phase='quarter', bracket_position=0, next_match=semi1)
+        q2 = Match.objects.create(tournament=tournament, phase='quarter', bracket_position=1, next_match=semi1)
+        q3 = Match.objects.create(tournament=tournament, phase='quarter', bracket_position=2, next_match=semi2)
+
+        q1.team_a = teams.pop(0)
+        q1.team_b = teams.pop(0)
+        q2.team_a = teams.pop(0)
+        q2.team_b = teams.pop(0)
+        q3.team_a = teams.pop(0)
+        q3.team_b = teams.pop(0)
+        q1.save()
+        q2.save()
+        q3.save()
+
+        semi2.team_b = teams.pop(0)
+        semi2.save()
+
+    elif total == 8:
+        semi1 = Match.objects.create(tournament=tournament, phase='semi', bracket_position=0, next_match=final)
+        semi2 = Match.objects.create(tournament=tournament, phase='semi', bracket_position=1, next_match=final)
+
+        q1 = Match.objects.create(tournament=tournament, phase='quarter', bracket_position=0, next_match=semi1)
+        q2 = Match.objects.create(tournament=tournament, phase='quarter', bracket_position=1, next_match=semi1)
+        q3 = Match.objects.create(tournament=tournament, phase='quarter', bracket_position=2, next_match=semi2)
+        q4 = Match.objects.create(tournament=tournament, phase='quarter', bracket_position=3, next_match=semi2)
+
+        for q in [q1, q2, q3, q4]:
+            q.team_a = teams.pop(0)
+            q.team_b = teams.pop(0)
+            q.save()
+
+    return redirect('direct_elimination', tournament_slug=tournament_slug)
+
+def update_third_place_match(tournament):
+    try:
+        semi_finals = Match.objects.filter(tournament=tournament, phase='semi').order_by('bracket_position')
+        third_place_match = Match.objects.get(tournament=tournament, phase='third_place', bracket_position=0)
+
+        if semi_finals.count() != 2:
+            return  # Il faut 2 demis pour faire une petite finale
+
+        losers = []
+        for semi in semi_finals:
+            if semi.winner_side == 'A':
+                losers.append(semi.team_b)
+            elif semi.winner_side == 'B':
+                losers.append(semi.team_a)
+
+        if len(losers) == 2:
+            third_place_match.team_a = losers[0]
+            third_place_match.team_b = losers[1]
+            third_place_match.save()
+    except Match.DoesNotExist:
+        pass  # Petite finale non créée
