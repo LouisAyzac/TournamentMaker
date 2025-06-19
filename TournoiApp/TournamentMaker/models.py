@@ -262,13 +262,21 @@ class Pool(models.Model):
 class Match(models.Model):
     tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
     pool = models.ForeignKey('Pool', on_delete=models.CASCADE, related_name='matches', null=True, blank=True)
-    team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a',null=True, blank=True)
+    team_a = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_a', null=True, blank=True)
     team_b = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team_b', null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True, verbose_name="Heure de début")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Heure de fin")
     bracket_position = models.PositiveIntegerField(null=True, blank=True)
 
-     
+    # 👇 Champ ajouté pour le lien entre les matchs dans un bracket
+    next_match = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='previous_matches',
+        help_text="Match suivant dans le bracket d'élimination"
+    )
 
     STATUT_CHOICES = [
         ('ND', 'Non débuté'),
@@ -306,7 +314,7 @@ class Match(models.Model):
 
     def __str__(self):
         return f"{self.team_a} vs {self.team_b} (Pool: {self.pool.name if self.pool else 'No Pool'})"
-    
+
     def is_match_complete(self):
         if not self.tournament:
             return False
@@ -334,7 +342,6 @@ class Match(models.Model):
             return sets_won_a >= sets_to_win or sets_won_b >= sets_to_win
 
         else:
-            # Vérifie qu’au moins 2 périodes ont été RENSEIGNÉES (peu importe le score)
             periods_filled = 0
             for i in range(1, 6):
                 sa = getattr(self, f"set{i}_team_a", None)
@@ -344,7 +351,6 @@ class Match(models.Model):
                     periods_filled += 1
 
             return periods_filled >= 2
-    
 
     def get_match_winner(self):
         if not self.team_a or not self.team_b or not self.tournament:
@@ -352,7 +358,6 @@ class Match(models.Model):
 
         sport = self.tournament.sport
 
-        # === Cas Volleyball (sets gagnants avec score minimum) ===
         if sport == 'volleyball':
             sets_to_win = self.tournament.nb_sets_to_win
             points_per_set = self.tournament.points_per_set
@@ -365,22 +370,20 @@ class Match(models.Model):
                 sb = getattr(self, f"set{i}_team_b", None)
 
                 if sa is None or sb is None or (sa == 0 and sb == 0):
-                    continue  
+                    continue
 
-                # Condition pour valider un set
                 if sa >= points_per_set and sa - sb >= 2:
                     sets_won_a += 1
                 elif sb >= points_per_set and sb - sa >= 2:
                     sets_won_b += 1
 
-            # Une des deux équipes a-t-elle gagné le bon nombre de sets ?
             if sets_won_a >= sets_to_win:
                 return self.team_a
             elif sets_won_b >= sets_to_win:
                 return self.team_b
             else:
-                return None  
-        
+                return None
+
         elif sport == 'basketball':
             num_quarters = self.tournament.number_of_quarters or 4
             total_a, total_b = 0, 0
@@ -391,14 +394,13 @@ class Match(models.Model):
                     total_a += sa
                     total_b += sb
                 else:
-                    return None  # Quart-temps non rempli → match incomplet
+                    return None
             return self.team_a if total_a > total_b else self.team_b if total_b > total_a else None
 
-        # === Cas autres sports (score cumulé) ===
         total_a = 0
         total_b = 0
 
-        for i in range(1, 6):  # On garde 5 "sets" car utilisés comme unités de temps
+        for i in range(1, 6):
             sa = getattr(self, f"set{i}_team_a", None)
             sb = getattr(self, f"set{i}_team_b", None)
 

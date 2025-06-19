@@ -270,9 +270,9 @@ def rankings_list(request, tournament_slug):
         .first()
     )
 
-    if final_match and final_match.winner_side:
-        winner = final_match.team_a if final_match.winner_side == 'A' else final_match.team_b
-        finalist = final_match.team_b if final_match.winner_side == 'A' else final_match.team_a
+    if final_match and final_match.winner_team:
+        winner = final_match.team_a if final_match.winner_team == 'A' else final_match.team_b
+        finalist = final_match.team_b if final_match.winner_team == 'A' else final_match.team_a
 
     # ---------- 3. Troisième place (petite finale) ----------
     third_place_match = (
@@ -287,9 +287,9 @@ def rankings_list(request, tournament_slug):
         .first()
     )
 
-    if third_place_match and third_place_match.winner_side:
+    if third_place_match and third_place_match.winner_team:
         third_place = (
-            third_place_match.team_a if third_place_match.winner_side == 'A'
+            third_place_match.team_a if third_place_match.winner_team == 'A'
             else third_place_match.team_b
         )
 
@@ -1129,38 +1129,39 @@ def get_next_phase(current_phase):
     }.get(current_phase)
 
 def advance_elimination_bracket(match):
+    """
+    Propagation du vainqueur d’un match vers la phase suivante.
+    Fonctionne pour les tournois de type Round-Robin (RR + phases finales)
+    et Direct Elimination (DE).
+    """
+    # --------------------------- Récupération du tournoi --------------------------- #
     tournament = match.tournament or (match.pool.tournament if match.pool else None)
     if not tournament:
         return
 
+    # ============================================================================= #
+    #                                1.  TOURNOI  RR                                #
+    # ============================================================================= #
     if tournament.type_tournament == 'RR':
-        # Code pour Round Robin (RR)
-        if match.winner_side == 'A':
-            winner = match.team_a
-            loser = match.team_b
-        elif match.winner_side == 'B':
-            winner = match.team_b
-            loser = match.team_a
-        else:
-            return
-
+        # 1️⃣  Détermination du vainqueur / perdant
+        winner = match.get_match_winner()
         if not winner or match.bracket_position is None:
             return
 
+        loser = match.team_b if winner == match.team_a else match.team_a
+
+        # 2️⃣  Phase suivante
         current_phase = match.phase
-        next_phase = get_next_phase(current_phase)
+        next_phase = get_next_phase(current_phase)      # ta fonction utilitaire
         if not next_phase:
             return
 
-        # Bracket position
+        # 3️⃣  Calcul du bracket_position dans la phase suivante
         if current_phase == 'eighth':
             next_position = 100 + (match.bracket_position // 2)
         elif current_phase == 'quarter':
-            total_quarters = Match.objects.filter(
-                tournament=tournament,
-                phase='quarter'
-            ).count()
-
+            total_quarters = Match.objects.filter(tournament=tournament,
+                                                  phase='quarter').count()
             if total_quarters == 2:
                 next_position = 1
             elif match.bracket_position in (0, 1):
@@ -1170,7 +1171,7 @@ def advance_elimination_bracket(match):
         else:
             next_position = match.bracket_position // 2
 
-        # Récupération / création du match suivant
+        # 4️⃣  Récupération / création du match suivant
         next_match, _ = Match.objects.get_or_create(
             tournament=tournament,
             phase=next_phase,
@@ -1178,17 +1179,15 @@ def advance_elimination_bracket(match):
             defaults={'team_a': None, 'team_b': None, 'statut': 'ND'}
         )
 
-        # Placement du vainqueur
+        # 5️⃣  Placement du vainqueur (team_a ou team_b)
         if match.bracket_position >= 100:
             even_index = (match.bracket_position - 100) % 2 == 0
         else:
             even_index = match.bracket_position % 2 == 0
 
-        target_is_a = even_index
-        target_field = 'team_a' if target_is_a else 'team_b'
-
-        already_there = getattr(next_match, target_field)
-        if already_there and already_there != winner:
+        target_field = 'team_a' if even_index else 'team_b'
+        if getattr(next_match, target_field) not in (None, winner):
+            # Collision : crée un match clone
             next_match = Match.objects.create(
                 tournament=tournament,
                 phase=next_phase,
@@ -1199,7 +1198,7 @@ def advance_elimination_bracket(match):
         setattr(next_match, target_field, winner)
         next_match.save()
 
-        # Petite finale auto
+        # 6️⃣  Petite finale auto si on vient d’une demi-finale
         if current_phase == 'semi' and loser:
             third_place, _ = Match.objects.get_or_create(
                 tournament=tournament,
@@ -1213,43 +1212,40 @@ def advance_elimination_bracket(match):
                 third_place.team_b = loser
             third_place.save()
 
-        # Propagation récursive
-        if next_match.statut == 'T' and next_match.winner_side in ('A', 'B'):
+        # 7️⃣  Propagation récursive si le match suivant est déjà terminé
+        if next_match.statut == 'T' and next_match.get_match_winner():
             advance_elimination_bracket(next_match)
 
-    else:  # Code pour Direct Elimination (DE)
-        if match.winner_side == 'A':
-            winner = match.team_a
-            loser = match.team_b
-        elif match.winner_side == 'B':
-            winner = match.team_b
-            loser = match.team_a
-        else:
-            return
-
+    # ============================================================================= #
+    #                                2.  TOURNOI  DE                                #
+    # ============================================================================= #
+    else:  # tournament.type_tournament == 'DE'
+        winner = match.get_match_winner()
         if not winner:
             return
 
+        loser = match.team_b if winner == match.team_a else match.team_a
         total_teams = Team.objects.filter(tournament=tournament).count()
+
+        # Classe automatiquement le perdant (tournois à 3 équipes)
         if match.phase == 'semi' and total_teams == 3 and loser:
-            Ranking.objects.update_or_create(
-                team=loser,
-                defaults={'rank': 3}
-            )
+            Ranking.objects.update_or_create(team=loser, defaults={'rank': 3})
 
         next_match = match.next_match
         if not next_match:
             return
 
+        # Place le vainqueur
         if next_match.team_a is None:
             next_match.team_a = winner
         elif next_match.team_b is None:
             next_match.team_b = winner
         elif winner not in (next_match.team_a, next_match.team_b):
-            return
+            return   # déjà deux équipes différentes
 
         next_match.save()
 
+        # Petite finale pour les tournois > 3 équipes
         if match.phase == 'semi' and loser and total_teams > 3:
             third_place, _ = Match.objects.get_or_create(
                 tournament=tournament,
@@ -1263,7 +1259,8 @@ def advance_elimination_bracket(match):
                 third_place.team_b = loser
             third_place.save()
 
-        if next_match.statut == 'T' and next_match.winner_side in ('A', 'B'):
+        # Propagation récursive
+        if next_match.statut == 'T' and next_match.get_match_winner():
             advance_elimination_bracket(next_match)
 
 
@@ -2020,9 +2017,9 @@ def update_third_place_match(tournament):
 
         losers = []
         for semi in semi_finals:
-            if semi.winner_side == 'A':
+            if semi.winner_team == 'A':
                 losers.append(semi.team_b)
-            elif semi.winner_side == 'B':
+            elif semi.winner_team == 'B':
                 losers.append(semi.team_a)
 
         if len(losers) == 2:
