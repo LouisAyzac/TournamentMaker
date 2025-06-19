@@ -715,8 +715,19 @@ def detail_poule(request, tournament_slug, pool_id):
 
 
 
-# Vue phase finale
-def matchs_finale(request):
+from django.shortcuts import get_object_or_404, render
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from .models import Tournament, Match
+
+@login_required
+def matchs_finale(request, tournament_slug):
+    # 1. Récupère le tournoi
+    tournament = get_object_or_404(Tournament, slug=tournament_slug)
+
+   
+
+    # 3. Prépare les matchs de chaque phase
     phase_labels = {
         'quarter': 'Quarts de finale',
         'semi': 'Demi-finales',
@@ -725,23 +736,17 @@ def matchs_finale(request):
     }
 
     phases = []
-    quarter = Match.objects.filter(phase='quarter')
-    semi = Match.objects.filter(phase='semi')
-    final = Match.objects.filter(phase='final')
-    third_place = Match.objects.filter(phase='third_place')
 
     for code, label in phase_labels.items():
-        matchs = Match.objects.filter(phase=code)
+        matchs = Match.objects.filter(tournament=tournament, phase=code)
         if matchs.exists():
             phases.append((code, label, matchs))
 
     return render(request, 'matchs_finale.html', {
-        'phases': phases,
-        'quarter': quarter,
-        'semi': semi,
-        'final': final,
-        'third_place': third_place
+        'tournament': tournament,
+        'phases': phases
     })
+
 
 
 def generer_phase_finale(request):
@@ -1432,6 +1437,45 @@ def afficher_deux_premiers(request, tournament_slug):
     data = []
     qualified_teams = []
 
+    # Vérifie que l'utilisateur est autorisé
+    if not (request.user.is_staff or (tournament.organizer and request.user == tournament.organizer.user)):
+        return render(request, 'matchs_finale.html', {
+            'tournament': tournament,
+            'error': "Accès interdit : seuls l'organisateur ou l'administrateur peuvent voir cette page."
+        })
+
+# -----------------------------------------------------------
+#  Vérifications avant d’afficher / créer la phase finale
+# -----------------------------------------------------------
+    pools = list(tournament.pools.all())
+
+# Nombre d'équipes dans chaque poule
+    teams_per_pool = [pool.teams.count() for pool in pools]
+
+    has_any_team      = any(cnt > 0 for cnt in teams_per_pool)     # au moins une équipe
+    every_pool_ready  = all(cnt >= 2 for cnt in teams_per_pool)    # >= 2 équipes partout
+    all_matches_ready = tournament.all_pool_matches_completed()
+
+    if not has_any_team:
+        error_msg = "⛔ Aucune équipe n'a été assignée aux poules. Veuillez les répartir avant de créer les phases finales."
+    elif not every_pool_ready:
+        error_msg = "⛔ Chaque poule doit contenir au moins deux équipes pour lancer les phases finales."
+    elif not all_matches_ready:
+        error_msg = "⛔ Des équipes sont présentes mais tous les matchs de poule ne sont pas encore joués."
+    else:
+        error_msg = None
+
+    if error_msg:
+        return render(request, 'matchs_finale.html', {
+        'tournament': tournament,
+        'error': error_msg
+    })
+# -----------------------------------------------------------
+#  Ici, tout est OK : on peut afficher / créer les phases finales
+# -----------------------------------------------------------
+
+
+
     for pool in pools:
         pool.calculate_rankings()
         rankings = Ranking.objects.filter(team__pool=pool).order_by('rank')[:2]
@@ -1596,7 +1640,8 @@ def afficher_deux_premiers(request, tournament_slug):
         'matchs_existent': matchs_existent,
         'is_three_pool_scenario': is_three_pool_scenario,
         'show_quarters': show_quarters,  # ✅ ajouté ici pour le HTML
-        
+        'error': None,         # ← pour garder la même logique d’affichage des erreurs
+
     })
 
 

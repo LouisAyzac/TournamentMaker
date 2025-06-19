@@ -56,6 +56,15 @@ class Tournament(models.Model):
     quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
     number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
     slug = models.SlugField(max_length=200, unique=False, blank=True)
+
+
+    def all_pool_matches_completed(self) -> bool:
+        """
+        Retourne True si chaque pool rattachée à ce tournoi a
+        tous ses matchs terminés (méthode all_matches_played()).
+        """
+        return all(pool.all_matches_played() for pool in self.pools.all())
+
     
     def save(self, *args, **kwargs):
         if not self.slug:
