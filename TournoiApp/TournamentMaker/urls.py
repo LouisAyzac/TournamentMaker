@@ -37,7 +37,6 @@ urlpatterns = [
     path('matchs-en-cours/', views.matchs_en_cours, name='matchs_en_cours'),
     path('<slug:tournament_slug>/match/<int:match_id>/score/', views.score_match, name='score_match'),
 
-
     
 
     # Pools et classements
@@ -46,7 +45,7 @@ urlpatterns = [
     path('rankings/', views.rankings_list, name='rankings_list'),
 
     # Tournois
-    path('creer_tournoi/etape1/', views.create_tournament_step1, name='create_tournament_step1'),  # ✅ nom corrigé ici
+    path('creer_tournoi/etape1/', views.create_tournament_step1, name='create_tournament_step1'),
     path('creer_tournoi/etape2/', views.create_tournament_step2, name='create_tournament_step2'),
     path('<slug:tournament_slug>/ranking/', views.rankings_list, name='rankings_list'),
     path('<slug:slug>/detail', TournamentDetailView.as_view(), name='tournament_detail'),

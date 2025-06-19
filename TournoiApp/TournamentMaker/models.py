@@ -267,8 +267,10 @@ class Match(models.Model):
     start_time = models.TimeField(null=True, blank=True, verbose_name="Heure de début")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Heure de fin")
     bracket_position = models.PositiveIntegerField(null=True, blank=True)
+    penalty_team_a = models.PositiveIntegerField(null=True, blank=True)
+    penalty_team_b = models.PositiveIntegerField(null=True, blank=True)
 
-    # 👇 Champ ajouté pour le lien entre les matchs dans un bracket
+
     next_match = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,

@@ -872,8 +872,13 @@ def create_tournament_step2(request):
             }
 
             if sport == 'volleyball':
+                nb_sets_to_win = int(request.POST.get('nb_sets_to_win', 3))
+                if nb_sets_to_win > 3:
+                    messages.error(request, "Le nombre de sets pour gagner ne peut pas dépasser 3 en volley-ball.")
+                    return redirect('create_tournament_step2')
+
                 common_data.update({
-                    'nb_sets_to_win': int(request.POST.get('nb_sets_to_win')),
+                    'nb_sets_to_win': nb_sets_to_win,
                     'points_per_set': int(request.POST.get('points_per_set')),
                 })
 
@@ -889,7 +894,6 @@ def create_tournament_step2(request):
             elif sport == 'rugby':
                 common_data.update({
                     'match_duration': int(request.POST.get('match_duration')),
-                    'half_time_duration': int(request.POST.get('half_time_duration')),
                     'nb_sets_to_win': 1,
                     'points_per_set': 1,
                 })
