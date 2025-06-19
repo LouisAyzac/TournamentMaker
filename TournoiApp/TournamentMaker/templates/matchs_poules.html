@@ -1,29 +1,80 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
+<style>
+  .text-purple {
+    color: #8e44ad !important;
+  }
+</style>
 
-<h2 class="text-center mt-4">Phase de Poule - {{ tournament.name }}</h2>
+<div class="container mt-4">
+  <div class="p-4 rounded shadow-sm text-center bg-gradient" style="background: linear-gradient(to right, #e0f7ff, #dceeff); border: 1px solid #b6d4fe;">
+    
+    <!-- Infos principales -->
+    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4 fw-semibold fs-5 text-dark">
+      <div class="d-flex align-items-center gap-2">
+        <span style="font-size: 1.4em;">🏆</span>
+        <span class="text-dark">{{ tournament.name }}</span>
+      </div>
+      
+      <div class="d-flex align-items-center gap-2">
+        {% if tournament.get_sport_display == 'Volleyball' %}
+          <span style="font-size: 1.2em;">🏐</span>
+        {% elif tournament.get_sport_display == 'Football' %}
+          <span style="font-size: 1.2em;">⚽</span>
+        {% elif tournament.get_sport_display == 'Basketball' %}
+          <span style="font-size: 1.2em;">🏀</span>
+        {% else %}
+          <i class="fas fa-dumbbell"></i>
+        {% endif %}
+        <span>{{ tournament.get_sport_display }}</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <i class="fas fa-calendar-alt text-purple"></i>
+        <span>du {{ tournament.start_date|date:"d/m/Y" }} au {{ tournament.end_date|date:"d/m/Y" }}</span>
+      </div>
+    </div>
+
+    <!-- Adresse ajoutée ici -->
+    <p class="text-muted fst-italic small fs-6 mt-2 mb-0">{{ tournament.address }}</p>
+
+  </div>
+</div>
+
+
+<!-- Titre principal -->
+<h2 class="text-center mt-5">Phase de Poule</h2>
 
 {% if pools_data %}
-    {% for pool_data in pools_data %}
-        <h4 class="mt-4 text-primary fw-bold">
-            Poule {{ pool_data.pool.name }}
-            <a href="{% url 'detail_poule' tournament.slug pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">
-                Voir les matchs
-            </a>
 
-        </h4>
+  {% for pool_data in pools_data %}
+    <h4 class="mt-4 text-primary fw-bold">
+      Poule {{ pool_data.pool.name }}
+      <a href="{% url 'detail_poule' tournament.slug pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">
+        Voir les matchs
+      </a>
+    </h4>
 
         <table class="table table-bordered table-sm text-center align-middle">
             <thead>
                 <tr>
                     <th style="background-color: yellow; color: black;">ÉQUIPE</th>
                     <th style="background-color: #4caf50; color: white;">V</th>
-
                     <th style="background-color: #f44336; color: white;">D</th>
+                    {% if tournament.sport == "football" or tournament.sport == "rugby" %}
+                        <th style="background-color: #2196f3; color: white;">N</th>
+                    {% endif %}
                     <th style="background-color: #ffeb99; color: black;">MJ</th>
-                    <th style="background-color: #ff9800; color: white;">Diff. Sets</th>
+                    {% if tournament.sport == "volleyball" %}
+                        <th style="background-color: #ff9800; color: white;">Diff. Sets</th>
+                    {% elif tournament.sport == "football" %}
+                        <th style="background-color: #ff9800; color: white;">Buts marqués</th>
+                    {%else%}
+                        <th style="background-color: #ff9800; color: white;">Points marqués</th>
+                    {% endif %}
                     <th style="background-color: #03a9f4; color: white;">Diff. Points</th>
+                    <th style="background-color: #607d8b; color: white;">Points</th>
                     <th style="background-color: #9c27b0; color: white;">Classement</th>
                 </tr>
             </thead>
@@ -33,16 +84,18 @@
                     <tr>
                         <td>
                             <a href="{% url 'team_detail' tournament.slug team_data.team.id %}">
-
     {{ team_data.team.name }}
 </a>
                         </td>
                         <td>{{ team_data.victoires }}</td>
- 
                         <td>{{ team_data.defaites }}</td>
+                        {% if tournament.sport == "football" or tournament.sport == "rugby" %}
+                        <td>{{ team_data.nuls }}</td>
+                        {% endif %}
                         <td>{{ team_data.matchs_joues }}</td>
                         <td>{{ team_data.diff_sets }}</td>
                         <td>{{ team_data.diff_points }}</td>
+                        <td>{{ team_data.points }}</td>
                         <td><strong>{{ team_data.rank }}</strong></td>
                     </tr>
                     {% endfor %}
@@ -53,13 +106,13 @@
                 {% endif %}
             </tbody>
         </table>
+
     {% endfor %}
 {% else %}
-    <p class="text-center mt-4 text-dark" style="font-size: 1.4em;">Aucune poule trouvée.</p>
-    
+  <p class="text-center mt-4 text-dark" style="font-size: 1.4em;">Aucune poule trouvée.</p>
 {% endif %}
 
-<!-- BOUTON RETOUR -->
+<!-- Bouton retour -->
 <div class="text-start mt-5 mb-4 ps-3">
   <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
     <i class="fas fa-arrow-left me-2"></i>Revenir à la sélection de la phase
