@@ -1,4 +1,5 @@
 import random
+import uuid
 from datetime import date
 from itertools import combinations
 
@@ -22,12 +23,14 @@ class Organisateur(models.Model):
     def __str__(self):
         return f"Organisateur: {self.user.email}"
 
+
 class Tournament(models.Model):
+    # ── Choix ────────────────────────────────────────────────────────────────
     SPORT_CHOICES = [
-        ('football', 'Football'),
+        ('football',   'Football'),
         ('volleyball', 'Volleyball'),
         ('basketball', 'Basketball'),
-        ('rugby', 'Rugby'),
+        ('rugby',      'Rugby'),
     ]
 
     TOURNAMENT_TYPE_CHOICES = [
@@ -35,33 +38,56 @@ class Tournament(models.Model):
         ('DE', 'Direct Elimination'),
     ]
 
-    name = models.CharField(max_length=100)
-    department = models.CharField(max_length=100)
-    address = models.CharField(max_length=255, blank=True, null=True)
-    is_indoor = models.BooleanField(default=True)
-    start_date = models.DateField(default=date.today)
-    end_date = models.DateField(default=date.today)
-    sport = models.CharField(max_length=50, choices=SPORT_CHOICES, default='football')
-    max_teams = models.PositiveIntegerField(default=8)
-    players_per_team = models.PositiveIntegerField(default=5)
-    number_of_pools = models.IntegerField(default=0)
-    type_tournament = models.CharField(max_length=2, choices=TOURNAMENT_TYPE_CHOICES, default='RR')
-    nb_sets_to_win = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
-    points_per_set = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
-    organizer = models.OneToOneField(Organisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name='organized_tournament')
-    match_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un match (en minutes)")
-    extra_time = models.BooleanField(null=True, blank=True, help_text="Prolongations possibles")
-    penalty_shootout = models.BooleanField(null=True, blank=True, help_text="Tirs au but en cas d’égalité")
-    half_time_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée de la mi-temps (en minutes)")
-    quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
-    number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
-    slug = models.SlugField(max_length=200, unique=False, blank=True)
-    
+    # ── Champs principaux ────────────────────────────────────────────────────
+    name                = models.CharField(max_length=100)
+    department          = models.CharField(max_length=100)
+    address             = models.CharField(max_length=255, blank=True, null=True)
+    is_indoor           = models.BooleanField(default=True)
+    start_date          = models.DateField(default=date.today)
+    end_date            = models.DateField(default=date.today)
+    sport               = models.CharField(max_length=50, choices=SPORT_CHOICES, default='football')
+    max_teams           = models.PositiveIntegerField(default=8)
+    players_per_team    = models.PositiveIntegerField(default=5)
+    number_of_pools     = models.IntegerField(default=0)
+    type_tournament     = models.CharField(max_length=2, choices=TOURNAMENT_TYPE_CHOICES, default='RR')
+
+    # ── Paramètres volley / sets ─────────────────────────────────────────────
+    nb_sets_to_win      = models.PositiveIntegerField(default=3, help_text="Nombre de sets nécessaires pour gagner un match")
+    points_per_set      = models.PositiveIntegerField(default=25, help_text="Nombre de points nécessaires pour gagner un set")
+
+    # ── Organisateur ─────────────────────────────────────────────────────────
+    organizer           = models.OneToOneField(
+        'Organisateur',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='organized_tournament'
+    )
+
+    # ── Paramètres spécifiques aux sports ────────────────────────────────────
+    match_duration      = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un match (en minutes)")
+    extra_time          = models.BooleanField(null=True, blank=True, help_text="Prolongations possibles")
+    penalty_shootout    = models.BooleanField(null=True, blank=True, help_text="Tirs au but en cas d’égalité")
+
+    half_time_duration  = models.PositiveIntegerField(null=True, blank=True, help_text="Durée de la mi-temps (en minutes)")
+
+    quarter_duration    = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
+    number_of_quarters  = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
+
+    # ── Slug unique ──────────────────────────────────────────────────────────
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
+
+    # ── Surcharge du save pour garantir l’unicité du slug ───────────────────
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            base_slug = slugify(self.name)
+            slug_candidate = base_slug
+            while Tournament.objects.filter(slug=slug_candidate).exclude(pk=self.pk).exists():
+                suffix = uuid.uuid4().hex[:6]
+                slug_candidate = f"{base_slug}-{suffix}"
+            self.slug = slug_candidate
         super().save(*args, **kwargs)
-        
+
+    # ── Représentation ───────────────────────────────────────────────────────
     def __str__(self):
         return self.name
 

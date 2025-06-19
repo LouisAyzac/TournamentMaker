@@ -93,6 +93,7 @@ def home(request):
         'sports': sports,
         'selected_sport': selected_sport,
         'selected_department': selected_department,
+        'today': today,
     }
 
     return render(request, 'home.html', context)
