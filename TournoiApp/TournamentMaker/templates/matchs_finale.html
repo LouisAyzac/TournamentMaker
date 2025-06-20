@@ -6,16 +6,15 @@
 </style>
 
 <div class="container mt-4">
-  <div class="p-4 rounded shadow-sm text-center bg-gradient"
-       style="background: linear-gradient(to right, #e0f7ff, #dceeff); border: 1px solid #b6d4fe;">
-
+  <div class="p-4 rounded shadow-sm text-center bg-gradient" style="background: linear-gradient(to right, #e0f7ff, #dceeff); border: 1px solid #b6d4fe;">
+    
     <!-- Infos principales -->
     <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4 fw-semibold fs-5 text-dark">
       <div class="d-flex align-items-center gap-2">
         <span style="font-size: 1.4em;">🏆</span>
         <span class="text-dark">{{ tournament.name }}</span>
       </div>
-
+      
       <div class="d-flex align-items-center gap-2">
         {% if tournament.get_sport_display == 'Volleyball' %}
           <span style="font-size: 1.2em;">🏐</span>
@@ -35,13 +34,14 @@
       </div>
     </div>
 
+    <!-- Adresse ajoutée ici -->
     <p class="text-muted fst-italic small fs-6 mt-2 mb-0">{{ tournament.address }}</p>
+
   </div>
 </div>
 
 <h2 class="text-center mt-5 text-dark">Créer les matchs de la phase finale</h2>
 
-{# ---------------- Classements ---------------- #}
 {% if data %}
   <div class="container mt-4">
     <h4 class="text-primary">🧮 2&nbsp;premiers de chaque poule</h4>
@@ -49,13 +49,11 @@
       {% for entry in data %}
         <div class="col-md-6 mb-3">
           <div class="card border-primary">
-            <div class="card-header bg-primary text-white">
-              {{ entry.pool.name }}
-            </div>
+            <div class="card-header bg-primary text-white">{{ entry.pool.name }}</div>
             <ul class="list-group list-group-flush">
               {% for ranking in entry.rankings %}
                 <li class="list-group-item">
-                  {{ ranking.rank }}. {{ ranking.team.name }}
+                  {% if ranking.rank == 1 %}1<sup>er</sup>{% else %}2<sup>e</sup>{% endif %} : {{ ranking.team.name }}
                 </li>
               {% endfor %}
             </ul>
@@ -66,97 +64,145 @@
   </div>
 {% endif %}
 
-{# ---------------- Affrontements prévus (uniquement 2 poules) -------- #}
 {% if data|length == 2 and data.0.rankings|length >= 2 and data.1.rankings|length >= 2 %}
   <div class="container mt-3">
-    <h5 class="text-success">📋 Affrontements prévus :</h5>
+    <h5 class="text-success">📋 Affrontements prévus (2 poules):</h5>
     <ul class="list-group">
       <li class="list-group-item">
-        {{ data.0.rankings.0.team.name }} (1<sup>er</sup> de {{ data.0.pool.name }})
-        <strong>vs</strong>
-        {{ data.1.rankings.1.team.name }} (2<sup>e</sup> de {{ data.1.pool.name }})
+        {{ data.0.rankings.0.team.name }}  <strong>vs</strong> {{ data.1.rankings.1.team.name }}
       </li>
       <li class="list-group-item">
-        {{ data.0.rankings.1.team.name }} (2<sup>e</sup> de {{ data.0.pool.name }})
-        <strong>vs</strong>
-        {{ data.1.rankings.0.team.name }} (1<sup>er</sup> de {{ data.1.pool.name }})
+        {{ data.0.rankings.1.team.name }} <strong>vs</strong> {{ data.1.rankings.0.team.name }}
       </li>
     </ul>
   </div>
+{% elif data|length == 3 and premiers_tries and deuxiemes_tries %}
+  <div class="container mt-3">
+    <h5 class="text-success">📋 Affrontements prévus (3 poules) :</h5>
+    <ul class="list-group">
+      <li class="list-group-item"><strong>Demi-finale :</strong><br>
+        {{ premiers_tries.0.team.name }} <strong>vs</strong> {{ premiers_tries.1.team.name }}
+      </li>
+      <li class="list-group-item"><strong>Quart 1 :</strong><br>
+        {{ premiers_tries.2.team.name }} <strong>vs</strong> {{ deuxiemes_tries.2.team.name }}
+      </li>
+      <li class="list-group-item"><strong>Quart 2 :</strong><br>
+        {{ deuxiemes_tries.0.team.name }} <strong>vs</strong> {{ deuxiemes_tries.1.team.name }}
+      </li>
+    </ul>
+  </div>
+{% elif data|length == 4 %}
+  {% with data.0 as p0 %}
+  {% with data.1 as p1 %}
+  {% with data.2 as p2 %}
+  {% with data.3 as p3 %}
+    {% if p0.rankings|length >= 2 and p1.rankings|length >= 2 and p2.rankings|length >= 2 and p3.rankings|length >= 2 %}
+      <div class="container mt-3">
+        <h5 class="text-success">📋 Affrontements prévus (4 poules) :</h5>
+        <ul class="list-group">
+          <li class="list-group-item">
+            <strong>Quart 1 :</strong><br>
+            {{ p0.rankings.0.team.name }}  <strong>vs</strong> {{ p3.rankings.1.team.name }} 
+          </li>
+          <li class="list-group-item">
+            <strong>Quart 2 :</strong><br>
+            {{ p3.rankings.0.team.name }}  <strong>vs</strong> {{ p0.rankings.1.team.name }} 
+          </li>
+          <li class="list-group-item">
+            <strong>Quart 3 :</strong><br>
+            {{ p1.rankings.0.team.name }}  <strong>vs</strong> {{ p2.rankings.1.team.name }} 
+          </li>
+          <li class="list-group-item">
+            <strong>Quart 4 :</strong><br>
+            {{ p2.rankings.0.team.name }}  <strong>vs</strong> {{ p1.rankings.1.team.name }} 
+          </li>
+        </ul>
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% endwith %}
+  {% endwith %}
+  {% endwith %}
 {% endif %}
 
-{# ---------------- Formulaire ---------------- #}
-<form method="post" class="container mt-4">
-  {% csrf_token %}
 
-  {% if match_range_eighth %}
-    <h2 class="text-primary">Huitièmes de finale</h2>
-    {% for i in match_range_eighth %}
-      <div class="match-block">
-        <h4>Huitième {{ i|add:1 }}</h4>
-        <label>Équipe A :</label>
-        <select name="eighth_team_a_{{ i }}" class="team-select" required>
-          {% for team in teams_for_eighth %}
-            <option value="{{ team.id }}">{{ team.name }}</option>
-          {% endfor %}
-        </select>
 
-        <label>Équipe B :</label>
-        <select name="eighth_team_b_{{ i }}" class="team-select" required>
-          {% for team in teams_for_eighth %}
-            <option value="{{ team.id }}">{{ team.name }}</option>
-          {% endfor %}
-        </select>
-      </div><br>
-    {% endfor %}
-  {% endif %}
+{% if error %}
+  <div class="alert alert-warning text-center fw-bold mt-4">{{ error }}</div>
+{% elif matchs_existent %}
+  <p class="text-danger text-center fw-bold mt-4">
+    ⚠️ Les matchs de la phase finale ont déjà été créés pour ce tournoi.
+  </p>
+{% else %}
+  <form method="post" class="container mt-4">
+    {% csrf_token %}
 
-  {% if show_quarters %}
-    <h2 style="color:#198754;">Quarts de finale</h2>
-    {% for i in match_range_quarter %}
-      <div class="match-block">
-        <h4>Quart {{ i|add:1 }}</h4>
-        <label>Équipe A :</label>
-        <select name="quarter_team_a_{{ i }}" class="team-select" required>
-          {% for team in teams_for_quarter %}
-            <option value="{{ team.id }}">{{ team.name }}</option>
-          {% endfor %}
-        </select>
+    {% if match_range_eighth %}
+      <h2 class="text-primary">Huitièmes de finale</h2>
+      {% for i in match_range_eighth %}
+        <div class="match-block">
+          <h4>Huitième {{ i|add:1 }}</h4>
+          <label>Équipe A :</label>
+          <select name="eighth_team_a_{{ i }}" class="team-select" required>
+            {% for team in teams_for_eighth %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+          <label>Équipe B :</label>
+          <select name="eighth_team_b_{{ i }}" class="team-select" required>
+            {% for team in teams_for_eighth %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+        </div><br>
+      {% endfor %}
+    {% endif %}
 
-        <label>Équipe B :</label>
-        <select name="quarter_team_b_{{ i }}" class="team-select" required>
-          {% for team in teams_for_quarter %}
-            <option value="{{ team.id }}">{{ team.name }}</option>
-          {% endfor %}
-        </select>
-      </div><br>
-    {% endfor %}
-  {% endif %}
+    {% if show_quarters %}
+      <h2 style="color:#198754;">Quarts de finale</h2>
+      {% for i in match_range_quarter %}
+        <div class="match-block">
+          <h4>Quart {{ i|add:1 }}</h4>
+          <label>Équipe A :</label>
+          <select name="quarter_team_a_{{ i }}" class="team-select" required>
+            {% for team in teams_for_quarter %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+          <label>Équipe B :</label>
+          <select name="quarter_team_b_{{ i }}" class="team-select" required>
+            {% for team in teams_for_quarter %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+        </div><br>
+      {% endfor %}
+    {% endif %}
 
-  {% if match_range_semi %}
-    <h2 style="color:#fd7e14;">Demi-finales</h2>
-    {% for i in match_range_semi %}
-      <div class="match-block">
-        <h4>Demi-finale {{ i|add:1 }}</h4>
-        <label>Équipe A :</label>
-        <select name="semi_team_a_{{ i }}" class="team-select" required>
-          {% for team in qualified_teams %}
-            <option value="{{ team.id }}">{{ team.name }}</option>
-          {% endfor %}
-        </select>
+    {% if match_range_semi %}
+      <h2 style="color:#fd7e14;">Demi-finales</h2>
+      {% for i in match_range_semi %}
+        <div class="match-block">
+          <h4>Demi-finale {{ i|add:1 }}</h4>
+          <label>Équipe A :</label>
+          <select name="semi_team_a_{{ i }}" class="team-select" required>
+            {% for team in qualified_teams %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+          <label>Équipe B :</label>
+          <select name="semi_team_b_{{ i }}" class="team-select" required>
+            {% for team in qualified_teams %}
+              <option value="{{ team.id }}">{{ team.name }}</option>
+            {% endfor %}
+          </select>
+        </div><br>
+      {% endfor %}
+    {% endif %}
 
-        <label>Équipe B :</label>
-        <select name="semi_team_b_{{ i }}" class="team-select" required>
-          {% for team in qualified_teams %}
-            <option value="{{ team.id }}">{{ team.name }}</option>
-          {% endfor %}
-        </select>
-      </div><br>
-    {% endfor %}
-  {% endif %}
-
-  <button type="submit" class="btn btn-primary">Créer les matchs</button>
-</form>
+    <button type="submit" class="btn btn-primary">Créer les matchs</button>
+  </form>
+{% endif %}
 
 <div class="text-start mt-5 mb-4 ps-3">
   <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
