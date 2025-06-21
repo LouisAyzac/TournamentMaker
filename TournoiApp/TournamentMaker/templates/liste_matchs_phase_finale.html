@@ -1,8 +1,46 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
+
+<div class="container mt-4">
+  <div class="p-4 rounded shadow-sm text-center bg-gradient" style="background: linear-gradient(to right, #e0f7ff, #dceeff); border: 1px solid #b6d4fe;">
+    
+    <!-- Infos principales -->
+    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4 fw-semibold fs-5 text-dark">
+      <div class="d-flex align-items-center gap-2">
+        <span style="font-size: 1.4em;">🏆</span>
+        <span class="text-dark">{{ tournament.name }}</span>
+      </div>
+      
+      <div class="d-flex align-items-center gap-2">
+        {% if tournament.get_sport_display == 'Volleyball' %}
+          <span style="font-size: 1.2em;">🏐</span>
+        {% elif tournament.get_sport_display == 'Football' %}
+          <span style="font-size: 1.2em;">⚽</span>
+        {% elif tournament.get_sport_display == 'Basketball' %}
+          <span style="font-size: 1.2em;">🏀</span>
+        {% else %}
+          <i class="fas fa-dumbbell"></i>
+        {% endif %}
+        <span>{{ tournament.get_sport_display }}</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <i class="fas fa-calendar-alt text-purple"></i>
+        <span>du {{ tournament.start_date|date:"d/m/Y" }} au {{ tournament.end_date|date:"d/m/Y" }}</span>
+      </div>
+    </div>
+
+    <!-- Adresse ajoutée ici -->
+    <p class="text-muted fst-italic small fs-6 mt-2 mb-0">{{ tournament.address }}</p>
+
+  </div>
+</div>
+
 <div class="phase-final-wrapper">
-  <h1 class="title">Matchs de la phase finale</h1>
+  <h1 class="title" style="color: #000;">Matchs de la phase finale</h1>
+
+  
 
   {% if match_groups %}
     <style>
@@ -102,14 +140,22 @@
       </div>
     {% endfor %}
   {% else %}
-    <p class="info-message">Aucun match à afficher pour cette phase finale pour le moment.</p>
+    <p class="info-message" style="color: #000;">Aucun match à afficher pour cette phase finale pour le moment.</p>
   {% endif %}
 </div>
+<<<<<<< HEAD
+
+=======
  
+>>>>>>> ange
 <div class="text-start mt-5 mb-4 ps-3">
   <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
     <i class="fas fa-arrow-left me-2"></i>Revenir à la sélection de la phase
   </a>
 </div>
 {% endblock %}
+<<<<<<< HEAD
+
+=======
  
+>>>>>>> ange
