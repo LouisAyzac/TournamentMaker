@@ -55,7 +55,7 @@ class Tournament(models.Model):
     half_time_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée de la mi-temps (en minutes)")
     quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
     number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
-    slug = models.SlugField(max_length=200, unique=False, blank=True)
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
 
 
     def all_pool_matches_completed(self) -> bool:
