@@ -26,7 +26,11 @@ class Command(BaseCommand):
                     sport=random.choice(sports),
                     max_teams=num_pools * 2,
                     players_per_team=1,
+<<<<<<< HEAD
                     number_of_pools=num_pools,
+=======
+                    number_of_pools=2,
+>>>>>>> antoine
                     type_tournament='RR',
                     nb_sets_to_win=1,
                     points_per_set=25
@@ -42,7 +46,11 @@ class Command(BaseCommand):
                         max_size=2
                     )
 
+<<<<<<< HEAD
                     for t_index in range(1, 3):  # 2 équipes
+=======
+                    for t_index in range(1, 4):  # 2 équipes
+>>>>>>> antoine
                         team_name = f"{p_index}.{t_index}"
                         team = Team.objects.create(
                             name=team_name,

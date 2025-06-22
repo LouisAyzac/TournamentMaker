@@ -292,6 +292,14 @@ def rankings_list(request, tournament_slug):
             third_place_match.team_a if third_place_match.winner_team == 'A'
             else third_place_match.team_b
         )
+    # ---------- 4. Classement global (pour DE uniquement) ----------
+    rankings = []
+    if tournoi.type_tournament == 'DE':
+        rankings = generate_final_ranking(tournoi)
+    
+    if tournoi.type_tournament == 'RR':
+        rankings = generate_final_ranking_rr_de(tournoi)
+
 
     # ---------- 4. Rendu ----------
     return render(request, 'rankings.html', {
@@ -301,6 +309,7 @@ def rankings_list(request, tournament_slug):
         'third_place':   third_place,  # ← ajouté ici
         'tournament':    tournoi,
         'tournament_slug': tournoi.slug,
+        'rankings': rankings,
     })
 
 # === Scores (par joueur connecté) ===
@@ -2053,3 +2062,198 @@ def update_third_place_match(tournament):
             third_place_match.save()
     except Match.DoesNotExist:
         pass  # Petite finale non créée
+
+from collections import defaultdict
+
+from collections import defaultdict
+from .models import Match, Team
+
+def generate_final_ranking(tournament):
+    if tournament.type_tournament != "DE":
+        return []
+
+    matches = Match.objects.filter(tournament=tournament, statut='T').select_related('team_a', 'team_b')
+    team_stats = defaultdict(lambda: {'victories': 0, 'defeats': 0, 'matchs_joues': 0})
+    ranked_teams = []
+    rankings = []
+
+    # Étape 1 : calcul des statistiques avec noms nettoyés
+    for match in matches:
+        if not match.team_a or not match.team_b or not match.winner_team:
+            continue
+
+        name_a = match.team_a.name.strip().lower()
+        name_b = match.team_b.name.strip().lower()
+        winner_name = match.winner_team.name.strip().lower()
+
+        if winner_name == name_a:
+            winner = match.team_a
+            loser = match.team_b
+        elif winner_name == name_b:
+            winner = match.team_b
+            loser = match.team_a
+        else:
+            continue  # Gagnant ne correspond à aucune des deux équipes
+
+        team_stats[winner]['victories'] += 1
+        team_stats[loser]['defeats'] += 1
+        team_stats[match.team_a]['matchs_joues'] += 1
+        team_stats[match.team_b]['matchs_joues'] += 1
+
+    # Étape 2 : classement par phases
+    final = matches.filter(phase='final').first()
+    third_place = matches.filter(phase='third_place').first()
+
+    if final and final.winner_team and final.team_a and final.team_b:
+        team_a_name = final.team_a.name.strip().lower()
+        team_b_name = final.team_b.name.strip().lower()
+        winner_name = final.winner_team.name.strip().lower()
+
+        if winner_name == team_a_name:
+            final_winner = final.team_a
+            final_loser = final.team_b
+        elif winner_name == team_b_name:
+            final_winner = final.team_b
+            final_loser = final.team_a
+        else:
+            final_winner = final_loser = None
+
+        if final_winner:
+            ranked_teams.append(final_winner)
+        if final_loser:
+            ranked_teams.append(final_loser)
+
+    if third_place and third_place.winner_team and third_place.team_a and third_place.team_b:
+        team_a_name = third_place.team_a.name.strip().lower()
+        team_b_name = third_place.team_b.name.strip().lower()
+        winner_name = third_place.winner_team.name.strip().lower()
+
+        if winner_name == team_a_name:
+            third_winner = third_place.team_a
+            third_loser = third_place.team_b
+        elif winner_name == team_b_name:
+            third_winner = third_place.team_b
+            third_loser = third_place.team_a
+        else:
+            third_winner = third_loser = None
+
+        if third_winner:
+            ranked_teams.append(third_winner)
+        if third_loser:
+            ranked_teams.append(third_loser)
+
+    # Étape 3 : insertion des classés
+    for i, team in enumerate(ranked_teams, start=1):
+        stats = team_stats.get(team, {'victories': 0, 'defeats': 0, 'matchs_joues': 0})
+        rankings.append({
+            'rank': i,
+            'id': team.id,
+            'name': team.name,
+            'victories': stats['victories'],
+            'defeats': stats['defeats'],
+            'matchs_joues': stats['matchs_joues'],
+        })
+
+    # Étape 4 : les non-classés (ex-aequo en dernière place)
+    all_teams = set(Team.objects.filter(tournament=tournament))
+    already_ranked = set(ranked_teams)
+    unranked = list(all_teams - already_ranked)
+
+    if unranked:
+        last_rank = len(ranked_teams) + 1
+        for team in unranked:
+            stats = team_stats.get(team, {'victories': 0, 'defeats': 0, 'matchs_joues': 0})
+            rankings.append({
+                'rank': last_rank,
+                'id': team.id,
+                'name': team.name,
+                'victories': stats['victories'],
+                'defeats': stats['defeats'],
+                'matchs_joues': stats['matchs_joues'],
+            })
+
+    return rankings
+
+def generate_final_ranking_rr_de(tournament):
+    from collections import defaultdict
+
+    # Phases de la phase finale
+    finale_phases = ['quarter', 'semi', 'final', 'third_place']
+    all_matches = Match.objects.filter(tournament=tournament, statut='T').select_related('team_a', 'team_b')
+
+    team_stats = {}
+    all_teams = set()
+
+    # 1. Calculer les stats (victoires, défaites, MJ) sur toutes les phases (poule + finale)
+    for match in all_matches:
+        if not match.team_a or not match.team_b:
+            continue
+
+        for team in [match.team_a, match.team_b]:
+            if team not in team_stats:
+                team_stats[team] = {'victories': 0, 'defeats': 0, 'matchs_joues': 0}
+            team_stats[team]['matchs_joues'] += 1
+            all_teams.add(team)
+
+        winner = match.get_match_winner()
+        if winner:
+            loser = match.team_b if winner == match.team_a else match.team_a
+            team_stats[winner]['victories'] += 1
+            team_stats[loser]['defeats'] += 1
+
+    # 2. Construire le classement à partir des résultats de phase finale
+    matches_finale = all_matches.filter(phase__in=finale_phases)
+
+    ranked_teams = []
+    seen_ids = set()
+
+    # Final + 3e place => top 4
+    final_match = matches_finale.filter(phase='final').first()
+    third_place_match = matches_finale.filter(phase='third_place').first()
+
+    if final_match and final_match.get_match_winner():
+        winner = final_match.get_match_winner()
+        loser = final_match.team_b if winner == final_match.team_a else final_match.team_a
+        ranked_teams.extend([winner, loser])
+        seen_ids.update([winner.id, loser.id])
+
+    if third_place_match and third_place_match.get_match_winner():
+        third = third_place_match.get_match_winner()
+        fourth = third_place_match.team_b if third_place_match.team_a == third else third_place_match.team_a
+        ranked_teams.extend([third, fourth])
+        seen_ids.update([third.id, fourth.id])
+
+    # Ajouter les demi-finalistes non encore classés
+    for match in matches_finale.filter(phase='semi'):
+        for team in [match.team_a, match.team_b]:
+            if team and team.id not in seen_ids:
+                ranked_teams.append(team)
+                seen_ids.add(team.id)
+
+    # Ajouter les quarts non encore classés
+    for match in matches_finale.filter(phase='quarter'):
+        for team in [match.team_a, match.team_b]:
+            if team and team.id not in seen_ids:
+                ranked_teams.append(team)
+                seen_ids.add(team.id)
+
+    # Ajouter les équipes des poules non qualifiées en phase finale
+    for team in all_teams:
+        if team.id not in seen_ids:
+            ranked_teams.append(team)
+            seen_ids.add(team.id)
+
+    # 3. Construire la structure finale
+    final_ranking = []
+    for i, team in enumerate(ranked_teams, start=1):
+        stats = team_stats.get(team, {'victories': 0, 'defeats': 0, 'matchs_joues': 0})
+        final_ranking.append({
+            'rank': i,
+            'id': team.id,
+            'name': team.name,
+            'victories': stats['victories'],
+            'defeats': stats['defeats'],
+            'matchs_joues': stats['matchs_joues'],
+        })
+
+    return final_ranking

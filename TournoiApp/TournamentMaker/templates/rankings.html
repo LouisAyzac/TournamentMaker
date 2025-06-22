@@ -42,6 +42,7 @@
     <p class="text-muted fst-italic small fs-6 mt-2 mb-0">{{ tournament.address }}</p>
  
   </div>
+<<<<<<< HEAD
 </div>
 
 
@@ -101,4 +102,98 @@
   ░░░ Code podium conservé pour une future page dédiée ░░░
   (déplacé pour ne pas être rendu ici)
 #}
+=======
+</div>
+
+
+<!-- Classement global -->
+<div class="container mt-5 animate__animated animate__fadeIn">
+  <h2 class="section-title text-center mb-4"><i class="fas fa-list-ol"></i> Classement Général</h2>
+
+  {% if tournament.type_tournament == "DE" %}
+    {% if rankings %}
+      <div class="table-responsive">
+        <table class="table table-bordered text-center align-middle table-striped">
+          <thead class="table-dark">
+            <tr>
+              <th>Classement</th>
+              <th>Équipe</th>
+              <th>Victoires</th>
+              <th>Défaites</th>
+              <th>Matchs joués</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for team in rankings %}
+              <tr>
+                <td><strong>#{{ team.rank }}</strong></td>
+                <td>
+                  <a href="{% url 'team_detail' tournament.slug team.id %}">
+                    {{ team.name }}
+                  </a>
+                </td>
+                <td>{{ team.victories|default:"0" }}</td>
+                <td>{{ team.defeats|default:"0" }}</td>
+                <td>{{ team.matchs_joues|default:"0" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted text-center">Le classement sera disponible une fois le tournoi terminé.</p>
+    {% endif %}
+  {% endif %}
+</div>
+
+{% if tournament.type_tournament == "RR" %}
+
+    {% if rankings %}
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped text-center align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>Rang</th>
+              <th>Équipe</th>
+              <th>V</th>
+              <th>D</th>
+              <th>MJ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for team in rankings %}
+              <tr {% if team.rank <= 3 %}class="table-success"{% endif %}>
+                <td><strong>#{{ team.rank }}</strong></td>
+                <td>
+                  {% if team.id %}
+                    <a href="{% url 'team_detail' tournament.slug team.id %}">{{ team.name }}</a>
+                  {% else %}
+                    {{ team.name }}
+                  {% endif %}
+                </td>
+                <td>{{ team.victories }}</td>
+                <td>{{ team.defeats }}</td>
+                <td>{{ team.matchs_joues }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted text-center">Le classement final sera disponible à la fin du tournoi.</p>
+    {% endif %}
+  </div>
+{% endif %}
+
+ 
+<!-- Bouton retour -->
+
+<div class="text-start mt-4 mb-5 ms-4">
+  <a href="{% url 'home' %}" class="btn-simple-return">
+    <i class="fas fa-arrow-left me-2"></i> Revenir à la liste des tournois
+  </a>
+</div>
+
+
+>>>>>>> antoine
 {% endblock %}
