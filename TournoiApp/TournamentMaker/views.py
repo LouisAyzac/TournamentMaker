@@ -450,7 +450,7 @@ def signup(request, tournament_slug):
 
             if i == 0 and player_data['email']:
                 email = player_data['email']
-                username = f"{email}_{team.id}"
+                username = f"{email}"
                 user = User.objects.create_user(username=username, email=email)
                 user_profile = UserProfile.objects.create(
                     user=user,
@@ -659,69 +659,83 @@ def detail_poule(request, tournament_slug, pool_id):
     if tournament.slug != tournament_slug:
         return redirect('detail_poule', tournament_slug=tournament.slug, pool_id=pool.id)
 
-    matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
+    teams = list(pool.teams.all())
+    planning = generate_balanced_schedule(teams)  # ✅ une seule fois ici
+
+    all_matchs = Match.objects.filter(pool=pool, phase='pool').select_related('team_a', 'team_b')
+
+    # Construire un index rapide pour retrouver les matchs existants
+    match_lookup = {}
+    for m in all_matchs:
+        match_lookup[(m.team_a.id, m.team_b.id)] = m
+        match_lookup[(m.team_b.id, m.team_a.id)] = m  # permet de trouver les deux sens
+
+    # Organiser les matchs dans l’ordre du planning équilibré
+    ordered_matchs = []
     nb_sets_display = min(2 * tournament.nb_sets_to_win - 1, 5)
 
-    for match in matchs:
-        match.score_sets = []
-        total_a = 0
-        total_b = 0
+    for team_a, team_b in planning:
+        match = match_lookup.get((team_a.id, team_b.id))
+        if match:
+            match.score_sets = []
+            total_a = 0
+            total_b = 0
 
-        # Affichage jusqu’à 5 sets max ou nombre de sets du tournoi
-        for i in range(1, nb_sets_display + 1):
-            sa = getattr(match, f"set{i}_team_a", None)
-            sb = getattr(match, f"set{i}_team_b", None)
+            for i in range(1, nb_sets_display + 1):
+                sa = getattr(match, f"set{i}_team_a", None)
+                sb = getattr(match, f"set{i}_team_b", None)
 
-            if sa is None or sb is None:
-                continue
+                if sa is None or sb is None:
+                    continue
 
-            # Pour le volley : n'afficher que les sets valides
-            if tournament.sport == 'volleyball':
-                if (sa >= tournament.points_per_set or sb >= tournament.points_per_set) and abs(sa - sb) >= 2:
-                    match.score_sets.append({
-                        'set_number': i,
-                        'team_a_score': sa,
-                        'team_b_score': sb
-                    })
-                    total_a += sa
-                    total_b += sb
-
-            elif tournament.sport == "basketball":
-                nb_quarters = tournament.number_of_quarters or 4
-                for i in range(1, nb_quarters + 1):
-                    sa = getattr(match, f"set{i}_team_a", None)
-                    sb = getattr(match, f"set{i}_team_b", None)
-                    if sa is not None and sb is not None and (sa != 0 or sb != 0):
+                if tournament.sport == 'volleyball':
+                    if (sa >= tournament.points_per_set or sb >= tournament.points_per_set) and abs(sa - sb) >= 2:
                         match.score_sets.append({
                             'set_number': i,
                             'team_a_score': sa,
-                            'team_b_score': sb,
-                            'label': f"QT {i}"
+                            'team_b_score': sb
                         })
                         total_a += sa
                         total_b += sb
 
-            else:
-                # Pour les autres sports, afficher tout set non vide
-                if sa != 0 or sb != 0:
-                    match.score_sets.append({
-                        'set_number': i,
-                        'team_a_score': sa,
-                        'team_b_score': sb
-                    })
-                    total_a += sa
-                    total_b += sb
+                elif tournament.sport == "basketball":
+                    nb_quarters = tournament.number_of_quarters or 4
+                    for i in range(1, nb_quarters + 1):
+                        sa = getattr(match, f"set{i}_team_a", None)
+                        sb = getattr(match, f"set{i}_team_b", None)
+                        if sa is not None and sb is not None and (sa != 0 or sb != 0):
+                            match.score_sets.append({
+                                'set_number': i,
+                                'team_a_score': sa,
+                                'team_b_score': sb,
+                                'label': f"QT {i}"
+                            })
+                            total_a += sa
+                            total_b += sb
+                    break  # évite de dupliquer dans volley/else
 
-        match.total_score = f"{total_a} - {total_b}"
-        match.winner = match.get_match_winner()
-        match.is_complete = match.is_match_complete()
+                else:
+                    if sa != 0 or sb != 0:
+                        match.score_sets.append({
+                            'set_number': i,
+                            'team_a_score': sa,
+                            'team_b_score': sb
+                        })
+                        total_a += sa
+                        total_b += sb
 
+            match.total_score = f"{total_a} - {total_b}"
+            match.winner = match.get_match_winner()
+            match.is_complete = match.is_match_complete()
+            ordered_matchs.append(match)
 
     return render(request, 'detail_poule.html', {
         'pool': pool,
         'tournament': tournament,
-        'matchs': matchs,
+        'matchs': ordered_matchs,  # ✅ dans l’ordre équilibré
+        'schedule': planning       # (facultatif si non utilisé)
     })
+
 
 
 
@@ -2178,21 +2192,24 @@ def generate_final_ranking(tournament):
 def generate_final_ranking_rr_de(tournament):
     from collections import defaultdict
 
-    # Phases de la phase finale
     finale_phases = ['quarter', 'semi', 'final', 'third_place']
     all_matches = Match.objects.filter(tournament=tournament, statut='T').select_related('team_a', 'team_b')
 
     team_stats = {}
     all_teams = set()
 
-    # 1. Calculer les stats (victoires, défaites, MJ) sur toutes les phases (poule + finale)
+    # 1. Calculer stats sur tous les matchs joués
     for match in all_matches:
         if not match.team_a or not match.team_b:
             continue
 
         for team in [match.team_a, match.team_b]:
             if team not in team_stats:
-                team_stats[team] = {'victories': 0, 'defeats': 0, 'matchs_joues': 0}
+                team_stats[team] = {
+                    'victories': 0,
+                    'defeats': 0,
+                    'matchs_joues': 0,
+                }
             team_stats[team]['matchs_joues'] += 1
             all_teams.add(team)
 
@@ -2202,59 +2219,86 @@ def generate_final_ranking_rr_de(tournament):
             team_stats[winner]['victories'] += 1
             team_stats[loser]['defeats'] += 1
 
-    # 2. Construire le classement à partir des résultats de phase finale
-    matches_finale = all_matches.filter(phase__in=finale_phases)
+    # 2. Catégoriser les équipes selon le niveau atteint
+    phase_levels = {
+        'final_winner': [],
+        'final_loser': [],
+        'third_place_winner': [],
+        'third_place_loser': [],
+        'semi_loser': [],
+        'quarter_loser': [],
+        'group_only': [],
+    }
 
-    ranked_teams = []
-    seen_ids = set()
+    seen = set()
 
-    # Final + 3e place => top 4
-    final_match = matches_finale.filter(phase='final').first()
-    third_place_match = matches_finale.filter(phase='third_place').first()
+    # Final
+    final = all_matches.filter(phase='final').first()
+    if final and final.get_match_winner():
+        winner = final.get_match_winner()
+        loser = final.team_b if winner == final.team_a else final.team_a
+        phase_levels['final_winner'].append(winner)
+        phase_levels['final_loser'].append(loser)
+        seen.update([winner.id, loser.id])
 
-    if final_match and final_match.get_match_winner():
-        winner = final_match.get_match_winner()
-        loser = final_match.team_b if winner == final_match.team_a else final_match.team_a
-        ranked_teams.extend([winner, loser])
-        seen_ids.update([winner.id, loser.id])
+    # Petite finale
+    third = all_matches.filter(phase='third_place').first()
+    if third and third.get_match_winner():
+        winner = third.get_match_winner()
+        loser = third.team_b if winner == third.team_a else third.team_a
+        phase_levels['third_place_winner'].append(winner)
+        phase_levels['third_place_loser'].append(loser)
+        seen.update([winner.id, loser.id])
 
-    if third_place_match and third_place_match.get_match_winner():
-        third = third_place_match.get_match_winner()
-        fourth = third_place_match.team_b if third_place_match.team_a == third else third_place_match.team_a
-        ranked_teams.extend([third, fourth])
-        seen_ids.update([third.id, fourth.id])
-
-    # Ajouter les demi-finalistes non encore classés
-    for match in matches_finale.filter(phase='semi'):
+    # Demi-finalistes non classés
+    for match in all_matches.filter(phase='semi'):
         for team in [match.team_a, match.team_b]:
-            if team and team.id not in seen_ids:
-                ranked_teams.append(team)
-                seen_ids.add(team.id)
+            if team and team.id not in seen:
+                phase_levels['semi_loser'].append(team)
+                seen.add(team.id)
 
-    # Ajouter les quarts non encore classés
-    for match in matches_finale.filter(phase='quarter'):
+    # Quart-finalistes non classés
+    for match in all_matches.filter(phase='quarter'):
         for team in [match.team_a, match.team_b]:
-            if team and team.id not in seen_ids:
-                ranked_teams.append(team)
-                seen_ids.add(team.id)
+            if team and team.id not in seen:
+                phase_levels['quarter_loser'].append(team)
+                seen.add(team.id)
 
-    # Ajouter les équipes des poules non qualifiées en phase finale
+    # Groupes uniquement
     for team in all_teams:
-        if team.id not in seen_ids:
-            ranked_teams.append(team)
-            seen_ids.add(team.id)
+        if team.id not in seen:
+            phase_levels['group_only'].append(team)
 
-    # 3. Construire la structure finale
+    # 3. Construction finale du classement, trié par victoire et goal diff si besoin
+    def sort_teams(teams):
+        return sorted(
+            teams,
+            key=lambda t: (
+                -team_stats[t]['victories'],              # Plus de victoires d'abord
+                team_stats[t]['defeats'],                # Moins de défaites ensuite
+                -team_stats[t].get('goal_diff', 0),      # Si tu veux, ajoute un goal diff ici
+                t.name                                    # Enfin nom pour stabilité
+            )
+        )
+
+
     final_ranking = []
-    for i, team in enumerate(ranked_teams, start=1):
-        stats = team_stats.get(team, {'victories': 0, 'defeats': 0, 'matchs_joues': 0})
-        final_ranking.append({
-            'rank': i,
-            'id': team.id,
-            'name': team.name,
-            'victories': stats['victories'],
-            'defeats': stats['defeats'],
-            'matchs_joues': stats['matchs_joues'],
-        })
+    rank = 1
+
+    for key in ['final_winner', 'final_loser', 'third_place_winner', 'third_place_loser',
+                'semi_loser', 'quarter_loser', 'group_only']:
+        sorted_teams = sort_teams(phase_levels[key])
+        for team in sorted_teams:
+            stats = team_stats.get(team, {'victories': 0, 'defeats': 0, 'matchs_joues': 0})
+            final_ranking.append({
+                'rank': rank,
+                'id': team.id,
+                'name': team.name,
+                'victories': stats['victories'],
+                'defeats': stats['defeats'],
+                'matchs_joues': stats['matchs_joues'],
+            })
+            rank += 1
 
     return final_ranking
+
