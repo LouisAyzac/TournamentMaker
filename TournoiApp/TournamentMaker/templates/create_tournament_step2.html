@@ -51,8 +51,8 @@
     {% if sport == 'volleyball' %}
       <div class="form-group">
         <label>Nombre de sets pour gagner :</label>
-        <input type="number" class="form-control" name="nb_sets_to_win" required min="1" max="3"
-       value="{% if request.POST.nb_sets_to_win %}{{ request.POST.nb_sets_to_win }}{% elif preset.nb_sets_to_win and preset_name != 'non spécifié' %}{{ preset.nb_sets_to_win }}{% else %}3{% endif %}">
+        <input type="number" class="form-control" name="nb_sets_to_win" required
+               value="{% if request.POST.nb_sets_to_win %}{{ request.POST.nb_sets_to_win }}{% elif preset.nb_sets_to_win and preset_name != 'non spécifié' %}{{ preset.nb_sets_to_win }}{% endif %}">
       </div>
       <div class="form-group">
         <label>Points par set :</label>
@@ -82,6 +82,11 @@
         <label>Durée du match (minutes) :</label>
         <input type="number" class="form-control" name="match_duration" required
                value="{% if request.POST.match_duration %}{{ request.POST.match_duration }}{% elif preset.match_duration and preset_name != 'non spécifié' %}{{ preset.match_duration }}{% endif %}">
+      </div>
+      <div class="form-group">
+        <label>Durée de la mi-temps (minutes) :</label>
+        <input type="number" class="form-control" name="half_time_duration" required
+               value="{% if request.POST.half_time_duration %}{{ request.POST.half_time_duration }}{% elif preset.half_time_duration and preset_name != 'non spécifié' %}{{ preset.half_time_duration }}{% endif %}">
       </div>
 
     {% elif sport == 'basketball' %}
