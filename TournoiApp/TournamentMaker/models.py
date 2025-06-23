@@ -1,4 +1,5 @@
 import random
+import uuid
 from datetime import date
 from itertools import combinations
 
@@ -22,12 +23,14 @@ class Organisateur(models.Model):
     def __str__(self):
         return f"Organisateur: {self.user.email}"
 
+
 class Tournament(models.Model):
+    # ── Choix ────────────────────────────────────────────────────────────────
     SPORT_CHOICES = [
-        ('football', 'Football'),
+        ('football',   'Football'),
         ('volleyball', 'Volleyball'),
         ('basketball', 'Basketball'),
-        ('rugby', 'Rugby'),
+        ('rugby',      'Rugby'),
     ]
 
     TOURNAMENT_TYPE_CHOICES = [
@@ -56,12 +59,27 @@ class Tournament(models.Model):
     quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
     number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
     slug = models.SlugField(max_length=200, unique=False, blank=True)
+
+
+    def all_pool_matches_completed(self) -> bool:
+        """
+        Retourne True si chaque pool rattachée à ce tournoi a
+        tous ses matchs terminés (méthode all_matches_played()).
+        """
+        return all(pool.all_matches_played() for pool in self.pools.all())
+
     
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            base_slug = slugify(self.name)
+            slug_candidate = base_slug
+            while Tournament.objects.filter(slug=slug_candidate).exclude(pk=self.pk).exists():
+                suffix = uuid.uuid4().hex[:6]
+                slug_candidate = f"{base_slug}-{suffix}"
+            self.slug = slug_candidate
         super().save(*args, **kwargs)
-        
+
+    # ── Représentation ───────────────────────────────────────────────────────
     def __str__(self):
         return self.name
 
