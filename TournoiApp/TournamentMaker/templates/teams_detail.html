@@ -1,10 +1,100 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
+<style>
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+    max-width: 1200px;
+    margin-inline: auto;
+  }
+
+  .player-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .player-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .player-image {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .player-image img,
+  .default-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    color: #888;
+  }
+
+  .player-info {
+    text-align: center;
+  }
+
+  .player-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .player-birthdate {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.25rem;
+  }
+
+  .player-level {
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  .default-logo-detail {
+    font-size: 2.5rem;
+    color: #3e64ff;
+    margin-bottom: 0.5rem;
+  }
+
+  .team-header {
+    text-align: center;
+    margin: 2rem auto;
+    max-width: 600px;
+  }
+
+  .team-name-detail {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+</style>
+
 <div class="teams-container animate__animated animate__fadeIn">
-  <div class="team-header text-center">
+  <div class="team-header">
     <h2 class="section-title"><i class="fas fa-tshirt"></i> Détails de l'Équipe</h2>
-    
+
     <p class="team-name-detail">{{ team.name }}</p>
 
     {% if team.logo %}
@@ -13,7 +103,7 @@
       </div>
     {% else %}
       <div class="default-logo-detail">
-        <i class="fas fa-volleyball-ball"></i>
+        <i class="fas fa-users"></i>
       </div>
     {% endif %}
 
@@ -21,7 +111,7 @@
     <p><strong>Défaites :</strong> {{ team.losses|default:"0" }}</p>
   </div>
 
-  <div class="players-grid" id="playersList">
+  <div class="players-grid">
     {% if team.players.count > 0 %}
       {% for player in team.players.all %}
         <a href="{% url 'player_detail' tournament_slug player.id %}" class="player-card {{ player.level|lower }}">
@@ -33,11 +123,11 @@
                 <i class="fas fa-user"></i>
               </div>
             {% endif %}
-            <span class="player-age">{{ player.birth_date }}</span>
           </div>
 
           <div class="player-info">
             <h3 class="player-name">{{ player.first_name }} <strong>{{ player.last_name }}</strong></h3>
+            <div class="player-birthdate">{{ player.birth_date|date:"d F Y" }}</div>
             <div class="player-level {{ player.level|lower }}">
               {{ player.get_level_display }}
             </div>
@@ -51,16 +141,11 @@
       </div>
     {% endif %}
   </div>
- 
-  <div class="text-start mt-4">
+
+  <div class="text-start mt-4 text-center">
     <a href="{% url 'teams' tournament_slug %}" class="btn-simple-return">
       <i class="fas fa-arrow-left"></i> Retour à la liste des équipes
     </a>
   </div>
-
-
-  </div>
- 
-
 </div>
 {% endblock %}

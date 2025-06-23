@@ -98,7 +98,13 @@
 
         {% elif tournoi.sport == "football" %}
           <div class="col-md-4 border-start border-2 border-dark-subtle">
-            <p><i class="fas fa-clock text-primary"></i> <strong> Durée du match :</strong> {{ tournoi.match_duration }} min</p>
+            <p><i class="fas fa-clock text-primary"></i> <strong> Durée du match :</strong>
+              {% if tournoi.match_duration %}
+                {{ tournoi.match_duration }} min
+              {% else %}
+                durée non précisée
+              {% endif %}
+            </p>
           </div>
           <div class="col-md-4 border-start border-2 border-dark-subtle">
             <p><i class="fas fa-plus text-primary"></i> <strong> Prolongation :</strong> {{ tournoi.extra_time|yesno:"Oui,Non" }}</p>
@@ -115,7 +121,13 @@
 
         {% elif tournoi.sport == "rugby" %}
           <div class="col-md-8 border-start border-2 border-dark-subtle">
-            <p><i class="fas fa-clock text-primary"></i> <strong> Durée du match :</strong> {{ tournoi.match_duration }} min</p>
+            <p><i class="fas fa-clock text-primary"></i> <strong> Durée du match :</strong>
+              {% if tournoi.match_duration %}
+                {{ tournoi.match_duration }} min
+              {% else %}
+                durée non précisée
+              {% endif %}
+            </p>
           </div>
         {% endif %}
       </div>
