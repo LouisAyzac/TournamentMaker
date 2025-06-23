@@ -14,8 +14,8 @@ class Command(BaseCommand):
         levels = [choice[0] for choice in Player.LEVEL_CHOICES]
  
         tournament_count = 1
-        for num_pools in range(2, 9):  # de 2 à 8 poules
-            for _ in range(2):  # deux tournois par config
+        for num_pools in range(3,4): 
+            for _ in range(1):  
                 tournament = Tournament.objects.create(
                     name=f"Tournament {tournament_count}",
                     department=str(fake.random_int(min=1, max=95)).zfill(2),
@@ -23,10 +23,12 @@ class Command(BaseCommand):
                     is_indoor=random.choice([True, False]),
                     start_date=fake.date_this_year(),
                     end_date=fake.date_this_year(),
-                    sport=random.choice(sports),
-                    max_teams=num_pools * 2,
+                    sport="football",
+                    max_teams=20,
                     players_per_team=1,
-                    number_of_pools=2,
+
+                    number_of_pools=num_pools,
+
                     type_tournament='RR',
                     nb_sets_to_win=1,
                     points_per_set=25
@@ -37,12 +39,13 @@ class Command(BaseCommand):
 
                 for p_index in range(num_pools):
                     pool = Pool.objects.create(
-                        name=f"Pool {p_index}",
+                        name=f" {p_index}",
                         tournament=tournament,
-                        max_size=2
                     )
+                    
 
-                    for t_index in range(1, 4):  # 2 équipes
+                    for t_index in range(1, 5):  # 2 équipes
+                        
                         team_name = f"{p_index}.{t_index}"
                         team = Team.objects.create(
                             name=team_name,
