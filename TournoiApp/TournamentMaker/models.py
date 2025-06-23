@@ -1,4 +1,5 @@
 import random
+import uuid
 from datetime import date
 from itertools import combinations
 
@@ -22,12 +23,14 @@ class Organisateur(models.Model):
     def __str__(self):
         return f"Organisateur: {self.user.email}"
 
+
 class Tournament(models.Model):
+    # ── Choix ────────────────────────────────────────────────────────────────
     SPORT_CHOICES = [
-        ('football', 'Football'),
+        ('football',   'Football'),
         ('volleyball', 'Volleyball'),
         ('basketball', 'Basketball'),
-        ('rugby', 'Rugby'),
+        ('rugby',      'Rugby'),
     ]
 
     TOURNAMENT_TYPE_CHOICES = [
@@ -68,9 +71,15 @@ class Tournament(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            base_slug = slugify(self.name)
+            slug_candidate = base_slug
+            while Tournament.objects.filter(slug=slug_candidate).exclude(pk=self.pk).exists():
+                suffix = uuid.uuid4().hex[:6]
+                slug_candidate = f"{base_slug}-{suffix}"
+            self.slug = slug_candidate
         super().save(*args, **kwargs)
-        
+
+    # ── Représentation ───────────────────────────────────────────────────────
     def __str__(self):
         return self.name
 
