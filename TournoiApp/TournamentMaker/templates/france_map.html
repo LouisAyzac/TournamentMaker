@@ -1,68 +1,50 @@
-{% extends "base_generic.html" %}
+{% extends 'base_generic.html' %}
 
 {% block content %}
-<h2 class="section-title">🗺️ Carte des tournois en France</h2>
+<style>
+  .nav-buttons-container .nav-button:not(:first-child) {
+    display: none !important;
+  }
+</style>
+<h2>Carte des Tournois</h2>
 
-<div id="map" style="height: 600px;"></div>
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-{% endblock %}
+<!-- Carte -->
+<div id="map" style="height: 600px; width: 100%;"></div>
 
-{% block extrahead %}
-<!-- Leaflet CSS -->
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"
-/>
-{% endblock %}
-
-{% block extrascript %}
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<!-- MarkerCluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    var map = L.map("map").setView([46.8, 2.5], 6);
+  const map = L.map('map').setView([48.85, 2.35], 6);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-    }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: 'Map data © OpenStreetMap contributors',
+  }).addTo(map);
 
-    var markers = L.markerClusterGroup();
+  const markerCluster = L.markerClusterGroup();
 
-    var tournaments = [
-      {% for tournoi in tournois %}
-        {% if tournoi.latitude and tournoi.longitude %}
-        {
-          name: "{{ tournoi.name|escapejs }}",
-          lat: {{ tournoi.latitude }},
-          lon: {{ tournoi.longitude }},
-          department: "{{ tournoi.department|default:'NC' }}",
-          sport: "{{ tournoi.get_sport_display|escapejs }}",
-          id: {{ tournoi.id }}
-        },
-        {% endif %}
-      {% endfor %}
-    ];
+  // Utilise les données injectées par Django
+  const markers = JSON.parse(`{{ markers|escapejs }}`);
 
-    console.log("TOURNOIS:", tournaments); // ✅ debug
+  markers.forEach(marker => {
+    console.log("🧪 marker reçu :", marker);
+    const point = L.marker([marker.latitude, marker.longitude])
+      .bindPopup(`
+  <strong>${marker.name}</strong><br>
+  ${marker.address}<br>
+  <a href="/TournamentMaker/${marker.slug}/detail">Voir le tournoi</a>
+`);
 
-    tournaments.forEach(function (t) {
-      var marker = L.marker([t.lat, t.lon]);
-      marker.bindPopup(`
-        <strong>${t.name}</strong><br>
-        Département : ${t.department}<br>
-        Sport : ${t.sport}<br>
-        <a href="/TournamentMaker/tournament/${t.id}/">Voir détails</a>
-      `);
-      markers.addLayer(marker);
-    });
-
-    map.addLayer(markers);
+    markerCluster.addLayer(point);
   });
+
+  map.addLayer(markerCluster);
 </script>
+
 {% endblock %}

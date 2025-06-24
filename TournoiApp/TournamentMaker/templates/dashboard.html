@@ -20,9 +20,41 @@
     {% endif %}
   </p>
 
+  <!-- PODIUM -->
+  {% if winner and finalist and third_place %}
+  <div class="real-podium d-flex justify-content-center align-items-end my-4 gap-5 flex-wrap">
+    <!-- 2e -->
+    <div class="text-center">
+      <div class="step silver-step">2</div>
+      <div class="mt-2">
+        <i class="fas fa-medal silver me-1"></i>
+        <a href="{% url 'team_detail' tournoi.slug finalist.id %}" class="team-link">{{ finalist.name }}</a>
+      </div>
+    </div>
+
+    <!-- 1er -->
+    <div class="text-center">
+      <div class="step gold-step">1</div>
+      <div class="mt-2">
+        <i class="fas fa-trophy gold me-1"></i>
+        <a href="{% url 'team_detail' tournoi.slug winner.id %}" class="team-link fw-bold">{{ winner.name }}</a>
+      </div>
+    </div>
+
+    <!-- 3e -->
+    <div class="text-center">
+      <div class="step bronze-step">3</div>
+      <div class="mt-2">
+        <i class="fas fa-award bronze me-1"></i>
+        <a href="{% url 'team_detail' tournoi.slug third_place.id %}" class="team-link">{{ third_place.name }}</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <hr class="my-4">
 
-  <!-- Informations générales -->
+  <!-- Infos générales -->
   <div class="row justify-content-center text-dark mb-4">
     <div class="col-md-10 rounded p-4 shadow-sm" style="background-color: #f1f1f1;">
       <h5 class="fw-bold mb-4 text-center">
@@ -42,9 +74,10 @@
       </div>
     </div>
   </div>
-
-  <!-- Règles du tournoi -->
-  <div class="row justify-content-center text-dark">
+ 
+  <!-- Règles -->
+   
+  <div class="row justify-content-center text-dark mb-4">
     <div class="col-md-10 rounded p-4 shadow-sm" style="background-color: #f1f1f1;">
       <h5 class="fw-bold mb-4 text-center">
         <i class="fas fa-gavel text-primary"></i> Règles du tournoi
@@ -64,14 +97,65 @@
       </div>
     </div>
   </div>
+ 
+  <!-- Détails -->
+
+  <div class="row justify-content-center mb-5">
+    <div class="col-md-10 text-center">
+      <a href="{% url 'tournament_detail' tournoi.slug %}" class="btn w-100"
+         style="background-color: #d1d5db; color: black; font-weight: 600; padding: 14px 24px; border-radius: 10px;">
+        <i class="fas fa-clipboard-list me-2"></i> Voir les détails complets du tournoi
+      </a>
+    </div>
+  </div>
 
   <hr class="my-5">
 </div>
 
-<!-- Bouton de retour à gauche -->
+<!-- Retour -->
 <div class="text-start ms-4 mb-5">
   <a href="{% url 'home' %}" class="btn-simple-return">
     <i class="fas fa-arrow-left me-2"></i> Revenir à la liste des tournois
   </a>
 </div>
+
+<!-- STYLES -->
+<style>
+  .real-podium .step {
+    width: 70px;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+
+  .gold-step {
+    background: linear-gradient(45deg, #FFD700, #FFC107);
+    height: 100px;
+  }
+
+  .silver-step {
+    background: linear-gradient(45deg, #C0C0C0, #B0B0B0);
+    height: 80px;
+  }
+
+  .bronze-step {
+    background: linear-gradient(45deg, #cd7f32, #b87333);
+    height: 60px;
+  }
+
+  .team-link {
+    text-decoration: none;
+    color: #333;
+  }
+
+  .team-link:hover {
+    text-decoration: underline;
+  }
+</style>
 {% endblock %}

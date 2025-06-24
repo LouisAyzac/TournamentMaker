@@ -1,9 +1,46 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
+
+<div class="container mt-4">
+  <div class="p-4 rounded shadow-sm text-center bg-gradient" style="background: linear-gradient(to right, #e0f7ff, #dceeff); border: 1px solid #b6d4fe;">
+    
+    <!-- Infos principales -->
+    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4 fw-semibold fs-5 text-dark">
+      <div class="d-flex align-items-center gap-2">
+        <span style="font-size: 1.4em;">🏆</span>
+        <span class="text-dark">{{ tournament.name }}</span>
+      </div>
+      
+      <div class="d-flex align-items-center gap-2">
+        {% if tournament.get_sport_display == 'Volleyball' %}
+          <span style="font-size: 1.2em;">🏐</span>
+        {% elif tournament.get_sport_display == 'Football' %}
+          <span style="font-size: 1.2em;">⚽</span>
+        {% elif tournament.get_sport_display == 'Basketball' %}
+          <span style="font-size: 1.2em;">🏀</span>
+        {% else %}
+          <i class="fas fa-dumbbell"></i>
+        {% endif %}
+        <span>{{ tournament.get_sport_display }}</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <i class="fas fa-calendar-alt text-purple"></i>
+        <span>du {{ tournament.start_date|date:"d/m/Y" }} au {{ tournament.end_date|date:"d/m/Y" }}</span>
+      </div>
+    </div>
+
+    <!-- Adresse ajoutée ici -->
+    <p class="text-muted fst-italic small fs-6 mt-2 mb-0">{{ tournament.address }}</p>
+
+  </div>
+</div>
+
 <div class="phase-final-wrapper">
-  <h1 class="title">Matchs de la phase finale</h1>
-  <p class="subtitle">Matchs de phase finale pour ce tournoi.</p>
+  <h1 class="title" style="color: #000;">Matchs de la phase finale</h1>
+
+  
 
   {% if match_groups %}
     <style>
@@ -19,12 +56,6 @@
         font-weight: bold;
         margin-bottom: 10px;
         color: #111;
-      }
-
-      .subtitle {
-        font-size: 1rem;
-        color: #444;
-        margin-bottom: 25px;
       }
 
       .phase-title {
@@ -86,49 +117,22 @@
         font-style: italic;
         color: #aaa;
       }
-
-      ::before,
-      ::after {
-        margin: 0;
-        padding: 0;
-        border-left: none !important;
-      }
     </style>
 
     {% for group in match_groups %}
-      <div class="phase-title">
-        {% if group.matchs|length == 1 %}
-          Finale
-        {% elif group.matchs|length == 2 %}
-          Demi-finales
-        {% elif group.matchs|length == 4 %}
-          Quarts de finale
-        {% elif group.matchs|length == 8 %}
-          Huitièmes de finale
-        {% else %}
-          Phase finale ({{ group.matchs|length }} matchs)
-        {% endif %}
-      </div>
+      <div class="phase-title">{{ group.label }}</div>
 
       <div class="match-list">
         {% for match in group.matchs %}
-          <a href="{% url 'score_match' match.id %}?tournament_id={{ match.tournament.id }}&from=phase_finale" class="match-link">
+<a href="{% url 'score_match' tournament_slug=match.tournament.slug match_id=match.id %}?from=phase_finale" class="match-link">
 
             <div class="match-card">
               <span class="team-name {% if match.winner_team == match.team_a %}winner{% endif %}">
-                {% if match.team_a %}
-                  {{ match.team_a.name }}
-                {% else %}
-                  <span class="pending">En attente</span>
-                {% endif %}
+                {{ match.team_a.name|default:"En attente" }}
               </span>
               <span class="vs">vs</span>
               <span class="team-name {% if match.winner_team == match.team_b %}winner{% endif %}">
-                {% if match.team_b %}
-                  {{ match.team_b.name }}
-                {% else %}
-                  <span class="pending">En attente</span>
-                {% endif %}
+                {{ match.team_b.name|default:"En attente" }}
               </span>
             </div>
           </a>
@@ -136,7 +140,22 @@
       </div>
     {% endfor %}
   {% else %}
-    <p class="info-message">Aucun match à afficher pour cette phase finale.</p>
+    <p class="info-message" style="color: #000;">Aucun match à afficher pour cette phase finale pour le moment.</p>
   {% endif %}
 </div>
+<<<<<<< HEAD
+
+=======
+ 
+>>>>>>> ange
+<div class="text-start mt-5 mb-4 ps-3">
+  <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
+    <i class="fas fa-arrow-left me-2"></i>Revenir à la sélection de la phase
+  </a>
+</div>
 {% endblock %}
+<<<<<<< HEAD
+
+=======
+ 
+>>>>>>> ange
