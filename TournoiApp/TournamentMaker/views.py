@@ -33,6 +33,12 @@ LEVEL_MAP = {
 # === Page d'accueil et généralités ===
 
 
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.timezone import now
+from .models import Tournament
+
 def home(request):
     # Gestion sélection tournoi → stocker en session
     if 'tournament_id' in request.GET:
@@ -41,9 +47,8 @@ def home(request):
         request.session['selected_tournament_id'] = tournoi.id
         request.session['selected_tournament_name'] = tournoi.name
         request.session['type_tournament'] = tournoi.type_tournament
-        request.session['selected_tournament_end'] = str(tournoi.end_date)  # 👈 ajoute ceci
-
-        return redirect('dashboard', tournament_slug=tournoi.slug)  # Correction ici ✅
+        request.session['selected_tournament_end'] = str(tournoi.end_date)
+        return redirect('dashboard', tournament_slug=tournoi.slug)
 
     if request.method == 'POST':
         selected_id = request.POST.get('tournament_id')
@@ -52,51 +57,76 @@ def home(request):
             request.session['selected_tournament_id'] = tournoi.id
             request.session['selected_tournament_name'] = tournoi.name
             request.session['type_tournament'] = tournoi.type_tournament
-            return redirect('dashboard', tournament_slug=tournoi.slug)  # Correction ici ✅
+            return redirect('dashboard', tournament_slug=tournoi.slug)
 
-    # Gestion affichage
     today = now().date()
     category = request.GET.get('category', 'all')
 
+    # Base queryset selon catégorie
     if category == 'ongoing':
         tournois = Tournament.objects.filter(start_date__lte=today, end_date__gte=today)
     elif category == 'upcoming':
         tournois = Tournament.objects.filter(start_date__gt=today)
     elif category == 'past':
         tournois = Tournament.objects.filter(end_date__lt=today)
-    elif category == 'all':
-        tournois = Tournament.objects.all()
     else:
         tournois = Tournament.objects.all()
 
-    # Filtres sport + département
+    # Filtres
     sports = Tournament.SPORT_CHOICES
     selected_sport = request.GET.get('sport')
     selected_department = request.GET.get('department')
+    selected_type = request.GET.get('type_tournament')
+    search_query = request.GET.get('search')
+    date_order = request.GET.get('date_order')
 
     if selected_sport:
         tournois = tournois.filter(sport=selected_sport)
+
     if selected_department:
         tournois = tournois.filter(department__icontains=selected_department)
 
+    if selected_type:
+        tournois = tournois.filter(type_tournament=selected_type)
+
+    if search_query:
+        tournois = tournois.filter(name__icontains=search_query)
+
+    # Tri par date
+    if date_order == 'asc':
+        tournois = tournois.order_by('start_date')
+    elif date_order == 'desc':
+        tournois = tournois.order_by('-start_date')
+
     # Pagination
-    paginator = Paginator(tournois, 6)  # 6 tournois par page
+    paginator = Paginator(tournois, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Context
+    # Construction du querystring pour pagination
+    filters = request.GET.copy()
+    if 'page' in filters:
+        filters.pop('page')
+    querystring = filters.urlencode()
+
+    # Contexte
     context = {
-        'tournois': page_obj,  # paginé
+        'tournois': page_obj,
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages(),
         'category': category,
         'sports': sports,
         'selected_sport': selected_sport,
         'selected_department': selected_department,
+        'selected_type': selected_type,
+        'search_query': search_query,
+        'date_order': date_order,
+        'querystring': querystring,
         'today': today,
     }
 
     return render(request, 'home.html', context)
+
 
 
 def index(request):
