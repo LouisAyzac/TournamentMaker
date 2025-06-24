@@ -46,9 +46,9 @@
 
 ### 📥 Installation
 
-1. **Cloner le dépôt :**
+1. **Cloner le dépôt dans un dossier vide :**
    ```bash
-   git clone <lien-du-repo>
+   git clone https://github.com/LouisAyzac/TournamentMaker.git
    cd TournamentMaker/TournoiApp
 
 
