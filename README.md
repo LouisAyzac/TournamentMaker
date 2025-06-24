@@ -51,29 +51,22 @@
    git clone https://github.com/LouisAyzac/TournamentMaker.git
    cd TournamentMaker/TournoiApp
 
-
-2. **Créer un environnement virtuel (optionnel mais recommandé) :**
-   ```bash
-   python -m venv env
-   source env/bin/activate  # Sous Windows : env\Scripts\activate
-   ```
-
-3. **Installer les dépendances :**
+2. **Installer les dépendances :**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Appliquer les migrations :**
+3. **Appliquer les migrations :**
    ```bash
    python manage.py migrate
    ```
 
-5. **Lancer le serveur :**
+4. **Lancer le serveur :**
    ```bash
    python manage.py runserver
    ```
 
-6. **Accéder à l’application :**
+5. **Accéder à l’application :**
    Ouvrez votre navigateur à l’adresse : [http://localhost:8000](http://localhost:8000)
 
 ---
