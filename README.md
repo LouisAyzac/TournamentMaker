@@ -12,7 +12,10 @@
 ## Technologies 
 
 - [Python](https://docs.python.org)
-- [Django](http://django.org)
+- [Django](https://www.djangoproject.com)
+- [HTML](https://developer.mozilla.org/fr/docs/Web/HTML)
+- [CSS](https://developer.mozilla.org/fr/docs/Web/CSS)
+
 
 BRANCH DEV 
 
