@@ -142,13 +142,6 @@ TOURNAMENTMAKER/
 ├── README.md
 ├── .gitignore
 │
-├── TournoiApp/                     # Dossier principal du projet Django
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py
-│   ├── urls.py
-│   ├── wsgi.py
-│
 ├── TournioApp/                     # Application Django principale
 │   ├── __init__.py
 │   ├── admin.py
@@ -164,6 +157,15 @@ TOURNAMENTMAKER/
 │   ├── static/                    # Fichiers statiques (CSS, JS, images)
 │   ├── templates/                 # Fichiers HTML
 │   └── templatetags/             # Filtres ou tags personnalisés
+│
+├── TournoiApp/                     # Dossier principal du projet Django
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+│
+
 │
 ├── [autres fichiers divers...]
 
