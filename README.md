@@ -1,45 +1,56 @@
-# TournamentMaker
+# 🏆 TournamentMaker
 
-## Membres du projet 
-
-- Ange Gagnard https://onlywei.github.io/explain-git-with-d3/
-- Pablo Minelian https://ohmygit.org
-- Florian Garcia--Salon "https://openclassrooms.com/fr/courses/7162856-gerez-du-code-avec-git-et-github"
-- Antoine Huang (https://eagain.net/articles/git-for-computer-scientists/)
-- Louis Ayzac https://youtube.com/watch?v=1ffBJ4sVUb4&t=125s
-- Remy Adboul Mazidou https://agripongit.vincenttunru.com/
-
-## Technologies 
-
-- [Python](https://docs.python.org)
-- [Django](https://www.djangoproject.com)
-- [HTML](https://developer.mozilla.org/fr/docs/Web/HTML)
-- [CSS](https://developer.mozilla.org/fr/docs/Web/CSS)
-
-
-BRANCH DEV 
-
-# TournamentMaker
-
-TournamentMaker est une application web Django permettant de créer, gérer et suivre des tournois.
+**TournamentMaker** est une application web développée avec **Django**. Elle permet de **créer**, **gérer** et **suivre facilement des tournois**, qu'ils soient sportifs, e-sport ou autres. Ce projet a été réalisé dans un cadre pédagogique afin de renforcer nos compétences en développement web, en gestion de version avec Git, et en travail d’équipe.
 
 ---
 
-## 🧑‍💻 User Guide
+## 👥 Membres du projet
 
-### Prérequis
+- **Ange Gagnard** – [Visualisation Git avec D3.js](https://onlywei.github.io/explain-git-with-d3/)
+- **Pablo Minelian** – [Jeu pédagogique Git](https://ohmygit.org)
+- **Florian Garcia--Salon** – [Cours OpenClassrooms : Git & GitHub](https://openclassrooms.com/fr/courses/7162856-gerez-du-code-avec-git-et-github)
+- **Antoine Huang** – [Git for Computer Scientists](https://eagain.net/articles/git-for-computer-scientists/)
+- **Louis Ayzac** – [Conférence Git (YouTube)](https://youtube.com/watch?v=1ffBJ4sVUb4&t=125s)
+- **Rémy Adboul Mazidou** – [AgriponGit – Visualiseur Git](https://agripongit.vincenttunru.com/)
+
+---
+
+## ⚙️ Technologies utilisées
+
+- [Python](https://docs.python.org) – Langage de programmation
+- [Django](https://www.djangoproject.com) – Framework web back-end
+- [HTML](https://developer.mozilla.org/fr/docs/Web/HTML) – Structure des pages
+- [CSS](https://developer.mozilla.org/fr/docs/Web/CSS) – Mise en forme et design
+
+> **Branche principale de développement** : `dev`
+
+---
+
+## 🚀 Fonctionnalités principales
+
+- Création de tournois personnalisés
+- Ajout de joueurs ou d’équipes
+- Génération automatique des matchs
+- Suivi des scores et des résultats
+- Tableau d’administration sécurisé
+
+---
+
+## 🧑‍💻 Guide d'installation (User Guide)
+
+### ✅ Prérequis
 
 - Python 3.8 ou supérieur
 - pip (installé avec Python)
-- (optionnel) Environnement virtuel : `python -m venv env`
+- (optionnel) Environnement virtuel Python
 
-### Installation
+### 📥 Installation
 
 1. **Cloner le dépôt :**
    ```bash
-   git clone <lien-vers-le-repo>
+   git clone <lien-du-repo>
    cd TournamentMaker/TournoiApp
-   ```
+
 
 2. **Créer un environnement virtuel (optionnel mais recommandé) :**
    ```bash
