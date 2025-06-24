@@ -161,7 +161,7 @@ TOURNAMENTMAKER/
 ├── TournoiApp/                     # Dossier principal du projet Django
 │   ├── __init__.py
 │   ├── asgi.py
-│   ├── settings.py
+│   ├── settings.py                 # Contient tous les paramètres de configuration du projet Django
 │   ├── urls.py
 │   ├── wsgi.py
 │
