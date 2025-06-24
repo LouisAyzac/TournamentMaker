@@ -1193,19 +1193,11 @@ def get_next_phase(current_phase):
     }.get(current_phase)
 
 def advance_elimination_bracket(match):
-    """
-    Propagation du vainqueur d’un match vers la phase suivante.
-    Fonctionne pour les tournois de type Round-Robin (RR + phases finales)
-    et Direct Elimination (DE).
-    """
-    # --------------------------- Récupération du tournoi --------------------------- #
+
     tournament = match.tournament or (match.pool.tournament if match.pool else None)
     if not tournament:
         return
-
-    # ============================================================================= #
-    #                                1.  TOURNOI  RR                                #
-    # ============================================================================= #
+ 
     if tournament.type_tournament == 'RR':
         # 1️⃣  Détermination du vainqueur / perdant
         winner = match.get_match_winner()
@@ -1280,10 +1272,7 @@ def advance_elimination_bracket(match):
         if next_match.statut == 'T' and next_match.get_match_winner():
             advance_elimination_bracket(next_match)
 
-    # ============================================================================= #
-    #                                2.  TOURNOI  DE                                #
-    # ============================================================================= #
-    else:  # tournament.type_tournament == 'DE'
+    else:  
         winner = match.get_match_winner()
         if not winner:
             return

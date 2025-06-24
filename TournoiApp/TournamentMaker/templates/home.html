@@ -82,7 +82,7 @@
           {% elif tournoi.start_date > today %}
             <span class="badge bg-primary ms-2">🔵 À venir</span>
           {% else %}
-            <span class="badge bg-secondary ms-2">⚫ Terminé</span>
+            <span class="badge bg-secondary ms-2">⚫ Passé</span>
           {% endif %}
           {% if tournoi.teams.count >= tournoi.max_teams and tournoi.end_date >= today %}
             <span class="badge bg-danger ms-2">❗ Complet</span>
