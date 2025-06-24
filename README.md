@@ -134,7 +134,7 @@ Puis accéder à : [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
 
 ### Structure du projet
 
-```
+
 TOURNAMENTMAKER/
 │
 ├── manage.py
@@ -169,7 +169,7 @@ TOURNAMENTMAKER/
 │
 ├── [autres fichiers divers...]
 
-```
+
 
 ### Création d’une nouvelle app
 
