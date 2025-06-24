@@ -113,36 +113,41 @@ from .models import Tournament, Team
 
 def dashboard(request, tournament_slug):
     tournoi = get_object_or_404(Tournament, slug=tournament_slug)
-    today = now().date()
 
+    # Statut selon date
+    today = now().date()
     if tournoi.start_date > today:
         statut = "À venir"
-    elif tournoi.end_date < today:
-        statut = "Terminé"
-    else:
+    elif tournoi.start_date <= today <= tournoi.end_date:
         statut = "En cours"
+    else:
+        statut = "Terminé"
 
-    # 🔁 Stockage session
-    request.session['selected_tournament_id'] = tournoi.id
-    request.session['selected_tournament_name'] = tournoi.name
-    request.session['type_tournament'] = tournoi.type_tournament
-    request.session['teams_count'] = tournoi.teams.count()
-    request.session['max_teams'] = tournoi.max_teams
-    request.session['tournament_statut'] = statut
+    # Récupérer les matchs de finale et petite finale
+    final_match = Match.objects.filter(tournament=tournoi, phase='final', statut='T').first()
+    third_place_match = Match.objects.filter(tournament=tournoi, phase='third_place', statut='T').first()
 
-    # ✅ Nouveau classement avec champ "ranking"
-    classement = Team.objects.filter(tournament=tournoi, ranking__isnull=False).order_by('ranking')
-    winner = classement[0] if classement.count() > 0 else None
-    finalist = classement[1] if classement.count() > 1 else None
-    third_place = classement[2] if classement.count() > 2 else None
+    winner = finalist = third_place = None
 
-    return render(request, 'dashboard.html', {
+    # Identifier les 3 premières équipes
+    if final_match and final_match.get_match_winner():
+        winner = final_match.get_match_winner()
+        finalist = final_match.team_b if final_match.team_a == winner else final_match.team_a
+
+    if third_place_match and third_place_match.get_match_winner():
+        third_place = third_place_match.get_match_winner()
+
+    context = {
         'tournoi': tournoi,
         'statut': statut,
         'winner': winner,
         'finalist': finalist,
         'third_place': third_place,
-    })
+        # ... ajoute ici le reste de ton context si besoin
+    }
+
+    return render(request, 'dashboard.html', context)
+
 
 
 
