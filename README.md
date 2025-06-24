@@ -1,10 +1,10 @@
-# 🏆 TournamentMaker
+# TournamentMaker
 
 **TournamentMaker** est une application web développée avec **Django**. Elle permet de **créer**, **gérer** et **suivre facilement des tournois**, qu'ils soient sportifs, e-sport ou autres. Ce projet a été réalisé dans un cadre pédagogique afin de renforcer nos compétences en développement web, en gestion de version avec Git, et en travail d’équipe.
 
 ---
 
-## 👥 Membres du projet
+## Membres du projet
 
 - **Ange Gagnard** – [Visualisation Git avec D3.js](https://onlywei.github.io/explain-git-with-d3/)
 - **Pablo Minelian** – [Jeu pédagogique Git](https://ohmygit.org)
@@ -15,7 +15,7 @@
 
 ---
 
-## ⚙️ Technologies utilisées
+## Technologies utilisées
 
 - [Python](https://docs.python.org) – Langage de programmation
 - [Django](https://www.djangoproject.com) – Framework web back-end
@@ -26,7 +26,7 @@
 
 ---
 
-## 🚀 Fonctionnalités principales
+## Fonctionnalités principales
 
 - Création de tournois personnalisés
 - Ajout de joueurs ou d’équipes
@@ -36,9 +36,9 @@
 
 ---
 
-## 🧑‍💻 Guide d'installation (User Guide)
+## User Guide
 
-# 🛠️ Installation de Django
+# Installation de Django
 
 ## Prérequis
 
@@ -130,7 +130,7 @@ Puis accéder à : [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
 
 ---
 
-## 🛠 Developer Guide
+## Developer Guide
 
 ### Structure du projet
 
