@@ -114,7 +114,7 @@ django-admin --version
    ```
 
 6. **Accéder à l’application :**
-   Ouvrez votre navigateur à l’adresse : [http://127.0.0.1:8000/TournamentMaker/](http://localhost:8000)](http://127.0.0.1:8000/TournamentMaker/)
+   Ouvrez votre navigateur à l’adresse : [http://127.0.0.1:8000/TournamentMaker/](http://127.0.0.1:8000/TournamentMaker/)
 
 ---
 
