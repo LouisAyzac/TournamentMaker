@@ -89,9 +89,9 @@ django-admin --version
 1. **Cloner le dépôt dans un dossier vide :**
    ```bash
    git clone https://github.com/LouisAyzac/TournamentMaker.git
-   cd TournamentMaker/TournoiApp
+   cd TournamentMaker/TournoiApp `Afin d'etre`
    ```
-   Afin de ce mettre dans le répertoire du site web 
+   
 
 2. **Installer les dépendances :**
    ```bash
