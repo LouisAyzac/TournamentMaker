@@ -1,10 +1,10 @@
-# TournamentMaker
+# 🏆 TournamentMaker
 
 **TournamentMaker** est une application web développée avec **Django**. Elle permet de **créer**, **gérer** et **suivre facilement des tournois**, qu'ils soient sportifs, e-sport ou autres. Ce projet a été réalisé dans un cadre pédagogique afin de renforcer nos compétences en développement web, en gestion de version avec Git, et en travail d’équipe.
 
 ---
 
-## Membres du projet
+## 👥 Membres du projet
 
 - **Ange Gagnard** – [Visualisation Git avec D3.js](https://onlywei.github.io/explain-git-with-d3/)
 - **Pablo Minelian** – [Jeu pédagogique Git](https://ohmygit.org)
@@ -15,7 +15,7 @@
 
 ---
 
-## Technologies utilisées
+## 🛠️ Technologies utilisées
 
 - [Python](https://docs.python.org) – Langage de programmation
 - [Django](https://www.djangoproject.com) – Framework web back-end
@@ -26,7 +26,7 @@
 
 ---
 
-## Fonctionnalités principales
+## ✨ Fonctionnalités principales
 
 - Création de tournois personnalisés
 - Ajout de joueurs ou d’équipes
@@ -36,105 +36,89 @@
 
 ---
 
-## User Guide
+## 👤 User Guide
 
-# Installation de Django
+### 🔧 Installation de Django
 
-## Prérequis
+#### Prérequis
 
 - **Python 3.8** ou plus récent  
 - **pip** (installé avec Python)  
 
----
+#### Étapes d’installation
 
-## Étapes d’installation
+1. Vérifier que Python est installé :
+    ```bash
+    python --version
+    ```
 
-### 1. Installer Python
+2. Mettre à jour `pip` :
+    ```bash
+    pip install --upgrade pip
+    ```
 
-Vérifie que Python est installé :
+3. Installer Django :
+    ```bash
+    pip install django
+    ```
 
-```bash
-python --version
-```
-
-Si ce n’est pas le cas, télécharge-le ici : <https://www.python.org/downloads/>
-
----
-
-
-### 2. Mettre à jour `pip`
-
-```bash
-pip install --upgrade pip
-```
-
----
-
-### 3. Installer Django
-
-```bash
-pip install django
-```
-
-Vérifie l’installation :
-
-```bash
-django-admin --version
-```
+4. Vérifier que Django est bien installé :
+    ```bash
+    django-admin --version
+    ```
 
 ---
 
-# Lancement du site web
+### 🚀 Lancement du site web
 
-1. **Cloner le dépôt dans un dossier vide :**
+1. **Cloner le dépôt :**
    ```bash
    git clone https://github.com/LouisAyzac/TournamentMaker.git
    cd TournamentMaker/TournoiApp 
    ```
-   
+
 2. **Installer les dépendances :**
    ```bash
    pip install django certifi
    ```
 
-3. **Appliquer les migrations s'il y en a :**
+3. **Préparer la base de données :**
    ```bash
    python manage.py makemigrations
    ```
-   Cela permet à Django de détecter les modifications dans les modèles et de préparer les fichiers nécessaires pour mettre à jour la base de données.
+   > Crée les fichiers de mise à jour pour la base de données.
 
    ```bash
    python manage.py migrate
    ```
-   Puis cela applique ces fichiers et crée ou modifie les tables dans la base de données.
+   > Applique les changements dans la base de données.
 
-5. **Lancer le serveur :**
+4. **Lancer le serveur de développement :**
    ```bash
    python manage.py runserver
    ```
 
-6. **Accéder à l’application :**
-   Ouvrez votre navigateur à l’adresse : [http://127.0.0.1:8000/TournamentMaker/](http://127.0.0.1:8000/TournamentMaker/)
+5. **Ouvrir l’application dans le navigateur :**
+   [http://127.0.0.1:8000/TournamentMaker/](http://127.0.0.1:8000/TournamentMaker/)
 
 ---
 
-## Accés à l'interface d'administrateur : 
+### 🔐 Accès à l’interface d’administration
 
 Créer un superutilisateur :
 ```bash
 python manage.py createsuperuser
 ```
-Il vous sera demandé un identifiant ainsi qu'un mot de passe 
-
-Puis accéder à : [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
+Puis accéder à l’interface :  
+[http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
 
 ---
 
-## Developer Guide
+## 🧑‍💻 Developer Guide
 
-### Structure du projet
+### 📁 Structure du projet
 
-```
+```plaintext
 TOURNAMENTMAKER/
 │
 ├── manage.py
@@ -144,53 +128,59 @@ TOURNAMENTMAKER/
 │
 ├── TournioApp/                     # Application Django principale
 │   ├── __init__.py
-│   ├── admin.py                    # Configure l’affichage des modèles dans l’interface d’administration
-│   ├── apps.py                     # Contient les infos de configuration de l’app
-│   ├── context_processors.py       # Permet d’ajouter des variables globales aux templates (optionnel)
-│   ├── models.py                   # Déclare les modèles (tables) de la base de données
-│   ├── tests.py                    # Contient des tests pour vérifier que le code fonctionne
-│   ├── urls.py                     # Définit les adresses (URL) propres à cette app
-│   ├── views.py                    # Gère la logique de traitement des pages web
-│   ├── migrations/                 # Fichiers de migration de la base
-│   ├── management/                 # (si utilisé pour custom commands)
-│   ├── services/                   # (code métier séparé)
-│   ├── static/                     # Fichiers statiques (CSS, JS, images)
+│   ├── admin.py                    # Configure l’administration
+│   ├── apps.py                     # Configuration de l'app
+│   ├── context_processors.py       # Variables globales pour les templates
+│   ├── models.py                   # Définition des modèles (tables)
+│   ├── tests.py                    # Tests unitaires
+│   ├── urls.py                     # Routes spécifiques à l'app
+│   ├── views.py                    # Logique des pages
+│   ├── migrations/                 # Historique des changements de la base
+│   ├── management/                 # Commandes personnalisées (optionnel)
+│   ├── services/                   # Code métier réutilisable
+│   ├── static/                     # Fichiers CSS, JS, images
 │   ├── templates/                  # Fichiers HTML
-│   └── templatetags/               # Filtres ou tags personnalisés
+│   └── templatetags/               # Tags/filtres personnalisés
 │
 ├── TournoiApp/                     # Dossier principal du projet Django
 │   ├── __init__.py
 │   ├── asgi.py
-│   ├── settings.py                 # Contient tous les paramètres de configuration du projet Django
+│   ├── settings.py                 # Configuration globale du projet
 │   ├── urls.py
-│   ├── wsgi.py
+│   └── wsgi.py
 │
-
-│
-├── [autres fichiers divers...]
+└── [autres fichiers éventuels...]
 ```
 
+---
 
-### Création d’une nouvelle app
+### ➕ Création d’une nouvelle app
 
 ```bash
 python manage.py startapp nom_de_votre_app
 ```
 
-Pensez à ajouter l’app dans `INSTALLED_APPS` de `settings.py`.
+> 🔁 N'oubliez pas d’ajouter l’app dans `INSTALLED_APPS` de `settings.py`.
 
-### Ajout de modèles et migrations
+---
 
-1. Définir les modèles dans `models.py`
-2. Exécuter :
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
+### 🛠️ Ajouter des modèles et gérer les migrations
+
+1. Écrire les modèles dans `models.py`
+2. Générer les migrations :
+    ```bash
+    python manage.py makemigrations
+    ```
+3. Appliquer les migrations :
+    ```bash
+    python manage.py migrate
+    ```
+
+---
 
 ## 📂 Autres fichiers utiles
 
-- `.gitignore` : liste les fichiers/dossiers exclus du contrôle de version
+- `.gitignore` : fichiers/dossiers ignorés par Git
 - `README.md` : ce fichier
 
 ---
