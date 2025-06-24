@@ -144,19 +144,19 @@ TOURNAMENTMAKER/
 │
 ├── TournioApp/                     # Application Django principale
 │   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── context_processors.py
-│   ├── models.py
-│   ├── tests.py
-│   ├── urls.py
-│   ├── views.py
+│   ├── admin.py                    # Configure l’affichage des modèles dans l’interface d’administration
+│   ├── apps.py                     # Contient les infos de configuration de l’app
+│   ├── context_processors.py       # Permet d’ajouter des variables globales aux templates (optionnel)
+│   ├── models.py                   # Déclare les modèles (tables) de la base de données
+│   ├── tests.py                    # Contient des tests pour vérifier que le code fonctionne
+│   ├── urls.py                     # Définit les adresses (URL) propres à cette app
+│   ├── views.py                    # Gère la logique de traitement des pages web
 │   ├── migrations/                 # Fichiers de migration de la base
-│   ├── management/                # (si utilisé pour custom commands)
-│   ├── services/                  # (code métier séparé)
-│   ├── static/                    # Fichiers statiques (CSS, JS, images)
-│   ├── templates/                 # Fichiers HTML
-│   └── templatetags/             # Filtres ou tags personnalisés
+│   ├── management/                 # (si utilisé pour custom commands)
+│   ├── services/                   # (code métier séparé)
+│   ├── static/                     # Fichiers statiques (CSS, JS, images)
+│   ├── templates/                  # Fichiers HTML
+│   └── templatetags/               # Filtres ou tags personnalisés
 │
 ├── TournoiApp/                     # Dossier principal du projet Django
 │   ├── __init__.py
@@ -187,16 +187,6 @@ Pensez à ajouter l’app dans `INSTALLED_APPS` de `settings.py`.
    python manage.py makemigrations
    python manage.py migrate
    ```
-
-### Interface d’administration
-
-Créer un superutilisateur :
-```bash
-python manage.py createsuperuser
-```
-Puis accéder à : [http://localhost:8000/admin](http://localhost:8000/admin)
-
----
 
 ## 📂 Autres fichiers utiles
 
