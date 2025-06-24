@@ -118,6 +118,18 @@ django-admin --version
 
 ---
 
+## Accés à l'interface d'administrateur : 
+
+Créer un superutilisateur :
+```bash
+python manage.py createsuperuser
+```
+Il vous sera demandé un identifiant ainsi qu'un mot de passe 
+
+Puis accéder à : [http://127.0.0.1:8000/TournamentMaker/admin/](http://127.0.0.1:8000/TournamentMaker/admin/)
+
+---
+
 ## 🛠 Developer Guide
 
 ### Structure du projet
