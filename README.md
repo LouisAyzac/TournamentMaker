@@ -126,7 +126,7 @@ python manage.py createsuperuser
 ```
 Il vous sera demandé un identifiant ainsi qu'un mot de passe 
 
-Puis accéder à : [http://127.0.0.1:8000/TournamentMaker/admin/](http://127.0.0.1:8000/TournamentMaker/admin/)
+Puis accéder à : [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
 
 ---
 
@@ -135,14 +135,38 @@ Puis accéder à : [http://127.0.0.1:8000/TournamentMaker/admin/](http://127.0.0
 ### Structure du projet
 
 ```
-TournamentMaker/
-└── TournoiApp/
-    ├── manage.py
-    └── TournoiApp/
-        ├── settings.py
-        ├── urls.py
-        ├── wsgi.py
-        └── asgi.py
+TOURNAMENTMAKER/
+│
+├── manage.py
+├── db.sqlite3
+├── README.md
+├── .gitignore
+│
+├── TournoiApp/                     # Dossier principal du projet Django
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+│
+├── TournioApp/                     # Application Django principale
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── context_processors.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   ├── migrations/                 # Fichiers de migration de la base
+│   ├── management/                # (si utilisé pour custom commands)
+│   ├── services/                  # (code métier séparé)
+│   ├── static/                    # Fichiers statiques (CSS, JS, images)
+│   ├── templates/                 # Fichiers HTML
+│   └── templatetags/             # Filtres ou tags personnalisés
+│
+├── [autres fichiers divers...]
+
 ```
 
 ### Création d’une nouvelle app
