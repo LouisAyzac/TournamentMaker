@@ -84,28 +84,18 @@ django-admin --version
 
 ---
 
-### 4. Créer un projet Django
-
-```bash
-django-admin startproject monprojet
-cd monprojet
-python manage.py runserver
-```
-
-Puis ouvre ton navigateur et visite : <http://127.0.0.1:8000>
-
----
-
-_Félicitations ! Django est maintenant installé et opérationnel._
+# Lancement du site web
 
 1. **Cloner le dépôt dans un dossier vide :**
    ```bash
    git clone https://github.com/LouisAyzac/TournamentMaker.git
    cd TournamentMaker/TournoiApp
+   ```
+   Afin de ce mettre dans le répertoire du site web 
 
 2. **Installer les dépendances :**
    ```bash
-   pip install -r requirements.txt
+   pip install django certifi
    ```
 
 3. **Appliquer les migrations :**
