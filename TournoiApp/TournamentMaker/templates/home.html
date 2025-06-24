@@ -37,6 +37,16 @@
           {% endfor %}
         </select>
       </div>
+
+       <div class="col">
+        <label for="type_tournament">Type :</label>
+        <select id="type_tournament" name="type_tournament" class="form-control">
+          <option value="">Tous les types</option>
+          <option value="RR" {% if type_tournament == "RR" %}selected{% endif %}>Round Robin</option>
+          <option value="DE" {% if type_tournament == "DE" %}selected{% endif %}>Élimination directe</option>
+        </select>
+      </div>
+
       <div class="col-md-4">
         <label for="department">Département :</label>
         <input type="number" name="department" id="department" class="form-control" 
