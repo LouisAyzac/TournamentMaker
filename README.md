@@ -38,21 +38,12 @@
 
 ## 🧑‍💻 Guide d'installation (User Guide)
 
-### ✅ Prérequis
-
-- [Python 3.8 ou supérieur] (https://www.python.org/downloads/)
-- pip (installé avec Python)
-- (optionnel) Environnement virtuel Python
-
-### 📥 Installation
-
 # 🛠️ Installation de Django
 
 ## Prérequis
 
 - **Python 3.8** ou plus récent  
 - **pip** (installé avec Python)  
-- _(optionnel)_ **virtualenv** ou **venv** pour isoler l’environnement
 
 ---
 
@@ -70,29 +61,8 @@ Si ce n’est pas le cas, télécharge-le ici : <https://www.python.org/download
 
 ---
 
-### 2. Créer un environnement virtuel (recommandé)
 
-```bash
-python -m venv env
-```
-
-Active-le :
-
-- **Linux / macOS**
-
-  ```bash
-  source env/bin/activate
-  ```
-
-- **Windows**
-
-  ```bash
-  env\Scripts\activate
-  ```
-
----
-
-### 3. Mettre à jour `pip`
+### 2. Mettre à jour `pip`
 
 ```bash
 pip install --upgrade pip
@@ -100,7 +70,7 @@ pip install --upgrade pip
 
 ---
 
-### 4. Installer Django
+### 3. Installer Django
 
 ```bash
 pip install django
@@ -114,7 +84,7 @@ django-admin --version
 
 ---
 
-### 5. Créer un projet Django
+### 4. Créer un projet Django
 
 ```bash
 django-admin startproject monprojet
