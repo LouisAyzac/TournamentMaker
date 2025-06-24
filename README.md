@@ -40,11 +40,93 @@
 
 ### ✅ Prérequis
 
-- Python 3.8 ou supérieur
+- [Python 3.8 ou supérieur] (https://www.python.org/downloads/)
 - pip (installé avec Python)
 - (optionnel) Environnement virtuel Python
 
 ### 📥 Installation
+
+# 🛠️ Installation de Django
+
+## Prérequis
+
+- **Python 3.8** ou plus récent  
+- **pip** (installé avec Python)  
+- _(optionnel)_ **virtualenv** ou **venv** pour isoler l’environnement
+
+---
+
+## Étapes d’installation
+
+### 1. Installer Python
+
+Vérifie que Python est installé :
+
+```bash
+python --version
+```
+
+Si ce n’est pas le cas, télécharge-le ici : <https://www.python.org/downloads/>
+
+---
+
+### 2. Créer un environnement virtuel (recommandé)
+
+```bash
+python -m venv env
+```
+
+Active-le :
+
+- **Linux / macOS**
+
+  ```bash
+  source env/bin/activate
+  ```
+
+- **Windows**
+
+  ```bash
+  env\Scripts\activate
+  ```
+
+---
+
+### 3. Mettre à jour `pip`
+
+```bash
+pip install --upgrade pip
+```
+
+---
+
+### 4. Installer Django
+
+```bash
+pip install django
+```
+
+Vérifie l’installation :
+
+```bash
+django-admin --version
+```
+
+---
+
+### 5. Créer un projet Django
+
+```bash
+django-admin startproject monprojet
+cd monprojet
+python manage.py runserver
+```
+
+Puis ouvre ton navigateur et visite : <http://127.0.0.1:8000>
+
+---
+
+_Félicitations ! Django est maintenant installé et opérationnel._
 
 1. **Cloner le dépôt dans un dossier vide :**
    ```bash
