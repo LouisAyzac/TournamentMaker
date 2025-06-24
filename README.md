@@ -89,27 +89,32 @@ django-admin --version
 1. **Cloner le dépôt dans un dossier vide :**
    ```bash
    git clone https://github.com/LouisAyzac/TournamentMaker.git
-   cd TournamentMaker/TournoiApp `Afin d'etre`
+   cd TournamentMaker/TournoiApp 
    ```
    
-
 2. **Installer les dépendances :**
    ```bash
    pip install django certifi
    ```
 
-3. **Appliquer les migrations :**
+3. **Appliquer les migrations s'il y en a :**
+   ```bash
+   python manage.py makemigrations
+   ```
+   Cela permet à Django de détecter les modifications dans les modèles et de préparer les fichiers nécessaires pour mettre à jour la base de données.
+
    ```bash
    python manage.py migrate
    ```
+   Puis cela applique ces fichiers et crée ou modifie les tables dans la base de données.
 
-4. **Lancer le serveur :**
+5. **Lancer le serveur :**
    ```bash
    python manage.py runserver
    ```
 
-5. **Accéder à l’application :**
-   Ouvrez votre navigateur à l’adresse : [http://localhost:8000](http://localhost:8000)
+6. **Accéder à l’application :**
+   Ouvrez votre navigateur à l’adresse : [http://127.0.0.1:8000/TournamentMaker/](http://localhost:8000)](http://127.0.0.1:8000/TournamentMaker/)
 
 ---
 
