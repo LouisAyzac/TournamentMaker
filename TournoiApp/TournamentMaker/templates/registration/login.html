@@ -2,36 +2,105 @@
 
 {% block content %}
 
-  {% if form.errors %}
-    <p>Your username and password didn't match. Please try again.</p>
-  {% endif %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
-  {% if next %}
-    {% if user.is_authenticated %}
-      <p>Your account doesn't have access to this page. To proceed,
-      please login with an account that has access.</p>
-    {% else %}
-      <p>Please login to see this page.</p>
-    {% endif %}
-  {% endif %}
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f7f9fc;
+  }
 
-  <p><strong>Le nom d’utilisateur est l’adresse e-mail du capitaine.</strong></p>
+  .login-container {
+    max-width: 420px;
+    margin: 3rem auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  }
+
+  .login-container h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-submit:hover {
+    background-color: #0056b3;
+  }
+
+  .login-note {
+    font-size: 0.95rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .login-warning {
+    background: #ffe0e0;
+    border-left: 4px solid #dc3545;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    color: #721c24;
+  }
+</style>
+
+<div class="login-container">
+  <h2>Connexion</h2>
+
+ 
+
 
   <form method="post" action="{% url 'login' %}">
     {% csrf_token %}
-    <table>
-      <tr>
-        <td>{{ form.username.label_tag }}</td>
-        <td>{{ form.username }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.password.label_tag }}</td>
-        <td>{{ form.password }}</td>
-      </tr>
-    </table>
-    <input type="submit" value="login">
-    <input type="hidden" name="next" value="{{ next }}">
-  </form>
 
+    <div class="form-group">
+      <label for="id_username">{{ form.username.label }}</label>
+      {{ form.username }}
+    </div>
+
+    <div class="form-group">
+      <label for="id_password">{{ form.password.label }}</label>
+      {{ form.password }}
+    </div>
+
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="btn-submit">Se connecter</button>
+  </form>
+</div>
 
 {% endblock %}

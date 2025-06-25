@@ -75,11 +75,7 @@
     </div>
   </div>
 
-<<<<<<< HEAD
   <!-- Règles -->
-=======
-  <!-- Règles du tournoi -->
->>>>>>> ange
   <div class="row justify-content-center text-dark mb-4">
     <div class="col-md-10 rounded p-4 shadow-sm" style="background-color: #f1f1f1;">
       <h5 class="fw-bold mb-4 text-center">
@@ -91,21 +87,55 @@
             {% if tournoi.type_tournament == "RR" %} Round Robin {% else %} Élimination directe {% endif %}
           </p>
         </div>
-        <div class="col-md-4 border-start border-2 border-dark-subtle">
-          <p><i class="fas fa-star text-primary"></i> <strong> Points par set :</strong> {{ tournoi.points_per_set }}</p>
-        </div>
-        <div class="col-md-4 border-start border-2 border-dark-subtle">
-          <p><i class="fas fa-trophy text-primary"></i> <strong> Sets nécessaires :</strong> {{ tournoi.nb_sets_to_win }}</p>
-        </div>
+
+        {% if tournoi.sport == "volleyball" %}
+          <div class="col-md-4 border-start border-2 border-dark-subtle">
+            <p><i class="fas fa-star text-primary"></i> <strong> Points par set :</strong> {{ tournoi.points_per_set }}</p>
+          </div>
+          <div class="col-md-4 border-start border-2 border-dark-subtle">
+            <p><i class="fas fa-trophy text-primary"></i> <strong> Sets nécessaires :</strong> {{ tournoi.nb_sets_to_win }}</p>
+          </div>
+
+        {% elif tournoi.sport == "football" %}
+          <div class="col-md-4 border-start border-2 border-dark-subtle">
+            <p><i class="fas fa-clock text-primary"></i> <strong> Durée du match :</strong>
+              {% if tournoi.match_duration %}
+                {{ tournoi.match_duration }} min
+              {% else %}
+                durée non précisée
+              {% endif %}
+            </p>
+          </div>
+          <div class="col-md-4 border-start border-2 border-dark-subtle">
+            <p><i class="fas fa-plus text-primary"></i> <strong> Prolongation :</strong> {{ tournoi.extra_time|yesno:"Oui,Non" }}</p>
+            <p><i class="fas fa-futbol text-primary"></i> <strong> Tirs au but :</strong> {{ tournoi.penalty_shootout|yesno:"Oui,Non" }}</p>
+          </div>
+
+        {% elif tournoi.sport == "basketball" %}
+          <div class="col-md-4 border-start border-2 border-dark-subtle">
+            <p><i class="fas fa-stopwatch text-primary"></i> <strong> Durée d’un quart-temps :</strong> {{ tournoi.quarter_duration }} min</p>
+          </div>
+          <div class="col-md-4 border-start border-2 border-dark-subtle">
+            <p><i class="fas fa-layer-group text-primary"></i> <strong> Nombre de quarts :</strong> {{ tournoi.number_of_quarters }}</p>
+          </div>
+
+        {% elif tournoi.sport == "rugby" %}
+          <div class="col-md-8 border-start border-2 border-dark-subtle">
+            <p><i class="fas fa-clock text-primary"></i> <strong> Durée du match :</strong>
+              {% if tournoi.match_duration %}
+                {{ tournoi.match_duration }} min
+              {% else %}
+                durée non précisée
+              {% endif %}
+            </p>
+          </div>
+        {% endif %}
       </div>
     </div>
   </div>
-
-<<<<<<< HEAD
+ 
   <!-- Détails -->
-=======
-  <!-- Nouveau bouton vers les détails du tournoi -->
->>>>>>> ange
+
   <div class="row justify-content-center mb-5">
     <div class="col-md-10 text-center">
       <a href="{% url 'tournament_detail' tournoi.slug %}" class="btn w-100"
@@ -114,6 +144,8 @@
       </a>
     </div>
   </div>
+
+
 
   <hr class="my-5">
 </div>

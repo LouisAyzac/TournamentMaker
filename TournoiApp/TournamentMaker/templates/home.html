@@ -1,98 +1,120 @@
-
 {% extends 'base_generic.html' %}
 
-{% block title %}
-  <title>Accueil - Tournois</title>
-{% endblock %}
+{% block title %}<title>Accueil - Tournois</title>{% endblock %}
 
 {% block content %}
-
 <style>
-  .nav-buttons-container .nav-button:not(:first-child) {
-    display: none !important;
-  }
+  .nav-buttons-container .nav-button:not(:first-child){ display:none!important; }
 </style>
 
 <div class="container mt-5">
+  <h1 class="text-center mb-4" style="color:black;">Bienvenue sur la plateforme des tournois</h1>
 
-  <h1 class="text-center mb-4" style="color: black;">Bienvenue sur la plateforme des tournois</h1>
-
-  <!-- BOUTONS de filtre par catégorie -->
-
-  <!--
-  <div class="text-center mb-4">
-    <a href="{% url 'create_tournament_step1' %}" class="btn btn-lg btn-outline-primary me-3">
-        ➕ Créer un tournoi
-    </a> 
-  -->
-
-    <a href="?category=all" class="btn btn-outline-dark {% if category == 'all' %}active{% endif %}">Tous les tournois</a>
-    <a href="?category=ongoing" class="btn btn-outline-success {% if category == 'ongoing' %}active{% endif %}">Tournois en cours</a>
-    <a href="?category=upcoming" class="btn btn-outline-primary {% if category == 'upcoming' %}active{% endif %}">Tournois à venir</a>
-    <a href="?category=past" class="btn btn-outline-secondary {% if category == 'past' %}active{% endif %}">Tournois passés</a>
-    <a href="{% url 'france_map' %}" class="btn btn-lg btn-outline-primary me-3">
-      🗺️ Carte de France
-
-  </a> 
-
+  <!-- onglets catégorie -->
+  <div class="mb-3">
+    <a href="?category=all"      class="btn btn-outline-dark      {% if category == "all" %}active{% endif %}">Tous les tournois</a>
+    <a href="?category=ongoing"  class="btn btn-outline-success   {% if category == "ongoing" %}active{% endif %}">Tournois en cours</a>
+    <a href="?category=upcoming" class="btn btn-outline-primary   {% if category == "upcoming" %}active{% endif %}">Tournois à venir</a>
+    <a href="?category=past"     class="btn btn-outline-secondary {% if category == "past" %}active{% endif %}">Tournois passés</a>
+    <a href="{% url 'france_map' %}" class="btn btn-lg btn-outline-primary me-3">🗺️ Carte de France</a>
+  </div>
 </div>
 
-<!-- FORMULAIRE de filtre sport + département -->
+<!-- zone filtres -->
 <div class="card mb-4">
   <div class="card-body">
     <h5 class="card-title">Filtrer les tournois</h5>
-    <form method="get" class="form-inline row g-3">
+
+    <form method="get" class="row row-cols-lg-auto g-3 align-items-end">
       <input type="hidden" name="category" value="{{ category }}">
-      <div class="col-md-4"> 
+
+         <div class="col">
+        <label for="search">Recherche :</label>
+        <input id="search" name="search" type="text" class="form-control"
+               placeholder="Nom du tournoi" value="{{ search_query|default_if_none:'' }}">
+      </div>
+
+      <div class="col">
         <label for="sport">Sport :</label>
-        <select name="sport" id="sport" class="form-control">
+        <select id="sport" name="sport" class="form-control">
           <option value="">Tous les sports</option>
           {% for sport in sports %}
             <option value="{{ sport.0 }}" {% if selected_sport == sport.0 %}selected{% endif %}>{{ sport.1 }}</option>
           {% endfor %}
         </select>
       </div>
+
+       <div class="col">
+        <label for="type_tournament">Type :</label>
+        <select id="type_tournament" name="type_tournament" class="form-control">
+          <option value="">Tous les types</option>
+          <option value="RR" {% if type_tournament == "RR" %}selected{% endif %}>Round Robin</option>
+          <option value="DE" {% if type_tournament == "DE" %}selected{% endif %}>Élimination directe</option>
+        </select>
+      </div>
+
       <div class="col-md-4">
         <label for="department">Département :</label>
         <input type="number" name="department" id="department" class="form-control" 
                placeholder="Numéro de département" 
-               value="{% if selected_department and selected_department != 'None' and selected_department != 'none' and selected_department != 'null' %}{{ selected_department }}{% endif %}">
+               value="{{ selected_department|default_if_none:'' }}">
       </div>
+
+
+
+   
+
+      
+      <div class="col-md-4">
+        <label for="address">Adresse :(61 rue marx dormoy, 13004 marseille)</label>
+        <input type="text" name="address" id="address" class="form-control" 
+               placeholder="Ex: Paris, Lyon..." 
+               value="{{ request.GET.address }}">
+      </div>
+
       <div class="col-md-4 align-self-end">
         <button type="submit" class="btn btn-primary">Filtrer</button>
       </div>
     </form>
   </div>
 </div>
- 
-<!-- TOURNOIS affichés en cartes -->
+
+<!-- CARTES TOURNOI -->
 <div class="row">
-  {% for tournoi in tournois %}
+{% for tournoi in tournois %}
   <div class="col-md-6 mb-4">
     <div class="card h-100">
-      <div class="card-header bg-primary text-white">
-        <h5 class="card-title mb-0 d-flex align-items-center">
+      <div class="card-header" style="background-color: #00d6ff;">
+        <h5 class="card-title mb-0 d-flex align-items-center" style="color: black;">
           {{ tournoi.name }}
-          {% if tournoi.teams.count >= tournoi.max_teams %}
-          <div class="badge bg-danger ms-2">
-            <i class="fas fa-exclamation-circle me-1"></i> Tournoi complet
-          </div>
+          {% if tournoi.start_date <= today and tournoi.end_date >= today %}
+            <span class="badge bg-success ms-2">🟢 En cours</span>
+          {% elif tournoi.start_date > today %}
+            <span class="badge bg-primary ms-2">🔵 À venir</span>
+          {% else %}
+            <span class="badge bg-secondary ms-2">⚫ Passé</span>
+          {% endif %}
+          {% if tournoi.teams.count >= tournoi.max_teams and tournoi.end_date >= today %}
+            <span class="badge bg-danger ms-2">❗ Complet</span>
           {% endif %}
         </h5>
       </div>
+
       <div class="card-body">
         <div class="row">
           <div class="col-md-6">
-            <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }} ({{ tournoi.departement }})</p>
+            <p class="card-text"><strong>📍 Lieu :</strong><br>{{ tournoi.address }} ({{ tournoi.department }})</p>
             <p class="card-text"><strong>📅 Dates :</strong><br>Du {{ tournoi.start_date|date:"d/m/Y" }} au {{ tournoi.end_date|date:"d/m/Y" }}</p>
           </div>
           <div class="col-md-6">
-            <p class="card-text"><strong>🏃 Sport :</strong><br>{{ tournoi.get_sport_display }}</p>
-            <p class="card-text"><strong>👥 Équipes :</strong><br>{{ tournoi.teams.count }}/{{ tournoi.max_teams }}</p>
+            <p><strong>🏃 Sport :</strong><br>{{ tournoi.get_sport_display }}</p>
+            <p><strong>👥 Équipes :</strong><br>{{ tournoi.teams.count }}/{{ tournoi.max_teams }}</p>
+            <p><strong>📊 Type :</strong><br>{% if tournoi.type_tournament == "RR" %}Round Robin{% else %}Élimination directe{% endif %}</p>
           </div>
         </div>
       </div>
-      <div class="card-footer bg-light">
+
+      <div class="card-footer bg-light text-end">
         <form method="POST" action="{% url 'home' %}" class="d-inline">
           {% csrf_token %}
           <input type="hidden" name="tournament_id" value="{{ tournoi.id }}">
@@ -100,44 +122,36 @@
             <i class="fas fa-check"></i> Sélectionner
           </button>
         </form>
-        <a href="{% url 'tournament_detail' tournoi.slug %}" class="btn btn-info btn-sm me-2">
+        <a href="{% url 'tournament_detail' tournoi.slug %}" class="btn btn-info btn-sm">
           <i class="fas fa-info-circle"></i> Détails
         </a>
-        
       </div>
     </div>
   </div>
-  {% empty %}
-  <div class="col-12">
-    <div class="alert alert-info">Aucun tournoi trouvé pour ce filtre.</div>
-  </div>
-  {% endfor %}
+{% empty %}
+  <div class="col-12"><div class="alert alert-info">Aucun tournoi trouvé pour ce filtre.</div></div>
+{% endfor %}
 </div>
 
-<!-- PAGINATION -->
 {% if is_paginated %}
 <nav aria-label="Pagination">
   <ul class="pagination justify-content-center">
     {% if page_obj.has_previous %}
-    <li class="page-item">
-      <a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_city %}&city={{ selected_city }}{% endif %}">&laquo;</a>
-    </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}">&laquo;</a>
+      </li>
     {% endif %}
-
     {% for num in page_obj.paginator.page_range %}
-    <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-      <a class="page-link" href="?page={{ num }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_city %}&city={{ selected_city }}{% endif %}">{{ num }}</a>
-    </li>
+      <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+        <a class="page-link" href="?page={{ num }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}">{{ num }}</a>
+      </li>
     {% endfor %}
-
     {% if page_obj.has_next %}
-    <li class="page-item">
-      <a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_city %}&city={{ selected_city }}{% endif %}">&raquo;</a>
-    </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ category }}{% if selected_sport %}&sport={{ selected_sport }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}">&raquo;</a>
+      </li>
     {% endif %}
   </ul>
 </nav>
 {% endif %}
-
-</div>
 {% endblock %}
