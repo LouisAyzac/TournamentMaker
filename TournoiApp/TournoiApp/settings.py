@@ -151,3 +151,8 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'projetE3match@gmail.com'
 EMAIL_HOST_PASSWORD = 'aati pugp tamd kegu'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # ✅ (défaut recommandé)
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = False  # ⚠️ True seulement en HTTPS
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+

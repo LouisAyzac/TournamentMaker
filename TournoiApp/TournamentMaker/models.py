@@ -23,6 +23,26 @@ class Organisateur(models.Model):
     def __str__(self):
         return f"Organisateur: {self.user.email}"
 
+class City(models.Model):
+    name = models.CharField(max_length=100)
+    department = models.CharField(max_length=100, default='')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+    
+class Address(models.Model):
+    street = models.CharField(max_length=255)
+    city = models.ForeignKey(City, on_delete=models.CASCADE)
+    zipcode = models.CharField(max_length=10)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.street}, {self.zipcode} {self.city.name}"
+
+
 
 class Tournament(models.Model):
     # ── Choix ────────────────────────────────────────────────────────────────
@@ -40,7 +60,9 @@ class Tournament(models.Model):
 
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
-    address = models.CharField(max_length=255, blank=True, null=True)
+    address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True, related_name='tournaments')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     is_indoor = models.BooleanField(default=True)
     start_date = models.DateField(default=date.today)
     end_date = models.DateField(default=date.today)
@@ -59,6 +81,7 @@ class Tournament(models.Model):
     quarter_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Durée d’un quart-temps (en minutes)")
     number_of_quarters = models.PositiveIntegerField(null=True, blank=True, help_text="Nombre de quart-temps")
     slug = models.SlugField(max_length=200, unique=False, blank=True)
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, blank=True, related_name='tournaments')
 
 
     def all_pool_matches_completed(self) -> bool:
@@ -515,14 +538,6 @@ def team_detail(request, team_id):
     }
     return render(request, 'team_detail.html', context)
 
-class City(models.Model):
-    name = models.CharField(max_length=100)
-    department = models.CharField(max_length=100, default='')
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
-
-    def __str__(self):
-        return self.name
 
 @receiver(post_save, sender=Tournament)
 def create_pools_for_tournament(sender, instance, created, **kwargs):
