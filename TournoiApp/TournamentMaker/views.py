@@ -21,6 +21,8 @@ from urllib.parse import urlencode
 from .models import (
     Player, Team, Match, Pool, Ranking, Tournament, UserProfile, Organisateur
 )
+import json
+
 
 LEVEL_MAP = {
     'débutant': 1,
@@ -1871,6 +1873,10 @@ DEPARTMENT_COORDS = {
     # Tu ajoutes ici les départements que tu veux
 }
 
+
+import json
+from django.shortcuts import render
+from .models import Tournament  # ⚠️ Vérifie bien que ce modèle est importé
 def france_map_view(request):
     tournaments = Tournament.objects.select_related('address').all()
     markers = []
@@ -1889,6 +1895,7 @@ def france_map_view(request):
     return render(request, 'france_map.html', {
         'markers': json.dumps(markers)
     })
+
 
 
 def tournaments_by_department(request, department):
@@ -2001,22 +2008,7 @@ from django.shortcuts import render
 from .models import Tournament
 import json
 
-def france_map_view(request):
-    tournaments = Tournament.objects.select_related('address').all()
-    markers = []
 
-    for t in tournaments:
-        address = t.address
-        city = address.city if address else None
-
-        if address and address.latitude and address.longitude:
-            markers.append({
-        'name': t.name,
-        'latitude': address.latitude,
-        'longitude': address.longitude,
-        'city': city.name if city else '',
-        'address': address.street,
-    })
  
 from itertools import combinations
 
