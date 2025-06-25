@@ -4,7 +4,7 @@ from django.contrib.auth import views as auth_views
 from . import views
 from .views import TournamentListView
 from TournamentMaker.views import TournamentDetailView
-
+ 
 urlpatterns = [
     # Accueil
     path('', views.home_landing, name='home_landing'),
@@ -70,6 +70,7 @@ urlpatterns = [
     path('carte-france/', views.france_map_view, name='france_map'),
 
     path('tournament/<slug:tournament_slug>/generate-bracket/', views.generate_elimination_bracket, name='generate_elimination_bracket'),
+    path('api/tournament_markers/', views.api_tournament_markers, name='api_tournament_markers'),
 
 
 ]
