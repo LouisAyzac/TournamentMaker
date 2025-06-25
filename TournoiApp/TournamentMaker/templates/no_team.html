@@ -17,7 +17,7 @@
   Retour aux phases finales
 </a>    {% else %}
 
-      <a href="{% url 'direct_elimination' %}" class="btn btn-primary">Retour aux phases finales</a>
+      <a href="{% url 'direct_elimination' tournament_slug=tournament_slug %}" class="btn btn-primary">Retour aux phases finales</a>
     {% endif %}
   </div>
 {% endblock %}
