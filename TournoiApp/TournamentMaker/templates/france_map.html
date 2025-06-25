@@ -6,6 +6,31 @@
     display: none !important;
   }
 </style>
+
+<!-- Bouton retour -->
+<style>
+  .bottom-map-btn {
+    margin-top: 20px;
+    margin-left: 0;
+    background-color: #007bff;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-block;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+  }
+
+  .bottom-map-btn:hover {
+    background-color: #0056b3;
+  }
+
+  .bottom-map-btn i {
+    margin-right: 8px;
+  }
+</style>
 <h2>Carte des Tournois</h2>
 
 <!-- Leaflet -->
@@ -21,7 +46,7 @@
 <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
 <script>
-  const map = L.map('map').setView([48.85, 2.35], 6);
+  const map = L.map('map').setView([46.9, 2.35], 6);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: 'Map data © OpenStreetMap contributors',
@@ -35,16 +60,24 @@
   markers.forEach(marker => {
     console.log("🧪 marker reçu :", marker);
     const point = L.marker([marker.latitude, marker.longitude])
-      .bindPopup(`
-  <strong>${marker.name}</strong><br>
-  ${marker.address}<br>
-  <a href="/TournamentMaker/${marker.slug}/detail">Voir le tournoi</a>
-`);
+  .on('click', function () {
+    const encodedAddress = encodeURIComponent(marker.address);
+    const url = `/TournamentMaker/tournois/?category=all&sport=&department=&address=${encodedAddress}`;
+    window.location.href = url;
+  });
+
 
     markerCluster.addLayer(point);
   });
 
   map.addLayer(markerCluster);
 </script>
+
+<div class="mt-4">
+  <a href="{% url 'home' %}" class="bottom-map-btn">
+    <i class="fas fa-arrow-left"></i> Retour
+  </a>
+</div>
+
 
 {% endblock %}

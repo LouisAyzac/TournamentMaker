@@ -73,11 +73,14 @@ def home(request):
     sports = Tournament.SPORT_CHOICES
     selected_sport = request.GET.get('sport')
     selected_department = request.GET.get('department')
+    selected_address = request.GET.get("address")
 
     if selected_sport:
         tournois = tournois.filter(sport=selected_sport)
     if selected_department:
         tournois = tournois.filter(department__icontains=selected_department)
+    if selected_address:
+        tournois = tournois.filter(address__street__icontains=selected_address)
 
     # Pagination
     paginator = Paginator(tournois, 6)  # 6 tournois par page
@@ -823,7 +826,7 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 
 def geocode_address(address):
-    geolocator = Nominatim(user_agent="tournament_app")
+    geolocator = Nominatim(user_agent="tournament_app", timeout=5)
     try:
         location = geolocator.geocode(address)
         if location:
@@ -835,9 +838,6 @@ def geocode_address(address):
 from .models import Tournament, Address, City
 
 def create_tournament_step1(request):
-    import pprint
-    pprint.pprint(request.session.get("step1"))
-
     if request.method == 'POST':
         preset_key = request.POST.get('preset')
         preset_name_map = {
@@ -849,7 +849,6 @@ def create_tournament_step1(request):
         address = request.POST.get('address')
         lat, lon = geocode_address(address)
         city_name = extract_city_from_geocode(address)
-        print("🌍 Ville extraite :", city_name)
 
 
         request.session['step1'] = {
@@ -885,7 +884,6 @@ from .models import City
 def create_tournament_step2(request):
     try:
         step1 = request.session.get('step1')
-        print("🪵 DEBUG SESSION STEP1:", step1)
 
         if not step1:
             print("🚨 step1 absent de session")
@@ -893,11 +891,7 @@ def create_tournament_step2(request):
 
         # Simule ton code actuel avec protections
         city_name = step1.get("city_name", "Ville inconnue")
-        print("🌍 City name extrait :", city_name)
-
         city_instance, _ = City.objects.get_or_create(name=city_name)
-
-        print("✅ City récupérée ou créée :", city_instance)
 
     except Exception as e:
         print("💥 ERREUR dans step2:", e)
@@ -1069,8 +1063,6 @@ L'équipe du tournoi
             traceback.print_exc()
             messages.error(request, f"Erreur : {str(e)}")
             return redirect('create_tournament_step2')
-
-    print("📍 FIN OK")  # ← ajoute ça
 
     return render(request, 'create_tournament_step2.html', {
     'sport': sport,
