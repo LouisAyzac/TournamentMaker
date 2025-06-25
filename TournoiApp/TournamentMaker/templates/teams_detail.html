@@ -92,31 +92,10 @@
 </style>
 
 <div class="teams-container animate__animated animate__fadeIn">
-<<<<<<< HEAD
   <div class="team-header">
     <h2 class="section-title"><i class="fas fa-tshirt"></i> Détails de l'Équipe</h2>
 
     <p class="team-name-detail">{{ team.name }}</p>
-=======
-  <div class="team-header text-center">
-    <h2 class="section-title"><i class="fas fa-tshirt"></i> Détails de l'Équipe</h2>
-    
-    <p class="team-name-detail">{{ team.name }}</p>
-
-    {% if team.logo %}
-      <div class="team-logo-detail">
-        <img src="{{ team.logo.url }}" alt="{{ team.name }}">
-      </div>
-    {% else %}
-      <div class="default-logo-detail">
-        <i class="fas fa-volleyball-ball"></i>
-      </div>
-    {% endif %}
-
-    <p><strong>Victoires :</strong> {{ team.wins|default:"0" }}</p>
-    <p><strong>Défaites :</strong> {{ team.losses|default:"0" }}</p>
-  </div>
->>>>>>> Florian
 
     {% if team.logo %}
       <div class="team-logo-detail">
@@ -144,18 +123,11 @@
                 <i class="fas fa-user"></i>
               </div>
             {% endif %}
-<<<<<<< HEAD
-=======
-            <span class="player-age">{{ player.birth_date }}</span>
->>>>>>> Florian
           </div>
 
           <div class="player-info">
             <h3 class="player-name">{{ player.first_name }} <strong>{{ player.last_name }}</strong></h3>
-<<<<<<< HEAD
             <div class="player-birthdate">{{ player.birth_date|date:"d F Y" }}</div>
-=======
->>>>>>> Florian
             <div class="player-level {{ player.level|lower }}">
               {{ player.get_level_display }}
             </div>
@@ -175,18 +147,5 @@
       <i class="fas fa-arrow-left"></i> Retour à la liste des équipes
     </a>
   </div>
-
-
-  </div>
  
-
-<<<<<<< HEAD
-  <div class="text-start mt-4 text-center">
-    <a href="{% url 'teams' tournament_slug %}" class="btn-simple-return">
-      <i class="fas fa-arrow-left"></i> Retour à la liste des équipes
-    </a>
-  </div>
-=======
->>>>>>> Florian
-</div>
 {% endblock %}
