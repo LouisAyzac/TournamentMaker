@@ -50,7 +50,7 @@
 
   {% for pool_data in pools_data %}
     <h4 class="mt-4 text-primary fw-bold">
-      Poule {{ pool_data.pool.name }}
+      {{ pool_data.pool.name }}
       <a href="{% url 'detail_poule' tournament.slug pool_data.pool.id %}" class="btn btn-sm btn-outline-primary float-end">
         Voir les matchs
       </a>
@@ -62,7 +62,6 @@
           <th style="background-color: yellow; color: black;">ÉQUIPE</th>
           <th style="background-color: #4caf50; color: white;">V</th>
           <th style="background-color: #f44336; color: white;">D</th>
-<<<<<<< HEAD
           {% if tournament.get_sport_display == 'Football' %}
             <th style="background-color: #ffcc00; color: black;">N</th>
           {% endif %}
@@ -70,11 +69,6 @@
           <th style="background-color: #ff9800; color: white;">Diff. Sets</th>
           <th style="background-color: #03a9f4; color: white;">Diff. Points</th>
           <th style="background-color: #607d8b; color: white;">Points</th>
-=======
-          <th style="background-color: #ffeb99; color: black;">MJ</th>
-          <th style="background-color: #ff9800; color: white;">Diff. Sets</th>
-          <th style="background-color: #03a9f4; color: white;">Diff. Points</th>
->>>>>>> Florian
           <th style="background-color: #9c27b0; color: white;">Classement</th>
         </tr>
       </thead>
@@ -89,7 +83,6 @@
               </td>
               <td>{{ team_data.victoires }}</td>
               <td>{{ team_data.defaites }}</td>
-<<<<<<< HEAD
               {% if tournament.get_sport_display == 'Football' %}
                 <td>{{ team_data.nuls }}</td>
               {% endif %}
@@ -97,11 +90,6 @@
               <td>{{ team_data.diff_sets }}</td>
               <td>{{ team_data.diff_points }}</td>
               <td><strong>{{ team_data.points }}</strong></td>
-=======
-              <td>{{ team_data.matchs_joues }}</td>
-              <td>{{ team_data.diff_sets }}</td>
-              <td>{{ team_data.diff_points }}</td>
->>>>>>> Florian
               <td><strong>{{ team_data.rank }}</strong></td>
             </tr>
           {% endfor %}

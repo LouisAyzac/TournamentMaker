@@ -1,10 +1,6 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
-<<<<<<< HEAD
-=======
-
->>>>>>> Florian
 <div class="container mt-4">
   <div class="p-4 rounded shadow-sm text-center bg-gradient" style="background: linear-gradient(to right, #e0f7ff, #dceeff); border: 1px solid #b6d4fe;">
     
@@ -27,7 +23,7 @@
         {% endif %}
         <span>{{ tournament.get_sport_display }}</span>
       </div>
-<<<<<<< HEAD
+
 
       <div class="d-flex align-items-center gap-2">
         <i class="fas fa-calendar-alt text-purple"></i>
@@ -97,140 +93,6 @@
   box-shadow:0 .5rem 1rem rgba(0,0,0,.05);
 }
 </style>
-=======
 
-      <div class="d-flex align-items-center gap-2">
-        <i class="fas fa-calendar-alt text-purple"></i>
-        <span>du {{ tournament.start_date|date:"d/m/Y" }} au {{ tournament.end_date|date:"d/m/Y" }}</span>
-      </div>
-    </div>
-
-    <!-- Adresse ajoutée ici -->
-    <p class="text-muted fst-italic small fs-6 mt-2 mb-0">{{ tournament.address }}</p>
-
-  </div>
-</div>
-
-<div class="phase-final-wrapper">
-  <h1 class="title" style="color: #000;">Matchs de la phase finale</h1>
-
-  
-
-  {% if match_groups %}
-    <style>
-      .phase-final-wrapper {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 20px;
-        font-family: sans-serif;
-      }
-
-      .title {
-        font-size: 1.8rem;
-        font-weight: bold;
-        margin-bottom: 10px;
-        color: #111;
-      }
-
-      .phase-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: #444;
-        margin-top: 30px;
-        margin-bottom: 10px;
-      }
-
-      .match-list {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-      }
-
-      .match-link {
-        text-decoration: none;
-        color: inherit;
-      }
-
-      .match-card {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        padding: 10px 16px;
-        width: 320px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        background-color: #fff;
-        transition: background-color 0.2s ease, box-shadow 0.2s ease;
-        font-size: 0.95rem;
-        cursor: pointer;
-      }
-
-      .match-card:hover {
-        background-color: #eef4ff;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-      }
-
-      .team-name {
-        font-weight: 500;
-        color: #333;
-      }
-
-      .winner {
-        color: #198754;
-        font-weight: 600;
-      }
-
-      .vs {
-        margin: 0 8px;
-        color: #666;
-        font-size: 0.95rem;
-      }
-
-      .pending {
-        font-style: italic;
-        color: #aaa;
-      }
-    </style>
-
-    {% for group in match_groups %}
-      <div class="phase-title">{{ group.label }}</div>
-
-      <div class="match-list">
-        {% for match in group.matchs %}
-<a href="{% url 'score_match' tournament_slug=match.tournament.slug match_id=match.id %}?from=phase_finale" class="match-link">
-
-            <div class="match-card">
-              <span class="team-name {% if match.winner_team == match.team_a %}winner{% endif %}">
-                {{ match.team_a.name|default:"En attente" }}
-              </span>
-              <span class="vs">vs</span>
-              <span class="team-name {% if match.winner_team == match.team_b %}winner{% endif %}">
-                {{ match.team_b.name|default:"En attente" }}
-              </span>
-            </div>
-          </a>
-        {% endfor %}
-      </div>
-    {% endfor %}
-  {% else %}
-    <p class="info-message" style="color: #000;">Aucun match à afficher pour cette phase finale pour le moment.</p>
-  {% endif %}
-</div>
-<<<<<<< HEAD
-
-=======
- 
->>>>>>> ange
-<div class="text-start mt-5 mb-4 ps-3">
-  <a href="{% url 'matchs_choice' tournament.slug %}" class="btn-simple-return">
-    <i class="fas fa-arrow-left me-2"></i>Revenir à la sélection de la phase
-  </a>
-</div>
->>>>>>> Florian
 {% endblock %}
-<<<<<<< HEAD
-
-=======
  
->>>>>>> ange

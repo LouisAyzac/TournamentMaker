@@ -28,6 +28,12 @@
     <form method="get" class="row row-cols-lg-auto g-3 align-items-end">
       <input type="hidden" name="category" value="{{ category }}">
 
+         <div class="col">
+        <label for="search">Recherche :</label>
+        <input id="search" name="search" type="text" class="form-control"
+               placeholder="Nom du tournoi" value="{{ search_query|default_if_none:'' }}">
+      </div>
+
       <div class="col">
         <label for="sport">Sport :</label>
         <select id="sport" name="sport" class="form-control">
@@ -56,11 +62,7 @@
 
 
 
-      <div class="col">
-        <label for="search">Recherche :</label>
-        <input id="search" name="search" type="text" class="form-control"
-               placeholder="Nom du tournoi" value="{{ search_query|default_if_none:'' }}">
-      </div>
+   
 
       
       <div class="col-md-4">

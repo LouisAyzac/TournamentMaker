@@ -78,14 +78,12 @@ modifie moi cette page pour ce que ce soit un peu plus stylé et le css laisse l
         Phase Finale
     </a>
  
-        {% if user.is_authenticated %}
-    {% if user.is_staff or user == tournament.organizer.user %}
+
     <a href="{% url 'login' %}?next={% url 'matchs_finale' tournament_slug=tournament.slug %}" class="btn btn-warning choice-button">
             Création des matchs de la phase finale
         </a>
-    {% endif %}
+ 
 
-{% endif %}
 
 
 </div>
