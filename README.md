@@ -44,7 +44,7 @@ Notre plateforme s’adresse à **deux types de profils** :
 
 ---
 
-## 🧑‍💻 Installation & Lancement
+## 🧑‍💻 User Guide
 
 ### 🔧 Prérequis
 
@@ -143,13 +143,13 @@ python manage.py createsuperuser
 ---
 
 Ces commandes sont toutes exécutées via la console ou le terminal. Elles sont essentielles pour faire fonctionner tout projet Django correctement.
-## 📁 Architecture du projet
+
+## 📁 Architecture du projet / Developper Guide
 
 ```plaintext
 TournamentMaker/
 ├── manage.py
 ├── db.sqlite3
-├── requirements.txt
 ├── README.md
 │
 ├── TournioApp/                   
@@ -185,11 +185,6 @@ TournamentMaker/
 ├── db.sqlite3
 ```
 > Base de données SQLite par défaut. Contient toutes les données persistantes (équipes, matchs, utilisateurs...).
-
-```plaintext
-├── requirements.txt
-```
-> Liste des bibliothèques Python nécessaires au projet. Sert à recréer l’environnement via `pip install -r`.
 
 ```plaintext
 ├── README.md
