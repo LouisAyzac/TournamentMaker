@@ -80,7 +80,7 @@
 
 2. **Installer les dépendances :**
    ```bash
-   pip install django certifi
+   pip install django certifi geopy 
    ```
 
 3. **Préparer la base de données :**
