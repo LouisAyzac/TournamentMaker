@@ -1,204 +1,157 @@
+
 # 🏆 TournamentMaker
 
-**TournamentMaker** est une application web développée avec **Django**. Elle permet de **créer**, **gérer** et **suivre facilement des tournois sportifs** tels que le football, le rugby, le basketball ou le handball. Ce projet a été réalisé dans un cadre pédagogique afin de renforcer nos compétences en développement web, en gestion de version avec Git, et en travail d’équipe.
+**TournamentMaker** est une application web développée avec **Django**. Elle permet de **créer**, **gérer** et **suivre facilement des tournois sportifs**, quels que soient le sport (football, basketball, handball, rugby, etc.).
+
+Ce projet a été réalisé dans un cadre pédagogique afin de renforcer nos compétences en développement web, gestion de version avec Git, et travail d’équipe.
 
 ---
-
 
 ## 🎯 Utilisateurs ciblés
 
 Notre plateforme s’adresse à **deux types de profils** :
 
-1. **Admin**
-    - Accède à une interface d’administration complète (équipes, matchs, scores, classement…)
+1. 👤 **Organisateurs**
+   - Créent et planifient leurs propres tournois
+   - Ajoutent des équipes et joueurs
+   - Gèrent les matchs, scores, et classements
+   - Accèdent à une interface d'administration dédiée
 
-
-2. 👤 **Organisateur**
-   - Crée, gère et planifie un tournoi sportif
-
-3. 🧍 **Joueur ou spectateur**
-   - Consulte les informations du tournoi (planning, résultats, classement)
-   - Suit l’évolution de son équipe ou des autres en temps réel
-
----
-
-## 🛠️ Technologies utilisées
-
-- [Python](https://docs.python.org) – Langage de programmation
-- [Django](https://www.djangoproject.com) – Framework web back-end
-- [HTML](https://developer.mozilla.org/fr/docs/Web/HTML) – Structure des pages
-- [CSS](https://developer.mozilla.org/fr/docs/Web/CSS) – Mise en forme et design
-
-> **Branche principale de développement** : `dev`
+2. 🧍 **Joueurs et spectateurs**
+   - Consultent les informations du tournoi (planning, résultats, scores)
+   - Suivent l’évolution des équipes en temps réel
+   - Peuvent visualiser le classement général et les matchs à venir
 
 ---
 
 ## ✨ Fonctionnalités principales
 
 - Création de tournois personnalisés
-- Ajout de joueurs ou d’équipes
-- Génération automatique des matchs
-- Suivi des scores et des résultats
-- Tableau d’administration sécurisé
+- Ajout et gestion d’équipes ou de joueurs
+- Génération automatique des rencontres
+- Mise à jour des scores en direct
+- Visualisation des classements et calendriers
+- Interface administrateur sécurisée
 
 ---
 
-## 👤 User Guide
+## 🛠️ Technologies utilisées
 
-### 🔧 Installation de Django
+- [Python](https://www.python.org) – Langage principal
+- [Django](https://www.djangoproject.com) – Framework web back-end
+- [HTML](https://developer.mozilla.org/fr/docs/Web/HTML) – Structure des pages
+- [CSS](https://developer.mozilla.org/fr/docs/Web/CSS) – Mise en forme
+- [JavaScript](https://developer.mozilla.org/fr/docs/Web/JavaScript) – Interactivité (optionnel/à étendre)
 
-#### Prérequis
-
-- **Python 3.8** ou plus récent  
-- **pip** (installé avec Python)  
-
-#### Étapes d’installation
-
-1. Vérifier que Python est installé :
-    ```bash
-    python --version
-    ```
-
-2. Mettre à jour `pip` :
-    ```bash
-    pip install --upgrade pip
-    ```
-
-3. Installer Django :
-    ```bash
-    pip install django
-    ```
-
-4. Vérifier que Django est bien installé :
-    ```bash
-    django-admin --version
-    ```
+> **Branche principale de développement** : `dev`
 
 ---
 
-### 🚀 Lancement du site web
+## 🧑‍💻 Installation & Lancement
 
-1. **Cloner le dépôt :**
+### 🔧 Prérequis
+
+- Python 3.8 ou plus récent
+- pip (gestionnaire de paquets Python)
+- Git
+
+### 🚀 Étapes d’installation
+
+1. **Cloner le projet :**
    ```bash
    git clone https://github.com/LouisAyzac/TournamentMaker.git
-   cd TournamentMaker/TournoiApp 
+   cd TournamentMaker/TournoiApp
    ```
 
 2. **Installer les dépendances :**
    ```bash
-   pip install django certifi geopy 
+   pip install -r requirements.txt
    ```
 
 3. **Préparer la base de données :**
    ```bash
    python manage.py makemigrations
-   ```
-   > Crée les fichiers de mise à jour pour la base de données.
-
-   ```bash
    python manage.py migrate
    ```
-   > Applique les changements dans la base de données.
 
 4. **Lancer le serveur de développement :**
    ```bash
    python manage.py runserver
    ```
 
-5. **Ouvrir l’application dans le navigateur :**
+5. **Accéder à l’application :**
    [http://127.0.0.1:8000/TournamentMaker/](http://127.0.0.1:8000/TournamentMaker/)
 
 ---
 
-### 🔐 Accès à l’interface d’administration
+### 🔐 Interface d’administration Django
 
-Créer un superutilisateur :
-```bash
-python manage.py createsuperuser
-```
-Puis accéder à l’interface :  
-[http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
+1. Créer un superutilisateur :
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+2. Se connecter à l'admin :
+   [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
 
 ---
 
-## 🧑‍💻 Developer Guide
-
-### 📁 Structure du projet
+## 📁 Architecture du projet
 
 ```plaintext
-TOURNAMENTMAKER/
-│
+TournamentMaker/
 ├── manage.py
 ├── db.sqlite3
+├── requirements.txt
 ├── README.md
-├── .gitignore
 │
-├── TournioApp/                     # Application Django principale
-│   ├── __init__.py
-│   ├── admin.py                    # Configure l’administration
-│   ├── apps.py                     # Configuration de l'app
-│   ├── context_processors.py       # Variables globales pour les templates
-│   ├── models.py                   # Définition des modèles (tables)
-│   ├── tests.py                    # Tests unitaires
-│   ├── urls.py                     # Routes spécifiques à l'app
-│   ├── views.py                    # Logique des pages
-│   ├── migrations/                 # Historique des changements de la base
-│   ├── management/                 # Commandes personnalisées (optionnel)
-│   ├── services/                   # Code métier réutilisable
-│   ├── static/                     # Fichiers CSS, JS, images
-│   ├── templates/                  # Fichiers HTML
-│   └── templatetags/               # Tags/filtres personnalisés
+├── TournioApp/                    # Application principale
+│   ├── admin.py                   # Configuration de l'interface d'admin
+│   ├── models.py                  # Définition des modèles (équipes, tournois, matchs...)
+│   ├── views.py                   # Logique des pages
+│   ├── urls.py                    # Routage de l'app
+│   ├── templates/                 # Fichiers HTML
+│   ├── static/                    # Fichiers CSS/JS/images
+│   ├── migrations/                # Historique des modifications de BDD
+│   └── ...
 │
-├── TournoiApp/                     # Dossier principal du projet Django
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py                 # Configuration globale du projet
-│   ├── urls.py
-│   └── wsgi.py
-│
-└── [autres fichiers éventuels...]
+├── TournoiApp/                    # Dossier de configuration globale
+│   ├── settings.py                # Paramètres du projet Django
+│   ├── urls.py                    # Routes principales
+│   └── ...
 ```
 
 ---
 
-### ➕ Création d’une nouvelle app
+## 🧰 Bonnes pratiques & conseils
 
-```bash
-python manage.py startapp nom_de_votre_app
-```
-
-> 🔁 N'oubliez pas d’ajouter l’app dans `INSTALLED_APPS` de `settings.py`.
+- Utilisez des **branches** pour développer de nouvelles fonctionnalités
+- Faites des **commits réguliers** avec des messages clairs
+- Testez localement avant de fusionner vos PR
 
 ---
 
-### 🛠️ Ajouter des modèles et gérer les migrations
+## 👥 Équipe projet
 
-1. Écrire les modèles dans `models.py`
-2. Générer les migrations :
-    ```bash
-    python manage.py makemigrations
-    ```
-3. Appliquer les migrations :
-    ```bash
-    python manage.py migrate
-    ```
+- **Ange Gagnard** – Dev Back-end / Visualisation
+- **Pablo Minelian** – UX / Interface utilisateur
+- **Florian Garcia--Salon** – Intégration front
+- **Antoine Huang** – Gestion de projet
+- **Louis Ayzac** – Lead Dev / GitHub
+- **Rémy Abdoul Mazidou** – Déploiement & outils Git
 
 ---
 
-## 📂 Autres fichiers utiles
+## ✅ Améliorations futures
 
-- `.gitignore` : fichiers/dossiers ignorés par Git
-- `README.md` : ce fichier
-
----
-
-## 👥 Membres du projet
-
-- **Ange Gagnard** – [Visualisation Git avec D3.js](https://onlywei.github.io/explain-git-with-d3/)
-- **Pablo Minelian** – [Jeu pédagogique Git](https://ohmygit.org)
-- **Florian Garcia--Salon** – [Cours OpenClassrooms : Git & GitHub](https://openclassrooms.com/fr/courses/7162856-gerez-du-code-avec-git-et-github)
-- **Antoine Huang** – [Git for Computer Scientists](https://eagain.net/articles/git-for-computer-scientists/)
-- **Louis Ayzac** – [Conférence Git (YouTube)](https://youtube.com/watch?v=1ffBJ4sVUb4&t=125s)
-- **Rémy Adboul Mazidou** – [AgriponGit – Visualiseur Git](https://agripongit.vincenttunru.com/)
+- Ajout d’un système d’authentification utilisateurs (joueurs / visiteurs)
+- Interface responsive pour mobile
+- Visualisation graphique du bracket / classement
+- Notifications en temps réel (WebSocket ou polling)
+- Export des données (PDF, CSV)
 
 ---
+
+## 📜 Licence
+
+Ce projet est à but éducatif. Libre de réutilisation et modification dans un cadre non commercial.
