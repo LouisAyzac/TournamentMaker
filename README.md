@@ -228,7 +228,7 @@ TournamentMaker/
 - Faites des **commits réguliers** avec des messages clairs
 - Testez localement avant de fusionner vos PR
 
---
+---
 
 
 ## ✅ Améliorations futures
