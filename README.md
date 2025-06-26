@@ -222,10 +222,6 @@ TournamentMaker/
 
 ```
 
-Cette structure suit les conventions Django pour séparer clairement :
-- la configuration globale du projet (`TournoiApp/`)
-- la logique de l’application principale (`TournioApp/`)
-```
 ---
 
 ## 🧰 Bonnes pratiques & conseils
