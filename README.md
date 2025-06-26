@@ -173,6 +173,64 @@ TournamentMaker/
 
 ---
 
+
+---
+
+### 🗂️ Détail de l’architecture du projet
+
+Voici une description des principaux fichiers et dossiers de l'application :
+
+```plaintext
+TournamentMaker/
+├── manage.py
+```
+> Fichier principal pour interagir avec le projet Django (lancer le serveur, exécuter les migrations, etc.).
+
+```plaintext
+├── db.sqlite3
+```
+> Base de données SQLite par défaut. Contient toutes les données persistantes (équipes, matchs, utilisateurs...).
+
+```plaintext
+├── requirements.txt
+```
+> Liste des bibliothèques Python nécessaires au projet. Sert à recréer l’environnement via `pip install -r`.
+
+```plaintext
+├── README.md
+```
+> Documentation du projet, contenant toutes les informations utiles pour installation, usage et développement.
+
+```plaintext
+├── TournioApp/
+```
+> Application Django principale. Contient toute la logique métier et les composants spécifiques du tournoi.
+
+- `admin.py` : Enregistre les modèles dans l’interface d’administration Django.
+- `models.py` : Définit les classes représentant les données (équipes, tournois, matchs...).
+- `views.py` : Contient les fonctions ou classes qui déterminent ce que renvoie chaque page.
+- `urls.py` : Définit les routes internes à l’application.
+- `templates/` : Contient les fichiers HTML rendus par Django.
+- `static/` : Contient les fichiers statiques (CSS, JavaScript, images).
+- `migrations/` : Historique des modifications du schéma de la base de données.
+
+```plaintext
+├── TournoiApp/
+```
+> Dossier de configuration global du projet Django.
+
+- `settings.py` : Paramètres généraux (apps, middleware, base de données, chemins statiques...).
+- `urls.py` : Point d’entrée des URLs du projet (peut inclure celles de `TournioApp`).
+- `asgi.py` / `wsgi.py` : Interfaces pour déployer le projet sur un serveur web.
+
+```
+
+Cette structure suit les conventions Django pour séparer clairement :
+- la configuration globale du projet (`TournoiApp/`)
+- la logique de l’application principale (`TournioApp/`)
+
+---
+
 ## 🧰 Bonnes pratiques & conseils
 
 - Utilisez des **branches** pour développer de nouvelles fonctionnalités
