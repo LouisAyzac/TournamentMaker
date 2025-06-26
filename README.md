@@ -218,7 +218,7 @@ TournamentMaker/
 - `urls.py` : Point d’entrée des URLs du projet (peut inclure celles de `TournioApp`).
 - `asgi.py` / `wsgi.py` : Interfaces pour déployer le projet sur un serveur web.
 
-```
+
 
 ---
 
