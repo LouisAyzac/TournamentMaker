@@ -104,6 +104,19 @@
 
 ---
 
+## 🎯 Utilisateurs ciblés
+
+Notre plateforme s’adresse à **deux types de profils** :
+
+1. 👤 **Organisateur**
+   - Crée, gère et planifie un tournoi sportif
+   - Accède à une interface d’administration complète (équipes, matchs, scores, classement…)
+
+2. 🧍 **Joueur ou spectateur**
+   - Consulte les informations du tournoi (planning, résultats, classement)
+   - Suit l’évolution de son équipe ou des autres en temps réel
+
+
 ### 🔐 Accès à l’interface d’administration
 
 Créer un superutilisateur :
