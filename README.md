@@ -4,7 +4,6 @@
 **TournamentMaker** est une application web développée avec **Django**. Elle permet de **créer**, **gérer** et **suivre facilement des tournois sportifs**, quels que soient le sport (football, basketball, handball, rugby, etc.).
 
 Ce projet a été réalisé dans le cadre de notre projet de 3ᵉ année à l’ESIEE, présenté lors de la Journée des Projets du 26 juin 2025. Il a été conçu pour mettre en pratique nos compétences en développement web, en gestion de version avec Git, ainsi qu’en travail collaboratif.
----
 
 ## 🎯 Utilisateurs ciblés
 
