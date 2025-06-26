@@ -234,6 +234,18 @@ Cette structure suit les conventions Django pour séparer clairement :
 - Faites des **commits réguliers** avec des messages clairs
 - Testez localement avant de fusionner vos PR
 
+--
+
+
+## ✅ Améliorations futures
+
+- Ajout d’un système d’authentification utilisateurs (joueurs / visiteurs)
+- Interface responsive pour mobile
+- Notifications en temps réel (WebSocket ou polling)
+- Export des données (PDF, CSV)
+- Modularisation du projet (création de nouvelle app affin que notre projet soit mieux strucuré
+- Stockage de la secret key
+
 ---
 
 ## 👥 Équipe projet
@@ -245,18 +257,4 @@ Cette structure suit les conventions Django pour séparer clairement :
 - **Louis Ayzac** – Lead Dev / GitHub
 - **Rémy Abdoul Mazidou** – Déploiement & outils Git
 
----
 
-## ✅ Améliorations futures
-
-- Ajout d’un système d’authentification utilisateurs (joueurs / visiteurs)
-- Interface responsive pour mobile
-- Visualisation graphique du bracket / classement
-- Notifications en temps réel (WebSocket ou polling)
-- Export des données (PDF, CSV)
-
----
-
-## 📜 Licence
-
-Ce projet est à but éducatif. Libre de réutilisation et modification dans un cadre non commercial.
