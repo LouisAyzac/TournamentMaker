@@ -96,6 +96,56 @@ Notre plateforme s’adresse à **deux types de profils** :
 
 ---
 
+
+---
+
+### 💻 Détail des commandes utilisées
+
+Voici une explication détaillée de chaque commande utilisée lors de l’installation et du lancement de l’application :
+
+#### 🔹 Clonage du dépôt
+```bash
+git clone https://github.com/LouisAyzac/TournamentMaker.git
+```
+> Clone le projet depuis GitHub dans un dossier local nommé `TournamentMaker`.
+
+```bash
+cd TournamentMaker/TournoiApp
+```
+> Se déplace dans le dossier contenant le cœur de l’application Django.
+
+#### 🔹 Installation des dépendances
+```bash
+pip install -r requirements.txt
+```
+> Installe toutes les bibliothèques Python listées dans le fichier `requirements.txt` (ex: Django, certifi, etc.). Cela garantit que le projet dispose de tout le nécessaire pour fonctionner.
+
+#### 🔹 Migrations de la base de données
+```bash
+python manage.py makemigrations
+```
+> Génère les fichiers de migration à partir des modèles définis dans `models.py`. Ces fichiers décrivent les changements à apporter à la base de données (tables, champs, relations...).
+
+```bash
+python manage.py migrate
+```
+> Applique les migrations à la base de données SQLite. Cela crée les tables et les structures nécessaires pour faire fonctionner l’application.
+
+#### 🔹 Lancement du serveur de développement
+```bash
+python manage.py runserver
+```
+> Lance le serveur web intégré de Django, accessible à l’adresse [http://127.0.0.1:8000](http://127.0.0.1:8000). Idéal pour tester localement.
+
+#### 🔹 Création d’un superutilisateur
+```bash
+python manage.py createsuperuser
+```
+> Lance une procédure pour créer un compte administrateur. Ce compte permet de se connecter à l’interface d’administration Django à [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/).
+
+---
+
+Ces commandes sont toutes exécutées via la console ou le terminal. Elles sont essentielles pour faire fonctionner tout projet Django correctement.
 ## 📁 Architecture du projet
 
 ```plaintext
