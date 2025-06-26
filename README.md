@@ -15,7 +15,6 @@ Notre plateforme s’adresse à **deux types de profils** :
    - Créent et planifient leurs propres tournois
    - Ajoutent des équipes et joueurs
    - Gèrent les matchs, scores, et classements
-   - Accèdent à une interface d'administration dédiée
 
 2. 🧍 **Joueurs et spectateurs**
    - Consultent les informations du tournoi (planning, résultats, scores)
@@ -155,23 +154,21 @@ TournamentMaker/
 ├── requirements.txt
 ├── README.md
 │
-├── TournioApp/                    # Application principale
-│   ├── admin.py                   # Configuration de l'interface d'admin
-│   ├── models.py                  # Définition des modèles (équipes, tournois, matchs...)
-│   ├── views.py                   # Logique des pages
-│   ├── urls.py                    # Routage de l'app
-│   ├── templates/                 # Fichiers HTML
-│   ├── static/                    # Fichiers CSS/JS/images
-│   ├── migrations/                # Historique des modifications de BDD
+├── TournioApp/                   
+│   ├── admin.py                  
+│   ├── models.py                 
+│   ├── views.py                  
+│   ├── urls.py                   
+│   ├── templates/                 
+│   ├── static/                  
+│   ├── migrations/               
 │   └── ...
 │
-├── TournoiApp/                    # Dossier de configuration globale
-│   ├── settings.py                # Paramètres du projet Django
-│   ├── urls.py                    # Routes principales
+├── TournoiApp/                    
+│   ├── settings.py              
+│   ├── urls.py                    
 │   └── ...
 ```
-
----
 
 
 ---
@@ -228,7 +225,7 @@ TournamentMaker/
 Cette structure suit les conventions Django pour séparer clairement :
 - la configuration globale du projet (`TournoiApp/`)
 - la logique de l’application principale (`TournioApp/`)
-
+```
 ---
 
 ## 🧰 Bonnes pratiques & conseils
