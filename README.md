@@ -219,7 +219,7 @@ TournamentMaker/
 - `asgi.py` / `wsgi.py` : Interfaces pour déployer le projet sur un serveur web.
 
 ```
-```
+
 ---
 
 ## 🧰 Bonnes pratiques & conseils
