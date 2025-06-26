@@ -5,14 +5,20 @@
 ---
 
 
-## 👥 Membres du projet
+## 🎯 Utilisateurs ciblés
 
-- **Ange Gagnard** – [Visualisation Git avec D3.js](https://onlywei.github.io/explain-git-with-d3/)
-- **Pablo Minelian** – [Jeu pédagogique Git](https://ohmygit.org)
-- **Florian Garcia--Salon** – [Cours OpenClassrooms : Git & GitHub](https://openclassrooms.com/fr/courses/7162856-gerez-du-code-avec-git-et-github)
-- **Antoine Huang** – [Git for Computer Scientists](https://eagain.net/articles/git-for-computer-scientists/)
-- **Louis Ayzac** – [Conférence Git (YouTube)](https://youtube.com/watch?v=1ffBJ4sVUb4&t=125s)
-- **Rémy Adboul Mazidou** – [AgriponGit – Visualiseur Git](https://agripongit.vincenttunru.com/)
+Notre plateforme s’adresse à **deux types de profils** :
+
+1. **Admin**
+    - Accède à une interface d’administration complète (équipes, matchs, scores, classement…)
+
+
+2. 👤 **Organisateur**
+   - Crée, gère et planifie un tournoi sportif
+
+3. 🧍 **Joueur ou spectateur**
+   - Consulte les informations du tournoi (planning, résultats, classement)
+   - Suit l’évolution de son équipe ou des autres en temps réel
 
 ---
 
@@ -115,24 +121,6 @@ Puis accéder à l’interface :
 
 ---
 
-## 🎯 Utilisateurs ciblés
-
-Notre plateforme s’adresse à **deux types de profils** :
-
-1. **Admin**
-    - Accède à une interface d’administration complète (équipes, matchs, scores, classement…)
-
-
-2. 👤 **Organisateur**
-   - Crée, gère et planifie un tournoi sportif
-
-3. 🧍 **Joueur ou spectateur**
-   - Consulte les informations du tournoi (planning, résultats, classement)
-   - Suit l’évolution de son équipe ou des autres en temps réel
-
-
----
-
 ## 🧑‍💻 Developer Guide
 
 ### 📁 Structure du projet
@@ -204,6 +192,13 @@ python manage.py startapp nom_de_votre_app
 
 ---
 
-## 📬 Contact
+## 👥 Membres du projet
 
-Pour toute question ou contribution, merci de contacter l’équipe de développement ou d’ouvrir un ticket sur le dépôt Git.
+- **Ange Gagnard** – [Visualisation Git avec D3.js](https://onlywei.github.io/explain-git-with-d3/)
+- **Pablo Minelian** – [Jeu pédagogique Git](https://ohmygit.org)
+- **Florian Garcia--Salon** – [Cours OpenClassrooms : Git & GitHub](https://openclassrooms.com/fr/courses/7162856-gerez-du-code-avec-git-et-github)
+- **Antoine Huang** – [Git for Computer Scientists](https://eagain.net/articles/git-for-computer-scientists/)
+- **Louis Ayzac** – [Conférence Git (YouTube)](https://youtube.com/watch?v=1ffBJ4sVUb4&t=125s)
+- **Rémy Adboul Mazidou** – [AgriponGit – Visualiseur Git](https://agripongit.vincenttunru.com/)
+
+---
