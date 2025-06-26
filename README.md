@@ -104,6 +104,17 @@
 
 ---
 
+### 🔐 Accès à l’interface d’administration
+
+Créer un superutilisateur :
+```bash
+python manage.py createsuperuser
+```
+Puis accéder à l’interface :  
+[http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
+
+---
+
 ## 🎯 Utilisateurs ciblés
 
 Notre plateforme s’adresse à **deux types de profils** :
@@ -119,15 +130,6 @@ Notre plateforme s’adresse à **deux types de profils** :
    - Consulte les informations du tournoi (planning, résultats, classement)
    - Suit l’évolution de son équipe ou des autres en temps réel
 
-
-### 🔐 Accès à l’interface d’administration
-
-Créer un superutilisateur :
-```bash
-python manage.py createsuperuser
-```
-Puis accéder à l’interface :  
-[http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
 
 ---
 
