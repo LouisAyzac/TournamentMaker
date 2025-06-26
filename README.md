@@ -108,11 +108,14 @@
 
 Notre plateforme s’adresse à **deux types de profils** :
 
-1. 👤 **Organisateur**
-   - Crée, gère et planifie un tournoi sportif
-   - Accède à une interface d’administration complète (équipes, matchs, scores, classement…)
+1. **Admin**
+    - Accède à une interface d’administration complète (équipes, matchs, scores, classement…)
 
-2. 🧍 **Joueur ou spectateur**
+
+2. 👤 **Organisateur**
+   - Crée, gère et planifie un tournoi sportif
+
+3. 🧍 **Joueur ou spectateur**
    - Consulte les informations du tournoi (planning, résultats, classement)
    - Suit l’évolution de son équipe ou des autres en temps réel
 
