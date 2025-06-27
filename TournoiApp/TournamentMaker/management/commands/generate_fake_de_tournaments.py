@@ -15,6 +15,8 @@ class Command(BaseCommand):
             city_name = fake.city()
             postcode = fake.postcode()
             department = postcode[:2]
+            street_name = f"{fake.building_number()} {fake.street_name()}"
+            full_street = f"{street_name}, {postcode} {city_name}, France"
 
             city_obj, _ = City.objects.get_or_create(
                 name=city_name,
@@ -26,7 +28,7 @@ class Command(BaseCommand):
             )
 
             address_obj = Address.objects.create(
-                street=f"{fake.building_number()} {fake.street_name()}",
+                street=full_street,  # <- adresse complète formatée
                 zipcode=postcode,
                 city=city_obj,
                 latitude=city_obj.latitude,
@@ -49,7 +51,7 @@ class Command(BaseCommand):
                 slug=tournament_slug,
                 type_tournament='DE',
                 department=real_address["department"],
-                address=real_address["address"],  # Instance d’Address bien formatée
+                address=real_address["address"],
                 is_indoor=random.choice([True, False]),
                 start_date=fake.date_this_year(before_today=True, after_today=False),
                 end_date=fake.date_this_year(before_today=False, after_today=True),
