@@ -1,11 +1,11 @@
-# 🏆 TournamentMaker
+# TournamentMaker
 
 **TournamentMaker** est une application web développée avec **Django**. Elle permet de **créer**, **gérer** et **suivre facilement des tournois sportifs** tels que le football, le rugby, le basketball ou le handball. Ce projet a été réalisé dans un cadre pédagogique afin de renforcer nos compétences en développement web, en gestion de version avec Git, et en travail d’équipe.
 
 ---
 
 
-## 👥 Membres du projet
+## Membres du projet
 
 - **Ange Gagnard** – [Visualisation Git avec D3.js](https://onlywei.github.io/explain-git-with-d3/)
 - **Pablo Minelian** – [Jeu pédagogique Git](https://ohmygit.org)
@@ -16,7 +16,7 @@
 
 ---
 
-## 🛠️ Technologies utilisées
+## Technologies utilisées
 
 - [Python](https://docs.python.org) – Langage de programmation
 - [Django](https://www.djangoproject.com) – Framework web back-end
@@ -27,7 +27,7 @@
 
 ---
 
-## ✨ Fonctionnalités principales
+## Fonctionnalités principales
 
 - Création de tournois personnalisés
 - Ajout de joueurs ou d’équipes
@@ -37,9 +37,9 @@
 
 ---
 
-## 👤 User Guide
+## User Guide
 
-### 🔧 Installation de Django
+### Installation de Django
 
 #### Prérequis
 
@@ -70,7 +70,7 @@
 
 ---
 
-### 🚀 Lancement du site web
+### Lancement du site web
 
 1. **Cloner le dépôt :**
    ```bash
@@ -104,7 +104,7 @@
 
 ---
 
-### 🔐 Accès à l’interface d’administration
+### Accès à l’interface d’administration
 
 Créer un superutilisateur :
 ```bash
@@ -115,9 +115,9 @@ Puis accéder à l’interface :
 
 ---
 
-## 🧑‍💻 Developer Guide
+## Developer Guide
 
-### 📁 Structure du projet
+### Structure du projet
 
 ```plaintext
 TOURNAMENTMAKER/
@@ -155,17 +155,17 @@ TOURNAMENTMAKER/
 
 ---
 
-### ➕ Création d’une nouvelle app
+### Création d’une nouvelle app
 
 ```bash
 python manage.py startapp nom_de_votre_app
 ```
 
-> 🔁 N'oubliez pas d’ajouter l’app dans `INSTALLED_APPS` de `settings.py`.
+>  N'oubliez pas d’ajouter l’app dans `INSTALLED_APPS` de `settings.py`.
 
 ---
 
-### 🛠️ Ajouter des modèles et gérer les migrations
+### Ajouter des modèles et gérer les migrations
 
 1. Écrire les modèles dans `models.py`
 2. Générer les migrations :
@@ -179,7 +179,7 @@ python manage.py startapp nom_de_votre_app
 
 ---
 
-## 📂 Autres fichiers utiles
+## Autres fichiers utiles
 
 - `.gitignore` : fichiers/dossiers ignorés par Git
 - `README.md` : ce fichier
