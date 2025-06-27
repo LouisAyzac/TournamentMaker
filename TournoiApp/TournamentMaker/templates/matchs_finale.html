@@ -66,11 +66,7 @@
 
 {% if data|length == 2 and data.0.rankings|length >= 2 and data.1.rankings|length >= 2 %}
   <div class="container mt-3">
-<<<<<<< HEAD
     <h4 class="text-success">📋 Affrontements prévus (2 poules):</h4>
-=======
-    <h5 class="text-success">📋 Affrontements prévus (2 poules):</h5>
->>>>>>> Florian
     <ul class="list-group">
       <li class="list-group-item">
         {{ data.0.rankings.0.team.name }}  <strong>vs</strong> {{ data.1.rankings.1.team.name }}
@@ -82,11 +78,7 @@
   </div>
 {% elif data|length == 3 and premiers_tries and deuxiemes_tries %}
   <div class="container mt-3">
-<<<<<<< HEAD
     <h4 class="text-success">📋 Affrontements prévus (3 poules) :</h4>
-=======
-    <h5 class="text-success">📋 Affrontements prévus (3 poules) :</h5>
->>>>>>> Florian
     <ul class="list-group">
       <li class="list-group-item"><strong>Demi-finale :</strong><br>
         {{ premiers_tries.0.team.name }} <strong>vs</strong> {{ premiers_tries.1.team.name }}
@@ -106,11 +98,7 @@
   {% with data.3 as p3 %}
     {% if p0.rankings|length >= 2 and p1.rankings|length >= 2 and p2.rankings|length >= 2 and p3.rankings|length >= 2 %}
       <div class="container mt-3">
-<<<<<<< HEAD
         <h4 class="text-success">📋 Affrontements prévus (4 poules) :</h4>
-=======
-        <h5 class="text-success">📋 Affrontements prévus (4 poules) :</h5>
->>>>>>> Florian
         <ul class="list-group">
           <li class="list-group-item">
             <strong>Quart 1 :</strong><br>
