@@ -1,28 +1,58 @@
 from django.core.management.base import BaseCommand
-from TournamentMaker.models import Tournament, Team, Player
+from TournamentMaker.models import Tournament, Team, Player, Address, City
 from faker import Faker
 import random
 
 class Command(BaseCommand):
-    help = "Crée 5 tournois à élimination directe avec 2 à 6 équipes (1 tournoi par nombre d'équipes)."
+    help = "Crée 5 tournois à élimination directe avec 2 à 8 équipes (1 tournoi par nombre d'équipes)."
 
     def handle(self, *args, **kwargs):
         fake = Faker('fr_FR')
-        players_per_team = 6  # fixe, ajustable
+        players_per_team = 6
 
-        for num_teams in range(2,9):  # Génère pour 2, 3, 4, 5, 6 équipes
-            t_name = f"Tournoi DE {num_teams} équipes - {fake.city()}"
-            t_slug = f"de-{num_teams}-{random.randint(1000, 9999)}"
+        real_addresses = []
+        for _ in range(10):
+            city_name = fake.city()
+            postcode = fake.postcode()
+            department = postcode[:2]
+
+            city_obj, _ = City.objects.get_or_create(
+                name=city_name,
+                defaults={
+                    'department': department,
+                    'latitude': fake.latitude(),
+                    'longitude': fake.longitude()
+                }
+            )
+
+            address_obj = Address.objects.create(
+                street=f"{fake.building_number()} {fake.street_name()}",
+                zipcode=postcode,
+                city=city_obj,
+                latitude=city_obj.latitude,
+                longitude=city_obj.longitude
+            )
+
+            real_addresses.append({
+                "address": address_obj,
+                "department": department
+            })
+
+        for num_teams in range(2, 9):  # 2 à 8 équipes
+            tournament_name = f"Tournoi DE {num_teams} équipes - {fake.city()}"
+            tournament_slug = f"de-{num_teams}-{random.randint(1000, 9999)}"
+
+            real_address = random.choice(real_addresses)
 
             tournament = Tournament.objects.create(
-                name=t_name,
-                slug=t_slug,
+                name=tournament_name,
+                slug=tournament_slug,
                 type_tournament='DE',
-                department=str(fake.random_int(min=1, max=95)).zfill(2),
-                address=fake.address(),
+                department=real_address["department"],
+                address=real_address["address"],  # Instance d’Address bien formatée
                 is_indoor=random.choice([True, False]),
-                start_date=fake.date_this_year(),
-                end_date=fake.date_this_year(),
+                start_date=fake.date_this_year(before_today=True, after_today=False),
+                end_date=fake.date_this_year(before_today=False, after_today=True),
                 sport='volleyball',
                 max_teams=num_teams,
                 players_per_team=players_per_team,
