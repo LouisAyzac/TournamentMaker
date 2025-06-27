@@ -1,27 +1,27 @@
 
-# 🏆 TournamentMaker
+# TournamentMaker
 
 **TournamentMaker** est une application web développée avec **Django**. Elle permet de **créer**, **gérer** et **suivre facilement des tournois sportifs**, quels que soient le sport (football, basketball, handball, rugby, etc.).
 
 Ce projet a été réalisé dans le cadre de notre projet de 3ᵉ année à l’ESIEE, présenté lors de la Journée des Projets du 26 juin 2025. Il a été conçu pour mettre en pratique nos compétences en développement web, en gestion de version avec Git, ainsi qu’en travail collaboratif.
 
-## 🎯 Utilisateurs ciblés
+## Utilisateurs ciblés
 
 Notre plateforme s’adresse à **deux types de profils** :
 
-1. 👤 **Organisateurs**
+1.  **Organisateurs**
    - Créent et planifient leurs propres tournois
    - Ajoutent des équipes et joueurs
    - Gèrent les matchs, scores, et classements
 
-2. 🧍 **Joueurs et spectateurs**
+2.  **Joueurs et spectateurs**
    - Consultent les informations du tournoi (planning, résultats, scores)
    - Suivent l’évolution des équipes en temps réel
    - Peuvent visualiser le classement général et les matchs à venir
 
----
+Ce projet a été réalisé dans le cadre de notre projet de 3ᵉ année à l’ESIEE, présenté lors de la Journée des Projets du 26 juin 2025. Il a été conçu pour mettre en pratique nos compétences en développement web, en gestion de version avec Git, ainsi qu’en travail collaboratif.
 
-## ✨ Fonctionnalités principales
+## Fonctionnalités principales
 
 - Création de tournois personnalisés
 - Ajout et gestion d’équipes ou de joueurs
@@ -32,7 +32,7 @@ Notre plateforme s’adresse à **deux types de profils** :
 
 ---
 
-## 🛠️ Technologies utilisées
+##  Technologies utilisées
 
 - [Python](https://www.python.org) – Langage principal
 - [Django](https://www.djangoproject.com) – Framework web back-end
@@ -44,15 +44,15 @@ Notre plateforme s’adresse à **deux types de profils** :
 
 ---
 
-## 🧑‍💻 User Guide
+## User Guide
 
-### 🔧 Prérequis
+### Prérequis
 
 - Python 3.8 ou plus récent
 - pip (gestionnaire de paquets Python)
 - Git
 
-### 🚀 Étapes d’installation
+### Étapes d’installation
 
 1. **Cloner le projet :**
    ```bash
@@ -81,7 +81,7 @@ Notre plateforme s’adresse à **deux types de profils** :
 
 ---
 
-### 🔐 Interface d’administration Django
+### Interface d’administration Django
 
 1. Créer un superutilisateur :
    ```bash
@@ -96,11 +96,11 @@ Notre plateforme s’adresse à **deux types de profils** :
 
 ---
 
-### 💻 Détail des commandes utilisées
+### Détail des commandes utilisées
 
 Voici une explication détaillée de chaque commande utilisée lors de l’installation et du lancement de l’application :
 
-#### 🔹 Clonage du dépôt
+#### Clonage du dépôt
 ```bash
 git clone https://github.com/LouisAyzac/TournamentMaker.git
 ```
@@ -111,13 +111,13 @@ cd TournamentMaker/TournoiApp
 ```
 > Se déplace dans le dossier contenant le cœur de l’application Django.
 
-#### 🔹 Installation des dépendances
+#### Installation des dépendances
 ```bash
 pip install -r requirements.txt
 ```
 > Installe toutes les bibliothèques Python listées dans le fichier `requirements.txt` (ex: Django, certifi, etc.). Cela garantit que le projet dispose de tout le nécessaire pour fonctionner.
 
-#### 🔹 Migrations de la base de données
+#### Migrations de la base de données
 ```bash
 python manage.py makemigrations
 ```
@@ -128,13 +128,13 @@ python manage.py migrate
 ```
 > Applique les migrations à la base de données SQLite. Cela crée les tables et les structures nécessaires pour faire fonctionner l’application.
 
-#### 🔹 Lancement du serveur de développement
+#### Lancement du serveur de développement
 ```bash
 python manage.py runserver
 ```
 > Lance le serveur web intégré de Django, accessible à l’adresse [http://127.0.0.1:8000](http://127.0.0.1:8000). Idéal pour tester localement.
 
-#### 🔹 Création d’un superutilisateur
+#### Création d’un superutilisateur
 ```bash
 python manage.py createsuperuser
 ```
@@ -146,20 +146,20 @@ Ces commandes sont toutes exécutées via la console ou le terminal. Elles sont 
 
 ---
 
-### 🔐 Gestion des organisateurs et accès sécurisé
+### Gestion des organisateurs et accès sécurisé
 
 Lors de la **création d’un tournoi**, un **email** est demandé : il s’agit de l’adresse email de l’organisateur du tournoi.
 
 Voici comment fonctionne l’accès sécurisé :
 
-1. 📩 **Envoi automatique d’un email** :
+1.  **Envoi automatique d’un email** :
    - Un email est envoyé à l’organisateur contenant un **lien pour définir son mot de passe**.
    - Ce mot de passe est strictement personnel et confidentiel.
 
-2. 🔐 **Utilisation du compte organisateur** :
+2.  **Utilisation du compte organisateur** :
    - Ce compte permet à l’organisateur de :
-     - 🔄 **Mettre à jour les scores** de toutes les équipes de son tournoi
-     - 🏆 **Créer les phases finales** (playoffs, demi-finales, etc.)
+     -  **Mettre à jour les scores** de toutes les équipes de son tournoi
+     -  **Créer les phases finales** (playoffs, demi-finales, etc.)
    - À chaque action sensible (comme changer un score ou accéder aux phases finales), le **login et mot de passe** de l’organisateur sont demandés.
 
 Cette fonctionnalité garantit que **seuls les organisateurs autorisés** peuvent modifier les éléments critiques d’un tournoi.
@@ -167,22 +167,22 @@ Cette fonctionnalité garantit que **seuls les organisateurs autorisés** peuven
 
 ---
 
-### 📧 Gestion des capitaines d’équipes
+### Gestion des capitaines d’équipes
 
 Lors de l’**inscription d’une équipe** à un tournoi, une adresse email est demandée au **capitaine** de l’équipe.
 
 Voici comment cela fonctionne :
 
-1. 📩 **Envoi automatique d’un email au capitaine** :
+1.  **Envoi automatique d’un email au capitaine** :
    - Un lien de création de mot de passe est envoyé à l’adresse fournie.
    - Ce mot de passe permet au capitaine d’accéder à une interface sécurisée dédiée.
 
-2. 🔒 **Accès restreint pour les capitaines** :
+2.  **Accès restreint pour les capitaines** :
    - Chaque capitaine peut uniquement :
-     - 📝 **Mettre à jour les scores** de **son équipe uniquement**
+     -  **Mettre à jour les scores** de **son équipe uniquement**
    - Il n’a pas accès aux autres données du tournoi ni aux équipes adverses.
 
-3. ✅ **Authentification obligatoire** :
+3.  **Authentification obligatoire** :
    - Pour modifier le score de son équipe, le capitaine doit **s’authentifier** avec son email et mot de passe personnel.
 
 Cela permet de responsabiliser les capitaines tout en assurant un contrôle précis et sécurisé des modifications autorisées.
@@ -190,7 +190,7 @@ Cela permet de responsabiliser les capitaines tout en assurant un contrôle pré
 ---
 
 
-## 📁 Architecture du projet / Developper Guide
+##  Architecture du projet / Developper Guide
 
 ```plaintext
 TournamentMaker/
@@ -217,7 +217,7 @@ TournamentMaker/
 
 ---
 
-### 🗂️ Détail de l’architecture du projet
+### Détail de l’architecture du projet
 
 Voici une description des principaux fichiers et dossiers de l'application :
 
@@ -263,7 +263,7 @@ TournamentMaker/
 
 ---
 
-## 🧰 Bonnes pratiques & conseils
+## Bonnes pratiques & conseils
 
 - Utilisez des **branches** pour développer de nouvelles fonctionnalités
 - Faites des **commits réguliers** avec des messages clairs
@@ -272,7 +272,7 @@ TournamentMaker/
 ---
 
 
-## ✅ Améliorations futures
+## Améliorations futures
 
 - Ajout d’un système d’authentification utilisateurs (joueurs / visiteurs)
 - Interface responsive pour mobile
@@ -283,7 +283,7 @@ TournamentMaker/
 
 ---
 
-## 👥 Équipe projet
+## Équipe projet
 
 - **Ange Gagnard** 
 - **Pablo Minelian**
